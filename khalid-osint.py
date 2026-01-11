@@ -1,75 +1,76 @@
-import os, subprocess, time, requests, yagmail
+import os, subprocess, time, requests
 from colorama import Fore, Style, init
 
 init(autoreset=True)
 
-# Aapki Details
-MY_EMAIL = "kahyan292@gmail.com"
-APP_KEY = "xxxx xxxx xxxx xxxx" # Yahan apna 16-digit password dalein
-
-# TOR Proxy for Deep/Dark Web
-TOR_PROXY = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
-
 def bot_banner():
     os.system('clear')
-    print(Fore.RED + Style.BRIGHT + """
+    print(Fore.BLUE + Style.BRIGHT + """
     ╔══════════════════════════════════════════════════════╗
-    ║        KHALID UNIVERSAL DEEP-DARK WEB ENGINE         ║
-    ║   [ GLOBAL SEARCH | TELEGRAM MIRROR | STEALTH ]      ║
+    ║        KHALID GLOBAL OSINT - TELEGRAM MIRROR         ║
+    ║   [ DARKWEB | SOCIAL | VEHICLE | ALL WORLD DATA ]    ║
     ╚══════════════════════════════════════════════════════╝
-    Status: TOR BRIDGE ACTIVE | MAC: SPOOFED
+    Status: DEEP SCAN ACTIVE | Format: TELEGRAM BOT STYLE
     """)
 
-def global_search(target):
+def telegram_style_format(raw_data):
+    """Raw data ko screenshot wale format mein badalne ka logic"""
+    formatted = ""
+    lines = raw_data.split('\n')
+    
+    # In keywords ko priority di jayegi (Screenshot style)
+    keywords = {
+        "Name": ["name", "full name", "user"],
+        "Father": ["father", "guardian", "s/o"],
+        "Address": ["address", "city", "location", "residence"],
+        "Phone": ["phone", "mobile", "contact"],
+        "Vehicle": ["plate", "car", "rto", "vin"],
+        "Password": ["pass", "password", "secret"]
+    }
+
+    for key, synonyms in keywords.items():
+        for line in lines:
+            if any(syn in line.lower() for syn in synonyms):
+                # Data ko "➤ Key: Value" format mein convert karna
+                clean_line = line.split(':')[-1].strip() if ':' in line else line.strip()
+                formatted += f"{Fore.CYAN}➤ {key}: {Fore.WHITE}{clean_line}\n"
+                break
+    return formatted
+
+def deep_world_search(target):
     folder = os.path.abspath(f"reports/{target}")
     os.makedirs(folder, exist_ok=True)
-    report_file = f"{folder}/full_intel.txt"
     
-    print(Fore.CYAN + f"[*] Launching Global Search for: {target}")
-    print(Fore.YELLOW + "[-] Scanning Surface Web, Deep Web & Dark Web Dumps...")
+    print(Fore.YELLOW + f"[*] Deep Searching World-Wide Databases for: {target}...")
+    
+    # 1. Surface & Social Media (FB, Insta, Twitter, WA)
+    res_social = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
+    
+    # 2. Dark Web & Leaks (Ahmia/Breach Mirror)
+    res_leaks = subprocess.run(f"holehe {target}", shell=True, capture_output=True, text=True)
 
-    # Layer 1: Identity & Telegram Bot Mirroring
-    res1 = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
+    # Combined Data
+    raw_combined = res_social.stdout + "\n" + res_leaks.stdout
     
-    # Layer 2: Phone & Mapping (India + Global)
-    res2 = subprocess.run(f"social-analyzer --username {target} --mode fast", shell=True, capture_output=True, text=True)
-    
-    # Layer 3: Dark Web/Breach Intel (Holehe & Custom Scrapers)
-    res3 = subprocess.run(f"holehe {target}", shell=True, capture_output=True, text=True)
+    # Format like your Screenshot
+    telegram_data = telegram_style_format(raw_combined)
 
-    # Filtering Data (Telegram Style: Name, Father, Address)
-    all_output = f"--- TARGET: {target} ---\n\n"
-    all_output += f"IDENTITY DATA:\n{res1.stdout}\n"
-    all_output += f"SOCIAL & PHONE:\n{res2.stdout}\n"
-    all_output += f"BREACH & DARKWEB:\n{res3.stdout}\n"
+    print(Fore.GREEN + "\n🔔 [FOUND] DATA MATCHED (TELEGRAM BOT MIRROR):")
+    print(Fore.YELLOW + "═"*65)
+    if telegram_data:
+        print(telegram_data)
+    else:
+        # Agar exact match nahi mila toh raw data dikhao
+        print(Fore.RED + "➤ Status: No exact record match in surface layers.")
+        print(Fore.WHITE + raw_combined[:500] + "...") 
+    print(Fore.YELLOW + "═"*65)
 
-    # Display Result
-    print(Fore.GREEN + "\n🔔 [FOUND] GLOBAL INTELLIGENCE GATHERED")
-    print(Fore.WHITE + "═"*70)
-    print(Fore.CYAN + all_output)
-    print(Fore.WHITE + "═"*70)
+    # Save with Full Path
+    path = os.path.abspath(f"{folder}/telegram_report.txt")
+    with open(path, "w") as f:
+        f.write(telegram_data if telegram_data else raw_combined)
     
-    # Saving
-    with open(report_file, "w") as f: f.write(all_output)
-    print(f"📂 Report Saved At: {Fore.GREEN}{report_file}")
-    
-    # Direct Send Option
-    choice = input(Fore.YELLOW + "\n[?] Email bhej doon? (y/n): ").lower()
-    if choice == 'y':
-        try:
-            yag = yagmail.SMTP(MY_EMAIL, APP_KEY)
-            yag.send(to=MY_EMAIL, subject=f"DATA FOUND: {target}", contents=all_output, attachments=report_file)
-            print(Fore.GREEN + "[✔] Sent to your Inbox!")
-        except:
-            print(Fore.RED + "[!] Send Failed. Check Internet/Password.")
+    print(f"📂 FILE PATH: {Fore.GREEN}{path}")
 
 def main():
-    while True:
-        bot_banner()
-        target = input(Fore.WHITE + "[+] Target Input: ")
-        if target.lower() == 'exit': break
-        global_search(target)
-        input(Fore.WHITE + "\nPress [ENTER] for next target...")
-
-if __name__ == "__main__":
-    main()
+    while
