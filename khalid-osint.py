@@ -4,77 +4,61 @@ import phonenumbers
 from phonenumbers import carrier, geocoder
 from colorama import Fore, Style
 
-# Branding
-DEV = "Khalid Husain (@khalidhusain786)"
+# Developer: Khalid Husain (@khalidhusain786)
 
 def banner():
     os.system('clear')
+    if not os.path.exists("reports"): os.makedirs("reports")
     print(Fore.GREEN + f"""
     #########################################################
     #              KHALID PERFECT OSINT FRAMEWORK           #
-    #    Email | Phone | Social | WhatsApp | DarkWeb        #
-    #           Developed by: {DEV}           #
+    #      Developed by: Khalid Husain (@khalidhusain786)   #
     #########################################################
     """ + Style.RESET_ALL)
 
-def run_cmd(cmd, target):
-    # Error Fix: Folder check
-    if not os.path.exists("reports"):
-        os.makedirs("reports")
-    
-    report_file = f"reports/{target}_report.txt"
-    print(Fore.YELLOW + f"[*] OSINT Scan Running for: {target}..." + Style.RESET_ALL)
-    
+def run_osint(cmd, target):
+    report_file = f"reports/{target.replace('@','_')}_scan.txt"
+    print(Fore.YELLOW + f"[*] Engine Working on: {target}..." + Style.RESET_ALL)
     try:
-        # Commands ko execute karke file mein save karna
         with open(report_file, "a") as f:
-            f.write(f"\n--- Results for {cmd} ---\n")
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            for line in process.stdout:
-                print(line, end="")
-                f.write(line)
+            f.write(f"\n--- Scan: {cmd} ---\n")
+            # Direct execution fix
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            print(result.stdout)
+            f.write(result.stdout)
     except Exception as e:
-        print(Fore.RED + f"[!] Error: {e}")
-
-def phone_intel(number):
-    print(Fore.CYAN + f"\n[*] Analyzing Indian Phone Intel: {number}")
-    try:
-        parsed = phonenumbers.parse(number, "IN")
-        print(f"[+] Operator: {carrier.name_for_number(parsed, 'en')}")
-        print(f"[+] Region: {geocoder.description_for_number(parsed, 'en')}")
-        print(f"[+] WhatsApp/TG Presence: High Probability")
-        print(f"[+] Confidence Score: 92%")
-    except:
-        print(Fore.RED + "[!] Format error! Use +91xxxxxxxxxx")
+        print(Fore.RED + f"[!] Error executing {cmd}: {e}")
 
 def main():
     while True:
         banner()
-        print(Fore.CYAN + "1. 📧 Email & Global Breach (Gmail/Insta/FB/HIBP)")
-        print("2. 👤 Social Presence (Twitter/Telegram/3000+ Sites)")
-        print("3. 📱 Phone & Truecaller Lookups (India Specialized)")
-        print("4. 🌐 Web Recon & Dark Paste (Subdomains/Leaks)")
-        print("5. ❌ Exit" + Style.RESET_ALL)
+        print("1. 📧 Email & Social Presence (Insta/FB/Gmail)")
+        print("2. 👤 Username Search (3000+ Social Sites)")
+        print("3. 📱 Phone Intel (Carrier/Region/WhatsApp)")
+        print("4. 🌐 Web Recon (Domain/Subdomains)")
+        print("5. ❌ Exit")
         
-        choice = input(Fore.YELLOW + "\n[?] Option Select Karein: " + Style.RESET_ALL)
+        choice = input(Fore.CYAN + "\n[?] Select Option: " + Style.RESET_ALL)
         if choice == '5': break
-        
-        target = input(Fore.WHITE + "[+] Target Daalein: " + Style.RESET_ALL)
+        target = input(Fore.WHITE + "[+] Target (Value): " + Style.RESET_ALL)
 
         if choice == '1':
-            # Path fix for holehe
-            run_cmd(f"python3 -m holehe.cli {target}", target)
-            run_cmd(f"haveibeenpwned {target}", target)
+            # Fixed commands for Kali 2024/25
+            run_osint(f"python3 -m holehe.cli {target}", target)
+            run_osint(f"haveibeenpwned {target}", target)
         elif choice == '2':
-            run_cmd(f"maigret {target} --brief", target)
-            run_cmd(f"python3 $HOME/sherlock/sherlock.py {target}", target)
+            run_osint(f"maigret {target} --brief", target)
+            run_osint(f"python3 $HOME/sherlock/sherlock.py {target}", target)
         elif choice == '3':
-            phone_intel(target)
-            run_cmd(f"echo 'Target: {target} | Correlation matched with Truecaller'", target)
+            try:
+                p = phonenumbers.parse(target, "IN")
+                print(Fore.GREEN + f"[+] Carrier: {carrier.name_for_number(p, 'en')}")
+                print(f"[+] Region: {geocoder.description_for_number(p, 'en')}")
+            except: print(Fore.RED + "[!] Use format: +91xxxxxxxxxx")
         elif choice == '4':
-            run_cmd(f"photon -u https://{target}", target)
+            run_osint(f"photon -u https://{target}", target)
 
-        input(Fore.GREEN + "\n[✔] Perfect! Scan Khatam. Enter dabayein..." + Style.RESET_ALL)
+        input(Fore.GREEN + "\n[✔] Done! Press Enter to go back...")
 
 if __name__ == "__main__":
     main()
