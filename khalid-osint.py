@@ -1,80 +1,72 @@
-import os, subprocess, time, yagmail
+import os, subprocess, time, sys
 from colorama import Fore, Style, init
-from fpdf import FPDF
 
 init(autoreset=True)
-
-# Email Setup
-MY_EMAIL = "kahyan292@gmail.com"
-APP_PASSWORD = "xxxx xxxx xxxx xxxx" # Apna App Password yahan daalein
 
 def bot_banner():
     os.system('clear')
     print(Fore.BLUE + Style.BRIGHT + """
     ╔══════════════════════════════════════════════════════╗
-    ║        KHALID ULTIMATE ALL-IN-ONE OSINT BOT          ║
-    ║   [ MIRRORING ALL TELEGRAM BOTS | FULL DATA ]        ║
+    ║        KHALID 6-LAYER GLOBAL SEARCH ENGINE           ║
+    ║   [ TARGET | INFRA | LEAKS | TELEGRAM MIRROR ]       ║
     ╚══════════════════════════════════════════════════════╝
-    Status: All Tools Connected | No Limits Active
+    Status: INFINITE SEARCH MODE | Path-Show: ENABLED
     """)
 
-def show_and_save_data(tool_name, output, target, folder_path):
-    """Data dikhane aur uska path show karne ka logic"""
-    keywords = ["Name", "Father", "Address", "Phone", "Document", "City", "Password", "http"]
+def process_and_show_path(layer_name, output, target, folder):
+    """Data dhundne, screen par dikhane aur path batane ka logic"""
+    # Key details jo Telegram bots dikhaate hain
+    keywords = ["Name", "Father", "Address", "Phone", "Document", "City", "Password", "http", "User"]
     
     if any(k in output for k in keywords):
-        # 1. Screen par Data dikhana (Telegram Style)
-        print(f"\n{Fore.GREEN}{Style.BRIGHT}🔔 [FOUND] DATA FROM: {tool_name.upper()}")
-        print(f"{Fore.YELLOW}{'═'*65}")
+        print(f"\n{Fore.GREEN}{Style.BRIGHT}🔔 [FOUND] {layer_name.upper()} DATA DETECTED")
+        print(f"{Fore.YELLOW}{'═'*75}")
+        
+        # Displaying like Telegram Bot
         for line in output.split('\n'):
             if any(k in line for k in keywords):
-                print(f"{Fore.CYAN}➤ {line.strip()}")
-        print(f"{Fore.YELLOW}{'═'*65}")
-
-        # 2. File Save karna aur Path dikhana
-        file_name = f"{tool_name.lower().replace(' ', '_')}.txt"
-        full_path = os.path.join(folder_path, file_name)
-        with open(full_path, "w") as f:
+                print(Fore.CYAN + f"➤ {line.strip()}")
+        
+        # Saving and Showing Absolute Path
+        file_path = os.path.abspath(f"{folder}/{layer_name.lower()}.txt")
+        with open(file_path, "w") as f:
             f.write(output)
         
-        print(f"{Fore.WHITE}📂 File Saved At: {Fore.GREEN}{full_path}")
-        return full_path
-    return None
+        print(f"{Fore.YELLOW}{'═'*75}")
+        print(f"{Fore.WHITE}📂 LOCATION: {Fore.GREEN}{file_path}\n")
+        return True
+    return False
 
 def main():
-    while True:
+    while True: # Infinite Target Loop
         bot_banner()
         target = input(Fore.YELLOW + "[+] Enter Target (Number/Email/User): ")
         if target.lower() == 'exit': break
 
-        # Create unique folder for target
+        # Create target-specific folder
         target_folder = os.path.abspath(f"reports/targets/{target}")
         os.makedirs(target_folder, exist_ok=True)
         
-        print(Fore.MAGENTA + f"\n[*] Starting Deep Scan for {target} using all integrated bots...")
+        print(Fore.MAGENTA + f"\n[*] Starting Recursive Global Search for: {target}...")
+        
+        # Layer 1: Identity & Social (@Hiddnosint / @TrueOsint Style)
+        res1 = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
+        process_and_show_path("Identity_Layer", res1.stdout, target, target_folder)
 
-        # --- 1. BREACH SCAN (@osint_bot_link & @breached_data_bot style) ---
-        scylla_cmd = f"python3 tools/Scylla/scylla.py --search {target}"
-        res_s = subprocess.run(scylla_cmd, shell=True, capture_output=True, text=True)
-        path1 = show_and_save_data("Breach Bot", res_s.stdout, target, target_folder)
+        # Layer 2: Phone & Mapping (India Special @number_infobot)
+        res2 = subprocess.run(f"social-analyzer --username {target} --mode fast", shell=True, capture_output=True, text=True)
+        process_and_show_path("Phone_Social_Footprint", res2.stdout, target, target_folder)
 
-        # --- 2. IDENTITY MAPPING (@Hiddnosint_bot & @TrueOsintBot style) ---
-        maigret_cmd = f"maigret {target} --brief"
-        res_m = subprocess.run(maigret_cmd, shell=True, capture_output=True, text=True)
-        path2 = show_and_save_data("Identity Bot", res_m.stdout, target, target_folder)
+        # Layer 3: Leaks & Dark Intel (@breached_data_bot)
+        res3 = subprocess.run(f"holehe {target}", shell=True, capture_output=True, text=True)
+        process_and_show_path("Leak_Intelligence", res3.stdout, target, target_folder)
 
-        # --- 3. PHONE INTEL (@number_infobot & @Ryd_osintbot style) ---
-        # Social-analyzer mapping for phone records
-        phone_cmd = f"social-analyzer --username {target} --mode fast"
-        res_p = subprocess.run(phone_cmd, shell=True, capture_output=True, text=True)
-        path3 = show_and_save_data("Phone Intel Bot", res_p.stdout, target, target_folder)
+        # Layer 4: Infrastructure (WHOIS/DNS)
+        res4 = subprocess.run(f"whois {target}", shell=True, capture_output=True, text=True)
+        process_and_show_path("Infra_OSINT", res4.stdout, target, target_folder)
 
-        if path1 or path2 or path3:
-            choice = input(Fore.WHITE + "\n[?] Send found reports to kahyan292@gmail.com? (y/n): ")
-            if choice.lower() == 'y':
-                print(Fore.GREEN + "[*] Dispatching all data to your email...")
-
-        input(Fore.WHITE + "\nScan Finished. Press [ENTER] to continue...")
+        print(Fore.GREEN + f"\n[✔] Recursive Search Finished for {target}.")
+        input(Fore.WHITE + "Press [ENTER] for another target...")
 
 if __name__ == "__main__":
     main()
