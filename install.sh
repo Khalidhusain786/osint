@@ -1,15 +1,17 @@
 #!/bin/bash
-# Khalid Husain - Global Deep/Dark Web Integration
-echo -e "\e[1;32m[*] Installing 6-Layer Global Infrastructure...\e[0m"
+# Khalid Husain - Global Deep-Scan Final
+echo -e "\e[1;32m[*] Cleaning and Installing Final Infrastructure...\e[0m"
 
-# System Clean & TOR Setup
-sudo apt update && sudo apt install tor proxychains4 macchanger -y
+# Clean system locks
+sudo killall apt apt-get dpkg 2>/dev/null
+sudo rm -rf /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock
+sudo dpkg --configure -a
+
+# Install only stable core modules
+pip install colorama requests[socks] holehe maigret social-analyzer --break-system-packages --ignore-installed
+
+# Start TOR for Dark Web access
+sudo apt update && sudo apt install tor proxychains4 -y
 sudo service tor start
 
-# Core Python Tools (Stable Versions)
-pip install colorama requests[socks] yagmail fpdf holehe maigret social-analyzer --break-system-packages --ignore-installed
-
-# Creating Database Folders
-mkdir -p reports/targets reports/darkweb_leaks
-
-echo -e "\e[1;34m[!] ALL TOOLS LOADED. Run: python3 khalid-osint.py\e[0m"
+echo -e "\e[1;34m[!] ALL SYSTEMS READY! Run: python3 khalid-osint.py\e[0m"
