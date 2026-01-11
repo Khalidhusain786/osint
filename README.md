@@ -1,6 +1,5 @@
 # osint
 
-cd ~
 
 rm -rf osint && git clone https://github.com/Khalidhusain786/osint.git
 
