@@ -1,22 +1,18 @@
 #!/bin/bash
-# Khalid Husain - Global Deep-Scan Setup (Root Version)
+# Khalid Husain - Global Deep-Scan Setup (No-Limit Version)
 
-echo -e "\e[1;32m[*] System cleanup aur installation shuru ho rahi hai...\e[0m"
+echo -e "\e[1;32m[*] Telegram Bot Mirror & Breach Data Setup Shuru...\e[0m"
 
-# 1. System Cleanup
+# 1. System Cleanup & TOR Setup
 sudo killall apt apt-get dpkg 2>/dev/null
 sudo rm -rf /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock
-sudo dpkg --configure -a
-
-# 2. Install Tools (TOR for Hidden Web)
 sudo apt update
 sudo apt install tor proxychains4 python3-pip -y
 sudo service tor start
 
-# 3. Install Searching Engines (No-Error Version)
+# 2. Telegram Bot Style Searching Tools
 pip install colorama requests[socks] holehe maigret social-analyzer --break-system-packages --ignore-installed
 
-# 4. Folder structure setup
+# 3. Path Fix
 mkdir -p /root/osint/reports
-
-echo -e "\e[1;34m[!] Setup Ready! Ab 'python3 khalid-osint.py' chala sakte hain.\e[0m"
+echo -e "\e[1;34m[!] Setup Done! Ab python3 khalid-osint.py chalayein.\e[0m"
