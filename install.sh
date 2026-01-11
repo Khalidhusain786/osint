@@ -1,23 +1,27 @@
 #!/bin/bash
 # Developer: Khalid Husain (@khalidhusain786)
-# Fix: Bypass System Environment Errors (Superfast Mode)
+# Auto-Installer & System Fixer
 
-echo -e "\e[1;32m[*] Installing Khalid OSINT Master Suite (No Errors)...\e[0m"
+echo -e "\e[1;32m[*] Khalid OSINT: Fixing Environment & Installing Tools...\e[0m"
 
-# Required Packages (No Upgrade to prevent lag)
-sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl wget
+# Folder creation
+mkdir -p reports
 
-# Setup Virtual Environment
-rm -rf venv
+# System Dependencies
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl
+
+# Virtual Environment Setup (Error Bypass)
 python3 -m venv venv
 source venv/bin/activate
 
-# Installing All Pro Tools & Modules
+# Force Install all tools
 pip install --upgrade pip
-pip install colorama requests phonenumbers holehe maigret haveibeenpwned photon-cli fpdf
+pip install colorama requests phonenumbers holehe maigret haveibeenpwned photon-cli fpdf --break-system-packages --ignore-installed
 
-# Reports Folder setup
-mkdir -p reports
+# Sherlock setup
+if [ ! -d "$HOME/sherlock" ]; then
+    git clone https://github.com/sherlock-project/sherlock.git $HOME/sherlock
+    cd $HOME/sherlock && pip install -r requirements.txt && cd -
+fi
 
-chmod +x khalid-osint.py
-echo -e "\e[1;34m[!] Setup Complete! Run: source venv/bin/activate && python3 khalid-osint.py\e[0m"
+echo -e "\e[1;34m[!] Setup Done! Ab bas 'python3 khalid-osint.py' chalao, activation auto hogi.\e[0m"
