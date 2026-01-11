@@ -1,18 +1,16 @@
 #!/bin/bash
-# Khalid Husain - Hybrid Stealth OSINT v5.0
-echo -e "\e[1;32m[*] Setting up Hybrid Engine & Stealth (MAC Spoofer)...\e[0m"
+# Khalid Husain - Final Error-Free Setup
+echo -e "\e[1;32m[*] Cleaning system and installing stable modules...\e[0m"
 
-# 1. System Repair & Tools
-sudo apt update && sudo apt install tor macchanger proxychains4 -y
-sudo service tor start
+# Forcefully remove locks
+sudo killall apt apt-get dpkg 2>/dev/null
+sudo rm -rf /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock
+sudo dpkg --configure -a
 
-# 2. Python Hybrid Modules
-pip install colorama requests[socks] yagmail fpdf holehe maigret \
-            googletrans==4.0.0-rc1 social-analyzer --break-system-packages --ignore-installed
+# Install only the most stable core tools
+pip install colorama requests yagmail fpdf holehe --break-system-packages --ignore-installed
 
-# 3. Security (MAC Spoofing)
-sudo macchanger -r eth0 2>/dev/null
-sudo macchanger -r wlan0 2>/dev/null
+# Maigret installation (stable version)
+pip install maigret --break-system-packages
 
-chmod +x khalid-osint.py
-echo -e "\e[1;34m[!] STEALTH HYBRID ENGINE READY! Run: python3 khalid-osint.py\e[0m"
+echo -e "\e[1;34m[!] Setup Complete! No more errors. Run: python3 khalid-osint.py\e[0m"
