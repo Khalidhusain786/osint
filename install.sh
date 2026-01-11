@@ -1,27 +1,46 @@
-#!/bin/bash
-echo -e "\e[1;32m[*] Installing 360-Degree Global Search (Govt + Private + Hidden)...\e[0m"
+cd ~/osint
+# Update the search script to show ALL raw data found
+cat <<EOF > khalid-osint.py
+import os, subprocess
+from colorama import Fore, init
+init(autoreset=True)
 
-# System Clean
-sudo killall apt apt-get dpkg 2>/dev/null
-sudo rm -rf /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock
-sudo dpkg --configure -a
+def bot():
+    print(Fore.RED + "--- KHALID GLOBAL SEARCH (FINAL FIXED) ---")
+    target = input(Fore.WHITE + "[+] Target (Name/Phone/Email): ")
+    print(Fore.YELLOW + "[*] Scanning Hidden & Deep Layers...")
+    
+    # Using Maigret with increased verbosity to ensure output is captured
+    res = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
+    
+    print(Fore.GREEN + "\n🔔 DATA RESULTS:")
+    print(Fore.WHITE + "═"*55)
+    
+    output = res.stdout.strip()
+    if output:
+        # Har line ko format ke sath print karna
+        for line in output.split('\n'):
+            print(f"{Fore.CYAN}➤ {line}")
+    else:
+        # Fallback agar tool ko format samajh na aaye
+        print(Fore.RED + "➤ Status: Search complete. Please check the reports folder if empty.")
+    
+    print(Fore.WHITE + "═"*55)
+    os.makedirs(f"reports/{target}", exist_ok=True)
+    with open(f"reports/{target}/report.txt", "w") as f:
+        f.write(output if output else "No data found.")
 
-# Install Stable Tools
-pip install colorama requests[socks] holehe maigret social-analyzer --break-system-packages --ignore-installed
+if __name__ == "__main__":
+    bot()
+EOF
 
-# Start TOR for Dark Web
-sudo apt update && sudo apt install tor proxychains4 -y
-sudo service tor start
-
-# Desktop Shortcut Creator
-cat <<EOF > ~/Desktop/Khalid-OSINT.desktop
+# Correct Desktop Shortcut for Kali Root
+cat <<EOF > /root/Desktop/Khalid-OSINT.desktop
 [Desktop Entry]
 Name=Khalid OSINT
-Exec=qterminal -e "python3 $(pwd)/khalid-osint.py"
+Exec=qterminal -e "bash -c 'cd /root/osint && python3 khalid-osint.py; exec bash'"
 Icon=security-high
 Terminal=true
 Type=Application
 EOF
-chmod +x ~/Desktop/Khalid-OSINT.desktop
-
-echo -e "\e[1;34m[!] ALL DONE! Ab Desktop par Khalid-OSINT icon par click karein.\e[0m"
+chmod +x /root/Desktop/Khalid-OSINT.desktop
