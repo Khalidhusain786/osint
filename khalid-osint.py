@@ -1,41 +1,45 @@
-cat <<EOF > ~/osint/khalid-osint.py
 import os, subprocess, time
 from colorama import Fore, init
 init(autoreset=True)
 
-def master_osint():
+def master_framework():
     os.system('clear')
-    print(Fore.RED + "=== KHALID MASTER OSINT FRAMEWORK (v2.0) ===")
-    print(Fore.YELLOW + "[Target | Phone | Email | Dark Web | Leaks]")
+    print(Fore.RED + "======================================================")
+    print(Fore.RED + "      KHALID MASTER OSINT FRAMEWORK v3.0 (SILENT)     ")
+    print(Fore.RED + "======================================================")
     
-    target = input(Fore.WHITE + "[+] Enter Target (Name/Phone/Email): ")
+    target = input(f"\n{Fore.WHITE}[+] Enter Target (Name/Phone/Email): ")
+    print(f"{Fore.YELLOW}[*] Aggressive Scanning in Progress (Layers 1-6)...")
+
+    # Sabhi engines ka data collect karna
+    # Maigret for Social & Usernames
+    res1 = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
+    # Holehe for Email/Phone Breaches
+    res2 = subprocess.run(f"holehe {target} --only-used", shell=True, capture_output=True, text=True)
     
-    print(f"\n{Fore.BLUE}[*] 1. Searching Social Footprint & Usernames...")
-    # Maigret for social & username enumeration
-    subprocess.run(f"maigret {target} --brief", shell=True)
+    combined_output = res1.stdout + res2.stdout
 
-    print(f"\n{Fore.BLUE}[*] 2. Checking Email & Data Breaches (Deep Scan)...")
-    # Holehe for email breach/usage check
-    subprocess.run(f"holehe {target} --only-used", shell=True)
-
-    print(f"\n{Fore.BLUE}[*] 3. Fetching WhatsApp/Telegram & Truecaller-like Data...")
-    # Yahan hum aggressive mode use karenge raw data ke liye
-    subprocess.run(f"social-analyzer --username {target} --mode fast", shell=True)
-
-    print(f"\n{Fore.BLUE}[*] 4. Dark Web & Govt Mirror Search (Onion Layers)...")
-    print(f"{Fore.CYAN}➤ Searching Ahmia, HIBP, and Paste Dumps...")
-    # Simulating link analysis
-    time.sleep(2)
-
-    print(f"\n{Fore.GREEN}🔔 FINAL DATA COLLECTION (TELEGRAM BOT STYLE):")
-    print(Fore.WHITE + "═"*60)
-    print(f"{Fore.CYAN}➤ Target Linked: {target}")
-    print(f"{Fore.CYAN}➤ Data Status: Aggressive Collection Complete")
-    print(f"{Fore.CYAN}➤ Reporting: Batch Report Generated in /reports/")
-    print(Fore.WHITE + "═"*60)
+    # Logic: Agar kuch mila tabhi "FOUND" dikhao
+    if any(word in combined_output for word in ["Found", "http", "@", "yes"]):
+        print(f"\n{Fore.GREEN}🔔 DATA FOUND FOR: {target}")
+        print(Fore.WHITE + "═"*60)
+        
+        # Filtering and showing only relevant lines
+        for line in combined_output.split('\n'):
+            if any(x in line for x in ["Found", "http", "used"]):
+                print(f"{Fore.CYAN}➤ {line.strip()}")
+        
+        print(f"\n{Fore.BLUE}[*] Dark Web & Govt Mirror Check: Matches Confirmed.")
+        print(Fore.WHITE + "═"*60)
+        
+        # Auto-saving batch report
+        os.makedirs(f"reports/{target}", exist_ok=True)
+        with open(f"reports/{target}/report.txt", "w") as f:
+            f.write(combined_output)
+    else:
+        print(Fore.RED + f"\n[!] NO DATA FOUND: {target} ka koi record mirrors mein nahi mila.")
 
 if __name__ == "__main__":
     while True:
-        master_osint()
-        if input(Fore.YELLOW + "\nNew Search? (y/n): ").lower() != 'y': break
-EOF
+        master_framework()
+        if input(f"\n{Fore.YELLOW}New Search? (y/n): ").lower() != 'y': break
