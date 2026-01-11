@@ -1,18 +1,18 @@
 #!/bin/bash
-# Khalid Husain - Global Deep-Scan Setup (No-Limit Version)
+# Khalid Husain - Ultimate Framework Setup
 
-echo -e "\e[1;32m[*] Telegram Bot Mirror & Breach Data Setup Shuru...\e[0m"
+echo -e "\e[1;32m[*] 6-Layer OSINT Framework Install ho raha hai...\e[0m"
 
-# 1. System Cleanup & TOR Setup
-sudo killall apt apt-get dpkg 2>/dev/null
-sudo rm -rf /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock
-sudo apt update
-sudo apt install tor proxychains4 python3-pip -y
+# 1. Background Services
+sudo apt update && sudo apt install tor whois dnsutils python3-pip -y
 sudo service tor start
 
-# 2. Telegram Bot Style Searching Tools
+# 2. Advanced Engines
+echo -e "\e[1;33m[*] Downloading Search Engines & Mirror Scrapers...\e[0m"
 pip install colorama requests[socks] holehe maigret social-analyzer --break-system-packages --ignore-installed
 
-# 3. Path Fix
+# 3. Path & Permissions
 mkdir -p /root/osint/reports
-echo -e "\e[1;34m[!] Setup Done! Ab python3 khalid-osint.py chalayein.\e[0m"
+chmod +x khalid-osint.py
+
+echo -e "\e[1;34m[!] Framework Taiyar! Ab 'python3 khalid-osint.py' chalaein.\e[0m"
