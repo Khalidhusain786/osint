@@ -1,18 +1,17 @@
 #!/bin/bash
-# Khalid Husain - Global Deep Search Setup
-echo -e "\e[1;32m[*] Installing Global 6-Layer Intelligence Framework...\e[0m"
+# Khalid Husain - Dark Web TOR Integration Setup
+echo -e "\e[1;32m[*] Installing TOR Connectors & Dark Web Scrapers...\e[0m"
 
-# 1. Force Release System Locks
-sudo killall apt apt-get dpkg 2>/dev/null
-sudo rm -rf /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock
-sudo dpkg --configure -a
+# 1. System Repair & TOR Installation
+sudo apt update && sudo apt install tor proxychains4 -y
+sudo service tor start
 
-# 2. Heavy-Duty Modules (No-Limit OSINT)
-pip install colorama requests yagmail fpdf holehe maigret social-analyzer \
-            shodan whois dnspython sublist3r python-whois --break-system-packages --ignore-installed
+# 2. Python TOR & Translation Libraries
+pip install colorama requests[socks] yagmail fpdf holehe maigret \
+            googletrans==4.0.0-rc1 --break-system-packages --ignore-installed
 
-# 3. Directory Setup for Path-Tracking
-mkdir -p reports/targets reports/infra reports/leaks
+# 3. Directory for Dark Evidence
+mkdir -p reports/targets reports/darkweb_leaks
 
 chmod +x khalid-osint.py
-echo -e "\e[1;34m[!] ALL LAYERS READY! Run: python3 khalid-osint.py\e[0m"
+echo -e "\e[1;34m[!] TOR BRIDGE READY! Run: python3 khalid-osint.py\e[0m"
