@@ -1,27 +1,25 @@
 #!/bin/bash
 # Developer: Khalid Husain (@khalidhusain786)
-# Fast Installer (No System Upgrade)
+# Perfect No-Error Installer
 
-echo -e "\e[1;32m[*] Installing Dependencies for Khalid-OSINT-Pro...\e[0m"
+echo -e "\e[1;32m[*] Installing Dependencies (Fast Mode)...\e[0m"
 
-# System update (no upgrade)
+# Sirf update, no upgrade
 sudo apt update 
 
-# Install core packages
+# Zaruri tools install ho rahe hain
 sudo apt install -y python3 python3-pip git curl snapd
 
-# Create required directories
+# Directory setup
 mkdir -p reports
 
-# Install OSINT tools via pip
-echo "[*] Installing Holehe, Maigret, and Social Analyzers..."
-pip3 install maigret holehe haveibeenpwned photon-cli colorama requests --break-system-packages
+# Pip tools installation
+pip3 install maigret holehe haveibeenpwned photon-cli colorama requests phonenumbers --break-system-packages
 
-# Setup Sherlock (Username search)
-if [ ! -d "~/sherlock" ]; then
-    git clone https://github.com/sherlock-project/sherlock.git ~/sherlock
-    cd ~/sherlock && pip3 install -r requirements.txt --break-system-packages && cd -
+# Sherlock Setup (Fixed Path)
+if [ ! -d "$HOME/sherlock" ]; then
+    git clone https://github.com/sherlock-project/sherlock.git $HOME/sherlock
+    cd $HOME/sherlock && pip3 install -r requirements.txt --break-system-packages && cd -
 fi
 
-chmod +x khalid-osint.py
-echo -e "\e[1;34m[!] Setup Complete by Khalid Husain! Run: python3 khalid-osint.py\e[0m"
+echo -e "\e[1;34m[!] Setup Complete Khalid! Run: python3 khalid-osint.py\e[0m"
