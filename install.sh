@@ -1,32 +1,24 @@
 #!/bin/bash
-# Developer: Khalid Husain (@khalidhusain786)
-# Ultimate No-Error Binary Setup
+# Khalid Husain Ultimate OSINT Suite Installer
+# One-Click Setup - No Errors - No Upgrade Required
 
-echo -e "\e[1;32m[*] Fast Setup Starting... No PIP Errors anymore!\e[0m"
+echo -e "\e[1;32m[*] Khalid OSINT Master Suite: Auto-Setup Starting...\e[0m"
 
-# Basic folders
-mkdir -p reports
-mkdir -p tools
+# Required folders
+mkdir -p reports/pdf reports/json reports/txt tools data/leaks
 
-# System tools install (Fast mode)
-sudo apt update
-sudo apt install -y python3-pip python3-full git curl
+# Dependencies (Bypassing System PIP Errors)
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl wget
 
-# Downloading Sherlock & Maigret directly (No PIP install needed)
+# Essential Libraries
+python3 -m pip install colorama requests phonenumbers fpdf flask pyfiglet holehe maigret --break-system-packages --ignore-installed
+
+# Auto-Download Professional Engines
 cd tools
-if [ ! -d "sherlock" ]; then
-    git clone https://github.com/sherlock-project/sherlock.git
-    python3 -m pip install -r sherlock/requirements.txt --break-system-packages
-fi
-
-if [ ! -d "maigret" ]; then
-    git clone https://github.com/soxoj/maigret.git
-    python3 -m pip install -r maigret/requirements.txt --break-system-packages
-fi
+git clone --depth=1 https://github.com/sherlock-project/sherlock.git
+git clone --depth=1 https://github.com/soxoj/maigret.git
+git clone --depth=1 https://github.com/pypa/sampleproject.git # Placeholder for custom modules
 cd ..
 
-# Installing core essentials for the main script
-python3 -m pip install colorama requests phonenumbers fpdf --break-system-packages
-
 chmod +x khalid-osint.py
-echo -e "\e[1;34m[!] ALL TOOLS READY! Ab seedhe chalao.\e[0m"
+echo -e "\e[1;34m[!] ALL TOOLS DOWNLOADED & READY. Run: python3 khalid-osint.py\e[0m"
