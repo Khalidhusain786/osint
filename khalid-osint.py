@@ -1,78 +1,75 @@
-import os, subprocess, sys, time, json
+import os, subprocess, sys, time
 from colorama import Fore, Style, init
 
 init(autoreset=True)
-DEV = "Khalid Husain (@khalidhusain786)"
 
-def banner():
+def bot_banner():
     os.system('clear')
-    print(Fore.GREEN + f"""
+    print(Fore.BLUE + Style.BRIGHT + """
     ╔══════════════════════════════════════════════════════╗
-    ║        KHALID AUTO-DISCOVERY OSINT ENGINE            ║
-    ║   [ 25+ TOOLS | AUTO-SAVE BY NAME | NO ERRORS ]      ║
+    ║        KHALID OSINT BOT ENGINE (UNLIMITED)           ║
+    ║   [ DEEP BREACH | IDENTITY MAPPING | NO LIMITS ]     ║
     ╚══════════════════════════════════════════════════════╝
-    Status: ACTIVE | Identity & Number Logic Integrated
+    Mirroring: @Hiddnosint_bot | @breached_data_bot
     """)
 
-def run_and_save(tool_name, command, target_name):
-    """Data khojkar target ke naam wali file mein save karega"""
-    try:
-        # Create folder for each target
-        folder_path = f"reports/targets/{target_name}"
-        if not os.path.exists(folder_path): os.makedirs(folder_path)
-        
-        print(Fore.YELLOW + f"[*] {tool_name} is searching for {target_name}...")
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=300)
-        
-        # Sirf Found wala data save karein
-        if any(x in result.stdout for x in ["Found", "registered", "http", "Active"]):
-            file_name = f"{folder_path}/{tool_name.lower().replace(' ', '_')}.txt"
-            with open(file_name, "w") as f:
-                f.write(result.stdout)
-            print(Fore.GREEN + f"[✔] {tool_name}: DATA DISCOVERED & SAVED!")
-        else:
-            print(Fore.RED + f"[!] {tool_name}: No direct matches found.")
-    except Exception as e:
-        pass
+def bot_found_display(tool, data, target, folder):
+    """Telegram Bot style data display logic"""
+    file_path = f"{folder}/{tool.lower().replace(' ', '_')}.txt"
+    with open(file_path, "w") as f:
+        f.write(data)
 
-def phone_mapping(number):
-    """Phone number OSINT logic (India Focus)"""
-    import phonenumbers
-    from phonenumbers import carrier, geocoder
+    print(f"\n{Fore.GREEN}{Style.BRIGHT}🔔 FOUND DATA DETECTED [{tool}]")
+    print(f"{Fore.WHITE}📂 File: {file_path}")
+    print(f"{Fore.YELLOW}{'═'*50}")
+    
+    # Telegram Bot ki tarah important details highlight karna
+    lines = data.split('\n')[:15] # Sirf pehli 15 lines ka preview
+    for line in lines:
+        if any(k in line for k in ["http", "Email", "Password", "User", "Found"]):
+            print(f"{Fore.CYAN}➤ {line.strip()}")
+    print(f"{Fore.YELLOW}{'═'*50}\n")
+
+def run_bot_logic(name, cmd, target, folder):
     try:
-        parsed = phonenumbers.parse(number, "IN")
-        data = f"Carrier: {carrier.name_for_number(parsed, 'en')}\nRegion: {geocoder.description_for_number(parsed, 'en')}\nWhatsApp: Status Active\nTelegram: Profile Linked"
-        
-        folder = f"reports/targets/{number}"
-        if not os.path.exists(folder): os.makedirs(folder)
-        with open(f"{folder}/phone_intel.txt", "w") as f: f.write(data)
-        
-        print(Fore.GREEN + f"[✔] Phone Intel Saved in reports/targets/{number}")
-        print(Fore.CYAN + data)
+        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=500)
+        output = proc.stdout
+        # Bot style filtering
+        if any(x in output for x in ["Found", "http", "registered", "Active", "200 OK", "@"]):
+            bot_found_display(name, output, target, folder)
     except:
-        print(Fore.RED + "[!] Invalid Number Format.")
+        pass
 
 def main():
     while True:
-        banner()
-        print(f"1. 🚀 AUTO-TARGET SCAN (Email/User/Social)\n2. 📱 PHONE & WHATSAPP MAPPING\n3. 📁 VIEW ALL REPORTS\n4. ❌ EXIT")
-        choice = input(Fore.YELLOW + "\n[?] Action -> ")
+        bot_banner()
+        print(f"1. 👤 IDENTITY BREACH (Telegram Bot Style - Deep Scan)")
+        print(f"2. 📱 PHONE ENRICHMENT (India & Global Database)")
+        print(f"3. 📁 OPEN ALL SAVED EVIDENCE")
+        print(f"4. ❌ EXIT")
+        
+        choice = input(Fore.YELLOW + "\n[?] Select Command -> ")
         if choice == '4': break
         
-        target = input(Fore.WHITE + "[+] Enter Target (e.g. Name, Number, Email): ")
+        target = input(Fore.WHITE + "[+] Enter Target (Email/Username/Phone): ")
+        target_folder = os.path.abspath(f"reports/targets/{target}")
+        if not os.path.exists(target_folder): os.makedirs(target_folder)
 
         if choice == '1':
-            # Run multiple tools and save by name
-            run_and_save("Social Presence", f"maigret {target} --brief", target)
-            run_and_save("Username Trace", f"python3 tools/sherlock/sherlock/sherlock.py {target} --timeout 1", target)
-            run_and_save("Email Breach", f"holehe {target}", target)
-        
+            print(Fore.MAGENTA + f"\n[*] Engaging Deep Crawlers for {target}...")
+            # Integrating Scylla, Sherlock, Maigret, and SocialMediaToolkit
+            run_bot_logic("Breach DB (Scylla)", f"scylla --search {target}", target, target_folder)
+            run_bot_logic("Social Presence", f"maigret {target} --brief", target, target_folder)
+            run_bot_logic("Account Discovery", f"python3 tools/sherlock/sherlock/sherlock.py {target} --timeout 1", target, target_folder)
+            run_bot_logic("Email Recon (Holehe)", f"holehe {target}", target, target_folder)
+            
         elif choice == '2':
-            phone_mapping(target)
+            print(Fore.MAGENTA + f"\n[*] Analyzing Phone Metadata & Social Links...")
+            run_bot_logic("Phone-Tell", f"phonetell {target}", target, target_folder)
+            run_bot_logic("Phomber", f"phomber --number {target}", target, target_folder)
 
-        elif choice == '3':
-            os.system("ls -R reports/targets/")
-            input("\nPress Enter to continue...")
+        print(Fore.GREEN + f"[*] Scan Finished. All findings stored in: {target_folder}")
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()
