@@ -3,70 +3,78 @@ from colorama import Fore, Style, init
 
 init(autoreset=True)
 
-def banner():
+def bot_banner():
     os.system('clear')
-    print(Fore.GREEN + Style.BRIGHT + """
+    print(Fore.BLUE + Style.BRIGHT + """
     ╔══════════════════════════════════════════════════════╗
-    ║        KHALID ORIGINAL OSINT ENGINE (NO ERRORS)      ║
-    ║   [ EMAIL | PHONE | SOCIAL | BREACH | AUTO-SAVE ]    ║
+    ║        KHALID OSINT MASTER (NO-LIMIT EDITION)        ║
+    ║   [ UNLIMITED SEARCH | NO TIMEOUT | AUTO-REPAIR ]    ║
     ╚══════════════════════════════════════════════════════╝
+    Status: Mirroring @Hiddnosint_bot | @osint_bot_link
     """)
 
-def run_step(name, cmd, target):
+def bot_engine(name, cmd, target):
+    """Found data ko screen par highlight karega aur path batayega"""
     try:
         folder = os.path.abspath(f"reports/targets/{target}")
         if not os.path.exists(folder): os.makedirs(folder)
         
-        # Tool execution (Hiding background junk)
-        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=300)
+        print(Fore.CYAN + f"[*] {name} is crawling for {target}...")
+        
+        # Deep Scan (No Limit)
+        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=600)
         output = proc.stdout
         
-        # Checking for data
-        if any(x in output for x in ["Found", "http", "registered", "Active", "200 OK"]):
+        # Sirf Found data ka bot-style display
+        if any(x in output for x in ["Found", "registered", "http", "@", "Password", "200 OK"]):
             file_path = f"{folder}/{name.lower().replace(' ', '_')}.txt"
             with open(file_path, "w") as f:
                 f.write(output)
             
-            print(Fore.GREEN + Style.BRIGHT + f"\n[✔] FOUND: {name} discovered data!")
-            print(Fore.WHITE + f"[📂] SAVED AT: {file_path}")
-            print(Fore.YELLOW + "-"*50)
-    except: pass
-
-def phone_intel(target):
-    import phonenumbers
-    from phonenumbers import carrier, geocoder
-    try:
-        p = phonenumbers.parse(target, "IN")
-        data = f"Carrier: {carrier.name_for_number(p, 'en')}\nRegion: {geocoder.description_for_number(p, 'en')}\nWhatsApp: Active"
-        
-        folder = os.path.abspath(f"reports/targets/{target}")
-        if not os.path.exists(folder): os.makedirs(folder)
-        
-        path = f"{folder}/phone_intel.txt"
-        with open(path, "w") as f: f.write(data)
-        
-        print(Fore.GREEN + Style.BRIGHT + f"\n[✔] FOUND: Phone Details for {target}")
-        print(Fore.WHITE + f"[📂] SAVED AT: {path}")
-        print(Fore.CYAN + data)
-    except: pass
+            print(Fore.GREEN + Style.BRIGHT + f"\n🔔 ALERT: DATA FOUND BY {name}!")
+            print(Fore.WHITE + f"📂 LOCATION: {file_path}")
+            print(Fore.YELLOW + "═" * 50)
+            
+            # Data Preview (Jaise Bot dikhata hai)
+            preview = "\n".join([line for line in output.split('\n') if any(k in line for k in ["http", "@", "Found", "User"])][:10])
+            print(Fore.CYAN + preview)
+            print(Fore.YELLOW + "═" * 50 + "\n")
+    except:
+        pass
 
 def main():
-    while True:
-        banner()
-        print(f"1. 🚀 FULL AUTO SCAN (Email/User/Social)\n2. 📱 PHONE MAPPING\n3. ❌ EXIT")
-        choice = input(Fore.YELLOW + "\n[?] Select Action -> ")
-        if choice == '3': break
-        target = input(Fore.WHITE + "[+] Enter Target: ")
+    while True: # Yeh loop tool ko band nahi hone dega
+        bot_banner()
+        print(f"1. 👤 UNLIMITED IDENTITY SCAN (All Bots Logic)")
+        print(f"2. 📱 UNLIMITED PHONE INTEL (Phomber/Phunter)")
+        print(f"3. 📁 BROWSE ALL FOUND DATA")
+        print(f"4. ❌ EXIT TOOL")
+        
+        choice = input(Fore.YELLOW + "\n[?] Select Command -> ")
+        
+        if choice == '4':
+            print(Fore.RED + "[!] Exiting Khalid OSINT Suite...")
+            break
+            
+        target = input(Fore.WHITE + "[+] Enter Target (Email/Number/User): ")
 
         if choice == '1':
-            print(Fore.BLUE + "\n[*] Scanning... Only FOUND data will be shown.")
-            run_step("Maigret", f"maigret {target} --brief", target)
-            run_step("Sherlock", f"python3 tools/sherlock/sherlock/sherlock.py {target} --timeout 1", target)
-            run_step("Holehe", f"holehe {target}", target)
-        elif choice == '2':
-            phone_intel(target)
+            print(Fore.MAGENTA + "\n[!] Engaging Multi-Bot Crawlers...")
+            bot_engine("Scylla Breach", f"scylla --search {target}", target)
+            bot_engine("Social Analyzer", f"social-analyzer --username {target}", target)
+            bot_engine("Maigret", f"maigret {target} --brief", target)
+            bot_engine("Email Recon", f"holehe {target}", target)
             
-        time.sleep(3)
+        elif choice == '2':
+            print(Fore.MAGENTA + "\n[!] Engaging Phone Intel Engines...")
+            bot_engine("Phunter", f"phunter {target}", target)
+            bot_engine("Phomber", f"phomber --number {target}", target)
+            
+        elif choice == '3':
+            os.system(f"ls -R reports/targets/")
+        
+        print(Fore.GREEN + f"\n[✔] All Scans Finished for {target}.")
+        input(Fore.WHITE + "Press Enter to continue with next target...")
 
 if __name__ == "__main__":
     main()
