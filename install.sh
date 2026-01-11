@@ -1,28 +1,28 @@
 #!/bin/bash
-# Developer: Khalid Husain (@khalidhusain786)
-# Ultimate Force-Repair & Auto-Installer
+# Khalid Husain Immortal Engine - Emergency Fixer
+# Force-clears all system locks and broken dependencies
 
-echo -e "\e[1;32m[*] Khalid OSINT: Killing System Locks & Fixing Errors...\e[0m"
+echo -e "\e[1;32m[*] Khalid OSINT: Fixing System (Emergency Mode)...\e[0m"
 
-# 1. Force release all locks (Screenshot 19:25 ka fix)
-sudo killall apt apt-get dpkg 2>/dev/null
-sudo rm /var/lib/apt/lists/lock /var/lib/dpkg/lock-frontend /var/cache/apt/archives/lock 2>/dev/null
+# 1. Kill any process holding the lock (Screenshot 19:21 & 19:25 fix)
+sudo fuser -kk /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/cache/apt/archives/lock 2>/dev/null
+sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/cache/apt/archives/lock
+
+# 2. Fix broken packages (Screenshot 19:31 fix)
 sudo dpkg --configure -a
+sudo apt-get install -f -y
 
-# 2. Setup folders
+# 3. Setup local environment
 mkdir -p reports/txt tools modules
 
-# 3. Fast Dependency Install (No System Upgrade)
-sudo apt update -y
-sudo apt install -y python3-pip python3-venv git curl --no-install-recommends
-
-# 4. Global Modules Force Install (Screenshot 18:51 ka fix)
+# 4. Install only core libraries (Fast & Safe)
+# Using --break-system-packages to force bypass Kali's protection
 pip install colorama requests phonenumbers fpdf holehe maigret --break-system-packages --ignore-installed
 
-# 5. Local Engines Setup
+# 5. Clone tool dependencies locally
 cd tools
 git clone --depth=1 https://github.com/sherlock-project/sherlock.git 2>/dev/null || (cd sherlock && git pull)
 cd ..
 
 chmod +x khalid-osint.py
-echo -e "\e[1;34m[!] ALL LOCKS CLEARED! Run: python3 khalid-osint.py\e[0m"
+echo -e "\e[1;34m[!] SYSTEM FIXED! Ab 'python3 khalid-osint.py' chalaein.\e[0m"
