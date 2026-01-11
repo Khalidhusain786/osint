@@ -1,19 +1,20 @@
 #!/bin/bash
 # Developer: Khalid Husain (@khalidhusain786)
-# Perfect No-Error Installer
+# Fix: No system upgrade to prevent hanging
 
-echo -e "\e[1;32m[*] Installing Dependencies (Fast Mode)...\e[0m"
+echo -e "\e[1;32m[*] Fast Installing Professional OSINT Tools (No Hang)...\e[0m"
 
-# Sirf update, no upgrade
+# System Update (Sirf list update hogi, upgrade nahi)
 sudo apt update 
 
-# Zaruri tools install ho rahe hain
+# Zaruri dependencies (No Upgrade)
 sudo apt install -y python3 python3-pip git curl snapd
 
-# Directory setup
+# Reports folder ki mistake fix karne ke liye
 mkdir -p reports
 
-# Pip tools installation
+# Professional Tools (Fast Installation)
+echo "[*] Installing Social & Breach Analyzers..."
 pip3 install maigret holehe haveibeenpwned photon-cli colorama requests phonenumbers --break-system-packages
 
 # Sherlock Setup (Fixed Path)
@@ -22,4 +23,5 @@ if [ ! -d "$HOME/sherlock" ]; then
     cd $HOME/sherlock && pip3 install -r requirements.txt --break-system-packages && cd -
 fi
 
-echo -e "\e[1;34m[!] Setup Complete Khalid! Run: python3 khalid-osint.py\e[0m"
+chmod +x khalid-osint.py
+echo -e "\e[1;34m[!] Perfect Setup Done! Ab python3 khalid-osint.py chalao.\e[0m"
