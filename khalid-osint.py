@@ -1,89 +1,65 @@
-import os, subprocess, sys, time, json
+import os, subprocess, sys, time
 from colorama import Fore, Style, init
 
 init(autoreset=True)
 
-def bot_banner():
+def bot_interface():
     os.system('clear')
     print(Fore.BLUE + Style.BRIGHT + """
     ╔══════════════════════════════════════════════════════╗
-    ║        KHALID OSINT BOT - NO LIMIT EDITION           ║
-    ║   [ SCYLLA | HIDDN | BREACHED | SOCIAL | PHONE ]     ║
+    ║        KHALID UNLIMITED OSINT BOT ENGINE             ║
+    ║   [ NO LIMIT | NO ERRORS | TELEGRAM BOT STYLE ]      ║
     ╚══════════════════════════════════════════════════════╝
-    Mirroring: @Hiddnosint_bot | @breached_data_bot
+    Mirroring: @Hiddnosint_bot | @breached_data_bot | @osint_bot_link
     """)
 
-def display_bot_data(tool, output, folder):
-    """Telegram Bot ki tarah data ko screen par show karne ka logic"""
-    if any(x in output for x in ["Found", "http", "@", "Password", "200 OK", "User"]):
-        file_path = f"{folder}/{tool.lower().replace(' ', '_')}.txt"
+def telegram_style_display(tool_name, output, target, folder):
+    """Found data ko table format mein screen par dikhayega"""
+    if any(x in output for x in ["Found", "http", "Password", "User", "Active", "@"]):
+        file_path = f"{folder}/{tool_name.lower().replace(' ', '_')}.txt"
         with open(file_path, "w") as f:
             f.write(output)
 
-        print(f"\n{Fore.GREEN}{Style.BRIGHT}🔔 [FOUND] DATA FROM {tool.upper()}")
+        print(f"\n{Fore.GREEN}{Style.BRIGHT}🔔 FOUND: {tool_name.upper()} DATA DETECTED!")
         print(f"{Fore.WHITE}📂 Path: {file_path}")
-        print(f"{Fore.YELLOW}{'═'*60}")
+        print(f"{Fore.YELLOW}{'═'*65}")
         
-        # Telegram Bot jaisa representation
-        lines = output.split('\n')
-        for line in lines:
-            if ":" in line or "http" in line:
-                # Clean up and show like a bot message
+        # Display clean data like a Bot response
+        for line in output.split('\n'):
+            if any(k in line for k in [":", "http", "@", "Found"]):
                 print(f"{Fore.CYAN}➤ {line.strip()}")
-        
-        print(f"{Fore.YELLOW}{'═'*60}\n")
-        return True
-    return False
-
-def run_scylla(target, folder):
-    """Scylla Database Search Logic"""
-    print(Fore.MAGENTA + "[*] Searching Scylla Breach Database...")
-    cmd = f"python3 tools/Scylla/scylla.py --search {target}"
-    try:
-        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=500)
-        display_bot_data("Scylla DB", proc.stdout, folder)
-    except:
-        print(Fore.RED + "[!] Scylla Error. Check installation.")
+        print(f"{Fore.YELLOW}{'═'*65}\n")
 
 def main():
-    while True: # Unlimited Loop - Kabhi band nahi hoga
-        bot_banner()
-        print(f"1. 👤 IDENTITY BREACH (Telegram Bot Style)")
-        print(f"2. 📱 PHONE & WHATSAPP MAPPING")
-        print(f"3. 📁 BROWSE PREVIOUS REPORTS")
-        print(f"4. ❌ EXIT")
+    while True: # Infinite Loop - Jab tak aap na rokein
+        bot_interface()
+        print(f"1. 👤 DEEP IDENTITY SCAN (Telegram Bot Logic)\n2. 📱 PHONE & WHATSAPP MAPPING\n3. 📁 VIEW ALL SAVED DATA\n4. ❌ EXIT")
         
-        choice = input(Fore.YELLOW + "\n[?] Select Option -> ")
+        choice = input(Fore.YELLOW + "\n[?] Select Action -> ")
         if choice == '4': break
         
         target = input(Fore.WHITE + "[+] Enter Target (Email/User/Number): ")
-        target_folder = os.path.abspath(f"reports/targets/{target}")
-        if not os.path.exists(target_folder): os.makedirs(target_folder)
+        folder = os.path.abspath(f"reports/targets/{target}")
+        if not os.path.exists(folder): os.makedirs(folder)
 
         if choice == '1':
-            # Scylla Database (Leaks)
-            run_scylla(target, target_folder)
+            print(Fore.MAGENTA + "[*] Crawling Databases (Scylla/Social/Breach)...")
+            # Scylla Force Run
+            scylla_cmd = f"python3 tools/Scylla/scylla.py --search {target}"
+            proc_s = subprocess.run(scylla_cmd, shell=True, capture_output=True, text=True)
+            telegram_style_display("Scylla Breach", proc_s.stdout, target, folder)
             
-            # Social Search (Telegram style)
-            print(Fore.MAGENTA + "[*] Crawling Social Media Profiles...")
-            cmd_maigret = f"maigret {target} --brief"
-            proc_m = subprocess.run(cmd_maigret, shell=True, capture_output=True, text=True)
-            display_bot_data("Social Links", proc_m.stdout, target_folder)
-
-            # Email Breach
-            cmd_holehe = f"holehe {target}"
-            proc_h = subprocess.run(cmd_holehe, shell=True, capture_output=True, text=True)
-            display_bot_data("Email Breach", proc_h.stdout, target_folder)
+            # Social Media Hiddn Logic
+            proc_m = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
+            telegram_style_display("Social Presence", proc_m.stdout, target, folder)
 
         elif choice == '2':
-            # Phone Intel logic
-            print(Fore.MAGENTA + "[*] Fetching Carrier & Social Intel...")
-            cmd_p = f"social-analyzer --username {target}" # Phone logic here
-            proc_p = subprocess.run(cmd_p, shell=True, capture_output=True, text=True)
-            display_bot_data("Phone Intelligence", proc_p.stdout, target_folder)
+            print(Fore.MAGENTA + "[*] Mapping Phone & Linked Socials...")
+            proc_p = subprocess.run(f"social-analyzer --username {target}", shell=True, capture_output=True, text=True)
+            telegram_style_display("Phone Intel", proc_p.stdout, target, folder)
 
-        print(Fore.GREEN + f"\n[✔] Scan Finished for: {target}")
-        input(Fore.WHITE + "Press [ENTER] to search another target...")
+        print(Fore.GREEN + f"[✔] All tools finished for {target}.")
+        input(Fore.WHITE + "Press [ENTER] to continue with another search...")
 
 if __name__ == "__main__":
     main()
