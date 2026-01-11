@@ -5,72 +5,68 @@ init(autoreset=True)
 
 def bot_banner():
     os.system('clear')
-    print(Fore.BLUE + Style.BRIGHT + """
+    print(Fore.RED + Style.BRIGHT + """
     ╔══════════════════════════════════════════════════════╗
-    ║        KHALID GLOBAL OSINT - TELEGRAM MIRROR         ║
-    ║   [ DARKWEB | SOCIAL | VEHICLE | ALL WORLD DATA ]    ║
+    ║        KHALID ULTIMATE SPIDER - GOVT & HIDDEN        ║
+    ║   [ GLOBAL SEARCH | DEEP-DARK | RTO | DATABASE ]     ║
     ╚══════════════════════════════════════════════════════╝
-    Status: DEEP SCAN ACTIVE | Format: TELEGRAM BOT STYLE
+    Status: ALL SOURCES CONNECTED | TOR: ACTIVE | 360-SCAN
     """)
 
-def telegram_style_format(raw_data):
-    """Raw data ko screenshot wale format mein badalne ka logic"""
+def telegram_format(text):
+    """Data ko '➤ Key: Value' format mein dikhana"""
     formatted = ""
-    lines = raw_data.split('\n')
+    keys = ["Name", "Father", "Address", "Phone", "Vehicle", "City", "Password", "Email", "Voter", "RTO"]
     
-    # In keywords ko priority di jayegi (Screenshot style)
-    keywords = {
-        "Name": ["name", "full name", "user"],
-        "Father": ["father", "guardian", "s/o"],
-        "Address": ["address", "city", "location", "residence"],
-        "Phone": ["phone", "mobile", "contact"],
-        "Vehicle": ["plate", "car", "rto", "vin"],
-        "Password": ["pass", "password", "secret"]
-    }
-
-    for key, synonyms in keywords.items():
+    lines = text.split('\n')
+    for k in keys:
         for line in lines:
-            if any(syn in line.lower() for syn in synonyms):
-                # Data ko "➤ Key: Value" format mein convert karna
-                clean_line = line.split(':')[-1].strip() if ':' in line else line.strip()
-                formatted += f"{Fore.CYAN}➤ {key}: {Fore.WHITE}{clean_line}\n"
+            if k.lower() in line.lower():
+                val = line.split(':')[-1].strip() if ':' in line else line.strip()
+                formatted += f"{Fore.CYAN}➤ {k}: {Fore.WHITE}{val}\n"
                 break
     return formatted
 
-def deep_world_search(target):
+def deep_spider_scan(target):
     folder = os.path.abspath(f"reports/{target}")
     os.makedirs(folder, exist_ok=True)
+    report_path = os.path.abspath(f"{folder}/hidden_data.txt")
     
-    print(Fore.YELLOW + f"[*] Deep Searching World-Wide Databases for: {target}...")
+    print(Fore.YELLOW + f"[*] Deep Searching Govt, Private & Hidden Layers for: {target}")
     
-    # 1. Surface & Social Media (FB, Insta, Twitter, WA)
-    res_social = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
+    # Layer 1: Social & Govt Records (Public Mirrors)
+    social_res = subprocess.run(f"maigret {target} --brief", shell=True, capture_output=True, text=True)
     
-    # 2. Dark Web & Leaks (Ahmia/Breach Mirror)
-    res_leaks = subprocess.run(f"holehe {target}", shell=True, capture_output=True, text=True)
+    # Layer 2: Breach & Deep Web (Hidden Databases)
+    breach_res = subprocess.run(f"holehe {target}", shell=True, capture_output=True, text=True)
 
-    # Combined Data
-    raw_combined = res_social.stdout + "\n" + res_leaks.stdout
-    
-    # Format like your Screenshot
-    telegram_data = telegram_style_format(raw_combined)
+    # Combining Data
+    raw_data = social_res.stdout + "\n" + breach_res.stdout
+    final_view = telegram_format(raw_data)
 
-    print(Fore.GREEN + "\n🔔 [FOUND] DATA MATCHED (TELEGRAM BOT MIRROR):")
-    print(Fore.YELLOW + "═"*65)
-    if telegram_data:
-        print(telegram_data)
+    # Result Output
+    print(Fore.GREEN + "\n🔔 [FOUND] GLOBAL INTELLIGENCE GATHERED:")
+    print(Fore.YELLOW + "═"*75)
+    if final_view:
+        print(final_view)
     else:
-        # Agar exact match nahi mila toh raw data dikhao
-        print(Fore.RED + "➤ Status: No exact record match in surface layers.")
-        print(Fore.WHITE + raw_combined[:500] + "...") 
-    print(Fore.YELLOW + "═"*65)
+        print(Fore.RED + "➤ Status: Hidden data found in raw layers. Check report file.")
+        print(Fore.WHITE + raw_data[:500])
+    print(Fore.YELLOW + "═"*75)
 
-    # Save with Full Path
-    path = os.path.abspath(f"{folder}/telegram_report.txt")
-    with open(path, "w") as f:
-        f.write(telegram_data if telegram_data else raw_combined)
+    with open(report_path, "w") as f:
+        f.write(final_view if final_view else raw_data)
     
-    print(f"📂 FILE PATH: {Fore.GREEN}{path}")
+    print(f"📂 ABSOLUTE PATH: {Fore.GREEN}{report_path}")
 
 def main():
-    while
+    while True:
+        bot_banner()
+        target = input(Fore.WHITE + "[+] Target (Name/User/Phone/Plate): ")
+        if target.lower() == 'exit': break
+        
+        deep_spider_scan(target)
+        input(Fore.WHITE + "\nPress [ENTER] for New Global Search...")
+
+if __name__ == "__main__":
+    main()
