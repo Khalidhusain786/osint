@@ -1,25 +1,20 @@
 #!/bin/bash
-# Khalid Husain Immortal Engine v25
-# Force-Fix System & Tool Integration
+# Khalid Husain - Telegram Bot Style OSINT Engine
+echo -e "\e[1;32m[*] Installing Deep Crawlers & Leak Database Links...\e[0m"
 
-echo -e "\e[1;32m[*] System Repairing & Tool Setup Starting...\e[0m"
-
-# 1. Fix Broken Packages & Locks (Screenshot 19:31 fix)
+# 1. Force release locks
 sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock
 sudo dpkg --configure -a
-sudo apt-get install -f -y
 
-# 2. Setup Folders for Automated Saving
-mkdir -p reports/targets tools
+# 2. Installing Core OSINT Engines
+pip install colorama requests phonenumbers fpdf holehe maigret scylla-sh social-analyzer --break-system-packages --ignore-installed
 
-# 3. Direct Library Injection (Bypassing wheel errors)
-pip install colorama requests phonenumbers fpdf holehe maigret --break-system-packages --ignore-installed --no-cache-dir
-
-# 4. Clone Professional Engines Locally
+# 3. Setting up Local Tool Directories
+mkdir -p reports/targets tools/scylla tools/social-analyzer
 cd tools
+git clone --depth=1 https://github.com/SamueleAmato/SocialMediaHackingToolkit.git 2>/dev/null
 git clone --depth=1 https://github.com/sherlock-project/sherlock.git 2>/dev/null
-git clone --depth=1 https://github.com/soxoj/maigret.git 2>/dev/null
 cd ..
 
 chmod +x khalid-osint.py
-echo -e "\e[1;34m[!] ALL TOOLS INTEGRATED! Run: python3 khalid-osint.py\e[0m"
+echo -e "\e[1;34m[!] OSINT BOT ENGINE READY! Run: python3 khalid-osint.py\e[0m"
