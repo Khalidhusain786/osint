@@ -2,7 +2,7 @@
 
 
 cd /home/kali && rm -rf osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && \
-# Dependency conflicts fix and installation
+# Dependency conflicts fix aur saare tools install
 python3 -m pip install --user --break-system-packages --ignore-installed colorama requests[socks] holehe maigret sherlock social-analyzer h8mail && \
 # Photon (Web Intelligence) setup
 [ -d "tools/Photon" ] || git clone https://github.com/s0md3v/Photon.git tools/Photon && \
