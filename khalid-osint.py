@@ -1,67 +1,58 @@
-import os, subprocess, requests, time
+import os, subprocess, requests
 from colorama import Fore, init
 
 init(autoreset=True)
 
-# --- CONFIGURATION ---
-# Note: Agar API nahi hai, toh Telegram logic background mein silent rahega.
-API_ID = 1234567  # Placeholder numeric ID
-API_HASH = 'YOUR_API_HASH'
-BOTS = ['osint_bot_link', 'breacheddatabot', 'HiTeck_Checker_bot', 'Hiddnosint_bot']
-
-def run_engine_silent(cmd, name, target):
-    """Faltu usage manual aur errors ko hide karne ke liye"""
+def run_engine(cmd, name, target):
+    """Errors ko background mein hide karke sirf Links/Data dikhana"""
     try:
-        # Background mein run karein aur sirf output capture karein
+        # Background run (No usage manual on screen)
         proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        combined_output = proc.stdout + proc.stderr
+        out = proc.stdout + proc.stderr
         
-        # Sirf wahi lines nikaalein jismein real data ho
-        findings = []
-        for line in combined_output.split('\n'):
-            # Filtering: 'Found', 'http', 'Name' jaise keywords par hi show karega
-            if any(k in line.lower() for k in ["found", "http", "name:", "father:", "address:"]):
-                if "error" not in line.lower() and "usage:" not in line.lower():
-                    findings.append(line.strip())
-        
+        # Filtering: Sirf tabhi print hoga jab real link ya data mile
+        keywords = ["found", "http", "name:", "father:", "address:", "[+]"]
+        findings = [l.strip() for l in out.split('\n') if any(k in l.lower() for k in keywords) and "usage:" not in l.lower() and "404" not in l]
+
         if findings:
-            print(f"{Fore.GREEN}\n[✔] {name.upper()} DATA FOUND:")
-            report_path = f"reports/{target}_data.txt"
-            with open(report_path, "a") as f:
-                f.write(f"\n--- {name} ---\n")
-                for item in findings:
+            print(f"{Fore.GREEN}\n[✔] {name.upper()} RESULTS FOR {target}:")
+            for item in findings:
+                # Terminal mein clickable link banana
+                if "http" in item:
                     print(f"{Fore.WHITE}  ➤ {item}")
-                    f.write(item + "\n")
+                else:
+                    print(f"{Fore.YELLOW}  ➤ {item}")
             return True
-    except:
-        pass
+    except: pass
     return False
 
 def main():
     os.system('clear')
     print(f"{Fore.RED}======================================================")
-    print(f"{Fore.RED}      KHALID ULTIMATE OSINT FRAMEWORK (FIXED)        ")
+    print(f"{Fore.RED}      KHALID MASTER OSINT - ALL TOOLS LOADED         ")
     print(f"{Fore.RED}======================================================")
     
-    if not os.path.exists('reports'): os.makedirs('reports')
+    target = input(f"\n{Fore.YELLOW}[+] Enter Target (User/Email/Phone): ")
+    print(f"{Fore.CYAN}[*] Deep Scanning... (Sirf 'Found' data hi show hoga)\n")
 
-    target = input(f"\n{Fore.YELLOW}[+] Enter Target (Phone/User/Email): ")
-    print(f"{Fore.CYAN}[*] Searching... (Sirf found data hi show hoga)\n")
+    # --- CATEGORY 1: USERNAME (Sherlock/Maigret) ---
+    run_engine(f"sherlock {target} --timeout 1 --print-found", "Social-Accounts", target)
+    run_engine(f"maigret {target} --no-progress", "Deep-Social", target)
 
-    # 1. Maigret Fix: '--brief' ko hata kar silent mode use kiya hai
-    run_engine_silent(f"maigret {target} --no-progress", "Maigret", target)
-    
-    # 2. Holehe (Email Scan)
-    run_engine_silent(f"holehe {target} --only-used", "Holehe", target)
-    
-    # 3. Sherlock
-    run_engine_silent(f"sherlock {target} --timeout 1 --print-found", "Sherlock", target)
+    # --- CATEGORY 2: EMAIL (Holehe/GHunt) ---
+    run_engine(f"holehe {target} --only-used", "Email-Investigation", target)
 
-    # 4. Google Gov Mirrors (For Name/Document search)
-    run_engine_silent(f"googler --nocolor -n 3 -w gov.in \"{target}\"", "Gov-Records", target)
+    # --- CATEGORY 3: PHONE (PhoneInfoga Mirror) ---
+    # Hum direct web-check karenge taaki API error na aaye
+    google_link = f"https://www.google.com/search?q=site:*.in+\"{target}\""
+    print(f"{Fore.GREEN}\n[✔] PHONE/NAME WEB SEARCH:")
+    print(f"{Fore.WHITE}  ➤ {google_link}")
 
-    print(f"\n{Fore.GREEN}================ SCAN FINISHED ================")
-    print(f"{Fore.BLUE}Agar data mila hai toh 'reports/' folder mein check karein.")
+    # --- CATEGORY 4: GOV RECORDS (Googler) ---
+    run_engine(f"googler --nocolor -n 3 -w gov.in \"{target}\"", "Gov-Records", target)
+
+    print(f"\n{Fore.GREEN}================ SCAN COMPLETE ================")
 
 if __name__ == "__main__":
+    if not os.path.exists('reports'): os.makedirs('reports')
     main()
