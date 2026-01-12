@@ -40,7 +40,7 @@ def start_tor():
     print(f"{Fore.GREEN}[OK] Ghost Tunnel: HIGH-SPEED ACTIVE")
 
 def clean_and_verify(raw_html, target, report_file, source_label):
-    """FIXED: Simple output without 'Detected' labels"""
+    """SIMPLE OUTPUT: No detected labels, only found data"""
     try:
         soup = BeautifulSoup(raw_html, 'lxml')
         for script in soup(["script", "style", "nav", "header", "footer", "aside"]): 
@@ -53,17 +53,17 @@ def clean_and_verify(raw_html, target, report_file, source_label):
             line = line.strip()
             if len(line) < 10: continue
             
-            # Junk words filter
+            # Junk words filter to keep screen clear
             noise_words = ["skip to content", "mobile english", "one last step", "javascript", "browser", "search about", "open links"]
             if any(noise in line.lower() for noise in noise_words): continue
 
             id_found = any(re.search(pattern, line) for pattern in SURE_HITS.values())
 
-            # Simple show: Target ya ID milne par line print karega
+            # Data found hone par seedha simple show karega
             if (target.lower() in line.lower()) or id_found:
                 with print_lock:
-                    display_text = line[:250].replace('\t', ' ').strip()
-                    # Bilkul simple format jaisa aapne kaha
+                    display_text = " ".join(line.split())[:250]
+                    # Format: [SOURCE-FOUND] Real Data Here
                     print(f"{Fore.RED}[{source_label}-FOUND] {Fore.WHITE}{display_text}")
                     
                     with open(report_file, "a") as f: 
