@@ -1,18 +1,20 @@
 #!/bin/bash
-echo -e "\e[1;32m[*] Khalid-OSINT Master Setup Shuru...\e[0m"
+echo -e "\e[1;32m[*] Khalid-OSINT: Installing Your Tool List...\e[0m"
 
-# 1. System Dependencies
-sudo apt update && sudo apt install tor proxychains4 python3-pip curl git exiftool nodejs npm googler -y
+# 1. System Essentials
+sudo apt update && sudo apt install python3-pip curl git nodejs npm googler tor proxychains4 -y
 
-# 2. Python Tools (Telegram, Social, Email)
-pip install colorama requests[socks] telethon holehe maigret sherlock socialscan --break-system-packages
+# 2. Main OSINT Engines (Fixing Dependencies)
+pip install colorama requests[socks] telethon holehe maigret sherlock socialscan ghunt instaloader --break-system-packages
 
-# 3. Heavy Engines (Social Analyzer & PhoneInfoga)
-sudo npm install -g social-analyzer
-curl -sSL https://raw.githubusercontent.com/sundowndev/phoneinfoga/master/support/install | bash
-sudo mv ./phoneinfoga /usr/local/bin/
+# 3. Cloning Repository Tools (Seeker, Zphisher, etc.)
+mkdir -p tools
+cd tools
+git clone https://github.com/thewhiteh4t/seeker.git
+git clone https://github.com/htr-tech/zphisher.git
+git clone https://github.com/sundowndev/phoneinfoga.git
+git clone https://github.com/Lucksi/Mr-Holmes.git
+cd ..
 
-# 4. Finalizing
 mkdir -p reports
-sudo service tor restart
-echo -e "\e[1;34m[!] Setup Complete. Ab 'python3 khalid-osint.py' chalayein.\e[0m"
+echo -e "\e[1;34m[✔] All Tools Ready in /home/kali/osint/tools/\e[0m"
