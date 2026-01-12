@@ -1,15 +1,20 @@
 #!/bin/bash
 
-echo "[*] Installing Dependencies..."
+# Purana kachra saaf karne ke liye
+echo -e "\e[31m[*] Cleaning old files...\e[0m"
+rm -rf /home/kali/osint
 
-# System Updates
-sudo apt-get update
-sudo apt-get install -y tor torsocks python3 python3-pip lxml
+# System update aur Tor setup
+echo -e "\e[34m[*] Updating system and installing Tor...\e[0m"
+sudo apt-get update -y
+sudo apt-get install -y tor torsocks python3-pip libxml2-dev libxslt1-dev zlib1g-dev
 
-# Python Libraries
-pip install requests beautifulsoup4 colorama lxml
+# Python libraries jo naye code ke liye zaroori hain
+echo -e "\e[32m[*] Installing Python dependencies (BS4, LXML, Colorama)...\e[0m"
+pip3 install --upgrade pip
+pip3 install requests beautifulsoup4 lxml colorama
 
-# Tools (If not installed)
-# pip install sherlock maigret social-analyzer
+# Tor service ko auto-start karna
+sudo service tor restart
 
-echo "[OK] All dependencies installed."
+echo -e "\e[36m[✔] Setup Complete! No errors expected.\e[0m"
