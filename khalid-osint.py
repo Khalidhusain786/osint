@@ -1,97 +1,81 @@
 import os, subprocess, sys, requests, re, time
 from colorama import Fore, init
 from threading import Thread, Lock
-from stem import Signal
-from stem.control import Controller
-
-# Telegram Library
-try:
-    from telethon import TelegramClient, events
-except ImportError:
-    pass
 
 init(autoreset=True)
-all_raw_findings = []
 print_lock = Lock()
 
-# --- CONFIG ---
-API_ID = 'YOUR_API_ID'
-API_HASH = 'YOUR_API_HASH'
+# --- TARGET IDENTITY FILTERS (ONLY RESULTS) ---
+SURE_HITS = [
+    r"[A-Z]{5}[0-9]{4}[A-Z]{1}", # PAN
+    r"[A-Z]{3}[0-9]{7}",          # Voter ID
+    r"[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{4}", # Vehicle RC
+    r"(?:\+91|0)?[6-9]\d{9}",     # Indian Phone
+    r"\b\d{6}\b",                 # Pincode
+    r"https?://\S+",              # Links
+    r"S/O|D/O|W/O|R/O"            # Relations/Address
+]
 
-# SOCKS5H ensures DNS is resolved by the Tor Exit Node, NOT your local ISP (No DNS Leak)
-proxies = {
-    'http': 'socks5h://127.0.0.1:9050',
-    'https': 'socks5h://127.0.0.1:9050'
-}
-
-def renew_tor_ip():
-    """Control Port logic to change identity and avoid IP bans/empty results"""
-    try:
-        with Controller.from_port(port=9051) as controller:
-            controller.authenticate(password="khalid_osint") # Make sure to set this in torrc
-            controller.signal(Signal.NEWNYM)
-            time.sleep(2)
-        return True
-    except:
-        return False
+proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
 
 def start_tor():
-    # Check if Tor is running, if not start it
     if os.system("systemctl is-active --quiet tor") != 0:
         os.system("sudo service tor start > /dev/null 2>&1")
-        time.sleep(3)
-    
-    # Check Control Port 9051
-    if renew_tor_ip():
-        print(f"{Fore.GREEN}[OK] Stealth Identity: ACTIVE (Control Port 9051)")
-    else:
-        print(f"{Fore.YELLOW}[!] Warning: Control Port 9051 locked. Using standard Tor.")
-    
-    print(f"{Fore.GREEN}[OK] Ghost Engine: ONLINE (DNS Leak Protected)")
+    print(f"{Fore.GREEN}[OK] Ghost Tunnel: ACTIVE")
 
-def dark_web_crawler(target, report_file):
-    """V61: Deep Onion Crawling with DNS Protection"""
-    onion_engines = [
-        f"https://ahmia.fi/search/?q={target}",
-        f"http://haystak5njsu5hk.onion/search.php?q={target}",
-        f"http://torchdeok6i7pud6x26sh6f4j6pqqhsk2fsit54v35ulswp7xmg6yd.onion/search?query={target}"
+def shadow_telegram_crawler(target, report_file):
+    """
+    Bina API ke Telegram Crawler (Using Web-Gateways)
+    Dumps aur leaked files dhoondhne ke liye
+    """
+    # Telegram web mirrors and search aggregators
+    gateways = [
+        f"https://ahmia.fi/search/?q={target}+telegram+leak",
+        f"https://www.google.com/search?q=site:t.me+OR+site:tgstat.com+%22{target}%22"
     ]
-    
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0'}
-    
-    for url in onion_engines:
+    for url in gateways:
         try:
-            # Tor proxy usage with session to maintain DNS integrity
-            session = requests.Session()
-            session.proxies = proxies
-            res = session.get(url, headers=headers, timeout=45)
-            
-            # Clean extraction logic
-            matches = re.findall(r"([a-z2-7]{16,56}\.onion|password:\s?\S+|email:\s?\S+)", res.text, re.I)
-            
-            if matches or target.lower() in res.text.lower():
-                with print_lock:
-                    output = f"[DARK-WEB] Intel Found on: {url[:35]}..."
-                    print(f"{Fore.RED}{output}")
-                    all_raw_findings.append(output)
-                    with open(report_file, "a") as f:
-                        f.write(f"[DARK-WEB] Match in {url}\n")
-        except:
-            pass
+            # Note: Tor proxy used for darkweb search
+            res = requests.get(url, proxies=proxies if "ahmia" in url else None, timeout=15)
+            # AI Check for specific data
+            for pattern in SURE_HITS:
+                matches = re.findall(pattern, res.text)
+                for m in list(set(matches))[:5]:
+                    with print_lock:
+                        print(f"{Fore.RED}[SHADOW-INTEL] {Fore.WHITE}{m}")
+                        with open(report_file, "a") as f: f.write(f"[SHADOW] {m}\n")
+        except: pass
 
-def run_local_tool(cmd, name, report_file):
-    """Reliable local tool runner with silent error handling"""
+def deep_data_extractor(target, report_file):
+    """Deep scan for PAN/Voter/Address from leak repositories"""
+    mirrors = [
+        f"http://juhanurmihxlp77nkq76byv6h6o4ujysoe62clq2u6si7yo76v6pwy6id.onion/search/?q={target}",
+        f"https://psbdmp.ws/api/search/{target}"
+    ]
+    for m_url in mirrors:
+        try:
+            res = requests.get(m_url, proxies=proxies, timeout=20)
+            lines = res.text.split('\n')
+            for line in lines:
+                if target.lower() in line.lower():
+                    # Check if line contains identity numbers or address
+                    if any(re.search(p, line) for p in SURE_HITS):
+                        with print_lock:
+                            print(f"{Fore.YELLOW}[FOUND-DATA] {Fore.WHITE}{line.strip()}")
+                            with open(report_file, "a") as f: f.write(f"[DATA] {line.strip()}\n")
+        except: pass
+
+def silent_tool_runner(cmd, name, report_file):
+    """Filters tools like Social-Analyzer/Sherlock to show ONLY hits"""
     try:
-        # Using torsocks to force local tools through Tor as well
-        secure_cmd = f"torsocks {cmd}"
-        process = subprocess.Popen(secure_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        process = subprocess.Popen(f"torsocks {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in process.stdout:
             clean = line.strip()
-            if any(x in clean.lower() for x in ["http", "found", "user", "@", "ip:"]):
-                if not any(bad in clean.lower() for bad in ["searching", "checking", "trying"]):
+            # AI Filtering: No "Searching..." noise
+            if any(x in clean.lower() for x in ["http", "found", "match", "@"]):
+                if not any(noise in clean.lower() for noise in ["searching", "checking", "trying", "0 results"]):
                     with print_lock:
-                        print(f"{Fore.GREEN}[FOUND] {Fore.YELLOW}{name}: {Fore.WHITE}{clean}")
-                        all_raw_findings.append(clean)
+                        print(f"{Fore.GREEN}[{name.upper()}] {Fore.WHITE}{clean}")
                         with open(report_file, "a") as f: f.write(f"[{name}] {clean}\n")
     except: pass
 
@@ -101,24 +85,28 @@ def main():
     os.system('clear')
     
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║   KHALID OSINT - GHOST ENGINE (DNS PROTECTED) v61.0        ║")
+    print(f"{Fore.RED}║   KHALID SHADOW BUREAU - ULTIMATE SURVEILLANCE v71.0       ║")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
     
-    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Email/Username): ")
+    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
+    if os.path.exists(report_path): os.remove(report_path)
 
-    # Launching Multi-Threaded Engine
+    print(f"{Fore.BLUE}[*] AI Multi-Threading Engine: Extraction in Progress (Silent Mode)...\n")
+
+    # High-Speed Parallel Execution
     threads = [
-        Thread(target=dark_web_crawler, args=(target, report_path)),
-        Thread(target=run_local_tool, args=(f"sherlock {target}", "Sherlock", report_path)),
-        Thread(target=run_local_tool, args=(f"maigret {target} --timeout 20", "Maigret", report_path))
+        Thread(target=shadow_telegram_crawler, args=(target, report_path)),
+        Thread(target=deep_data_extractor, args=(target, report_path)),
+        Thread(target=silent_tool_runner, args=(f"social-analyzer --username {target} --mode fast --silent", "Social", report_path)),
+        Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 10", "Sherlock", report_path))
     ]
 
     for t in threads: t.start()
     for t in threads: t.join()
 
-    print(f"\n{Fore.GREEN}[➔] Ghost Scan Complete. Found: {len(all_raw_findings)} results.")
+    print(f"\n{Fore.GREEN}[➔] Intelligence Gathered. Report Saved: {report_path}")
 
 if __name__ == "__main__":
     main()
