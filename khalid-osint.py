@@ -7,14 +7,13 @@ init(autoreset=True)
 print_lock = Lock()
 
 # --- TARGET IDENTITY FILTERS (ONLY HIGH ACCURACY) ---
-SURE_HITS = [
-    r"[A-Z]{5}[0-9]{4}[A-Z]{1}",            # PAN
-    r"[A-Z]{3}[0-9]{7}",                     # Voter ID
-    r"[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}",   # Vehicle RC
-    r"(?:\+91|0)?[6-9]\d{9}",                # Indian Phone
-    r"\b\d{6}\b",                            # Pincode
-    r"S/O|D/O|W/O|R/O|Address|Resident|PIN:" # Address Keywords
-]
+SURE_HITS = {
+    "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
+    "VoterID": r"[A-Z]{3}[0-9]{7}",
+    "Vehicle": r"[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}",
+    "Phone": r"(?:\+91|0)?[6-9]\d{9}",
+    "Pincode": r"\b\d{6}\b"
+}
 
 proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -25,37 +24,42 @@ def start_tor():
     print(f"{Fore.GREEN}[OK] Ghost Tunnel: ACTIVE")
 
 def clean_and_verify(raw_html, target, report_file, source_label):
-    """Deep Matching Logic: Target milta-julta ho aur ID pattern ho tabhi show kare"""
+    """Refined Deep Matching: Clean UI and Precise Data Extraction"""
     try:
         soup = BeautifulSoup(raw_html, 'lxml')
-        # Junk data hatana speed ke liye
-        for script in soup(["script", "style"]): script.decompose()
-        
-        text = soup.get_text(separator=' ')
-        lines = text.split('\n')
-        for line in lines:
-            line = line.strip()
+        for script in soup(["script", "style", "nav", "header", "footer"]): 
+            script.decompose()
             
-            # 1. Target ka naam/email match ho raha ho
-            # 2. Ya fir line mein koi Indian ID (PAN/Phone) ka pattern ho
-            target_match = target.lower() in line.lower()
-            pattern_match = any(re.search(p, line) for p in SURE_HITS)
+        text = soup.get_text(separator=' ')
+        # Target se related lines filter karein
+        lines = [line.strip() for line in text.split('\n') if target.lower() in line.lower() or any(re.search(p, line) for p in SURE_HITS.values())]
 
-            if target_match and pattern_match:
+        for line in lines:
+            if len(line) < 5: continue
+            
+            # Sirf kaam ka data extract karein (Regex se)
+            found_ids = []
+            for label, pattern in SURE_HITS.items():
+                match = re.search(pattern, line)
+                if match:
+                    found_ids.append(f"{Fore.YELLOW}{label}: {match.group()}")
+
+            if found_ids:
+                output = " | ".join(found_ids)
                 with print_lock:
-                    # Sirf wahi line dikhayega jo accurate hai
-                    print(f"{Fore.RED}[{source_label}-FOUND] {Fore.WHITE}{line[:150]}")
+                    # Clean output formatting
+                    print(f"{Fore.RED}[{source_label}-FOUND] {Fore.CYAN}Target: {target} {Fore.WHITE}➔ {output}")
                     with open(report_file, "a") as f: 
                         f.write(f"[{source_label}] {line}\n")
-    except: pass
+    except: 
+        pass
 
-# --- NAYA TELEGRAM ENGINE (BINA API KE - PUBLIC SEARCH) ---
+# --- NAYA TELEGRAM ENGINE (PUBLIC SEARCH) ---
 def telegram_dork_engine(target, report_file):
-    """Telegram public databases ko deep scan karega"""
     tg_links = [
         f"https://www.google.com/search?q=site:t.me+%22{target}%22",
         f"https://www.bing.com/search?q=site:t.me+%22{target}%22",
-        f"https://yandex.com/search/?text=site:t.me+%22{target}%22", # Added Yandex for better TG data
+        f"https://yandex.com/search/?text=site:t.me+%22{target}%22",
         f"https://ahmia.fi/search/?q=t.me+{target}"
     ]
     for url in tg_links:
@@ -66,7 +70,6 @@ def telegram_dork_engine(target, report_file):
         except: pass
 
 def shadow_crawler_ai(target, report_file):
-    """Har jagah se (Leak Sites + Deep Web) data collect karega"""
     gateways = [
         f"https://ahmia.fi/search/?q={target}+india+leak",
         f"https://psbdmp.ws/api/search/{target}",
@@ -80,12 +83,10 @@ def shadow_crawler_ai(target, report_file):
         except: pass
 
 def silent_tool_runner(cmd, name, report_file):
-    """Sirf accurate 'FOUND' output screen par layega"""
     try:
         process = subprocess.Popen(f"torsocks {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in process.stdout:
             clean = line.strip()
-            # Sirf tabhi show kare jab confirm results hon
             if any(x in clean.lower() for x in ["http", "found", "match:"]):
                 if not any(noise in clean.lower() for noise in ["searching", "checking", "trying", "0 results"]):
                     with print_lock:
@@ -104,11 +105,12 @@ def main():
     
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN): ")
     if not target: return
+    
     report_path = os.path.abspath(f"reports/{target}.txt")
     if os.path.exists(report_path): os.remove(report_path)
-
+    
     print(f"{Fore.BLUE}[*] Parallel Scanning: Extracting Accurate Matches Only...\n")
-
+    
     threads = [
         Thread(target=telegram_dork_engine, args=(target, report_path)),
         Thread(target=shadow_crawler_ai, args=(target, report_path)),
@@ -116,10 +118,10 @@ def main():
         Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 10", "Sherlock", report_path)),
         Thread(target=silent_tool_runner, args=(f"maigret {target} --timeout 10", "Maigret", report_path))
     ]
-
+    
     for t in threads: t.start()
     for t in threads: t.join()
-
+    
     print(f"\n{Fore.GREEN}[➔] Scan Complete. Accurate Matches Saved: {report_path}")
 
 if __name__ == "__main__":
