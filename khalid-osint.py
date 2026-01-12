@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 init(autoreset=True)
 print_lock = Lock()
 
-# --- TARGET IDENTITY FILTERS (UPGRADED FOR ALL DETAILS) ---
+# --- TARGET IDENTITY FILTERS ---
 SURE_HITS = {
     "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
     "Aadhaar": r"\b\d{4}\s\d{4}\s\d{4}\b|\b\d{12}\b",
@@ -23,7 +23,6 @@ SURE_HITS = {
     "Location": r"(?i)(Village|City|State|Country|Map|Lat|Long)"
 }
 
-# --- ONION PROXY CONFIG (SAME AS BEFORE) ---
 def get_onion_session():
     session = requests.Session()
     proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
@@ -41,7 +40,7 @@ def start_tor():
     print(f"{Fore.GREEN}[OK] Ghost Tunnel: HIGH-SPEED ACTIVE")
 
 def clean_and_verify(raw_html, target, report_file, source_label):
-    """PURANA LOGIC + BETTER VISIBILITY"""
+    """FIXED: Simple output without 'Detected' labels"""
     try:
         soup = BeautifulSoup(raw_html, 'lxml')
         for script in soup(["script", "style", "nav", "header", "footer", "aside"]): 
@@ -54,25 +53,18 @@ def clean_and_verify(raw_html, target, report_file, source_label):
             line = line.strip()
             if len(line) < 10: continue
             
-            # Junk words ko filter karke asli data nikalna
-            noise_words = ["skip to content", "mobile english", "one last step", "javascript", "browser"]
+            # Junk words filter
+            noise_words = ["skip to content", "mobile english", "one last step", "javascript", "browser", "search about", "open links"]
             if any(noise in line.lower() for noise in noise_words): continue
 
-            id_found = False
-            found_labels = []
-            for label, pattern in SURE_HITS.items():
-                if re.search(pattern, line):
-                    id_found = True
-                    found_labels.append(label)
+            id_found = any(re.search(pattern, line) for pattern in SURE_HITS.values())
 
-            # Agar target match ho ya koi ID mile, toh saaf-saaf dikhayega
+            # Simple show: Target ya ID milne par line print karega
             if (target.lower() in line.lower()) or id_found:
                 with print_lock:
-                    display_text = line[:200].replace('\t', ' ').strip()
+                    display_text = line[:250].replace('\t', ' ').strip()
+                    # Bilkul simple format jaisa aapne kaha
                     print(f"{Fore.RED}[{source_label}-FOUND] {Fore.WHITE}{display_text}")
-                    if found_labels:
-                        # Har match ko highlight karega
-                        print(f"   {Fore.YELLOW}➔ Detected: {', '.join(set(found_labels))}")
                     
                     with open(report_file, "a") as f: 
                         f.write(f"[{source_label}] {line}\n")
