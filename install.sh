@@ -1,22 +1,18 @@
 #!/bin/bash
-echo -e "\e[1;32m[*] System Fix aur Deep Installation Shuru...\e[0m"
+echo -e "\e[1;32m[*] Auto-Fixer Installation Shuru...\e[0m"
 
-# 1. Broken Packages Fix
-sudo apt update --fix-missing
-sudo apt install -y python3-pip curl git nodejs npm googler tor proxychains4 libpcap-dev
+# 1. System Fix (Missing Googler fix)
+sudo apt update
+sudo apt install -y python3-pip curl git tor proxychains4 libpcap-dev
+sudo curl -o /usr/local/bin/googler https://raw.githubusercontent.com/jarun/googler/master/googler
+sudo chmod +x /usr/local/bin/googler
 
-# 2. Python Tools Fix (Direct Installation)
-# System environment bypass karke install karna
-python3 -m pip install --upgrade pip --break-system-packages
-python3 -m pip install colorama requests[socks] telethon holehe maigret sherlock social-analyzer ghunt --break-system-packages
+# 2. Pip Fix (Environment Bypass)
+python3 -m pip install --user --break-system-packages colorama requests[socks] telethon holehe maigret sherlock
 
-# 3. Dedicated Tools (Sirf wahi jo login nahi maangte)
-mkdir -p tools && cd tools
-rm -rf seeker zphisher phoneinfoga # Purana saaf karna
-git clone https://github.com/thewhiteh4t/seeker.git
-git clone https://github.com/htr-tech/zphisher.git
-git clone https://github.com/sundowndev/phoneinfoga.git
-cd ..
+# 3. Path Fix (Taaki 'Not Found' error na aaye)
+sudo ln -sf ~/.local/bin/sherlock /usr/local/bin/sherlock
+sudo ln -sf ~/.local/bin/maigret /usr/local/bin/maigret
+sudo ln -sf ~/.local/bin/holehe /usr/local/bin/holehe
 
-mkdir -p reports
-echo -e "\e[1;34m[✔] Setup Ready! Saare errors fix kar diye gaye hain.\e[0m"
+echo -e "\e[1;34m[✔] Sab Fix Ho Gaya! Ab script chalao.\e[0m"
