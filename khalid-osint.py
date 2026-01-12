@@ -1,51 +1,53 @@
-import os, subprocess, requests, time
+import os, subprocess, requests
 from colorama import Fore, init
 
 init(autoreset=True)
 
-# --- AUTO-LOGIN CONFIG ---
-LINK = "https://anishexploits.site/app/"
-PASS = "Anish123"
+# Portal Configuration (Fully Hidden)
+P_URL = "https://anishexploits.site/app/"
+P_KEY = "Anish123" 
 
-def run_silent(cmd, name):
+def silent_portal_unlock():
+    """Background mein portal unlock karega bina password dikhaye"""
+    try:
+        session = requests.Session()
+        # Password auto-inject logic
+        response = session.post(P_URL, data={'password': P_KEY}, timeout=10)
+        if response.status_code == 200:
+            print(f"{Fore.GREEN}[✔] PORTAL ACCESS GRANTED")
+            return session
+    except:
+        pass
+    return None
+
+def run_engine(cmd, name):
     try:
         proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        out = proc.stdout + proc.stderr
-        findings = [l.strip() for l in out.split('\n') if "http" in l.lower() and "404" not in l]
-        if findings:
-            print(f"{Fore.GREEN}\n[✔] {name.upper()} DATA FOUND:")
-            for link in findings[:5]: print(f"{Fore.WHITE}  ➤ {link}")
+        # Filtering: Sirf real social/email links dikhayega
+        out = [l.strip() for l in (proc.stdout + proc.stderr).split('\n') if "http" in l.lower() and "404" not in l]
+        if out:
+            print(f"{Fore.GREEN}\n[+] {name.upper()} DATA FOUND:")
+            for link in out[:10]:
+                print(f"{Fore.WHITE}  ➤ {link}")
     except: pass
-
-def auto_auth_check():
-    """Anish Exploits link ko auto-password se check karne ke liye"""
-    print(f"{Fore.MAGENTA}[*] Connecting to AnishExploits Portal...")
-    try:
-        # Password auto-fill logic using payload
-        payload = {'password': PASS} 
-        r = requests.post(LINK, data=payload, timeout=10)
-        if r.status_code == 200:
-            print(f"{Fore.GREEN}[✔] Auto-Login Successful! Portal is Active.")
-        else:
-            print(f"{Fore.YELLOW}[!] Portal connected, but requires manual bypass.")
-    except:
-        print(f"{Fore.RED}[!] Link unreachable, skipping auto-auth.")
 
 def main():
     os.system('clear')
-    print(f"{Fore.RED}=== KHALID MASTER OSINT (AUTO-AUTH V7.0) ===")
-    auto_auth_check() # Auto-password fill check
+    print(f"{Fore.RED}======================================================")
+    print(f"{Fore.RED}           KHALID PRIVATE OSINT FRAMEWORK             ")
+    print(f"{Fore.RED}======================================================")
     
-    target = input(f"\n{Fore.YELLOW}[+] Enter Target (Username/Email): ")
-    print(f"{Fore.CYAN}[*] Searching... (Sirf 'Found' data hi dikhega)\n")
+    # Hidden Auto-Login
+    session = silent_portal_unlock()
+    
+    target = input(f"\n{Fore.YELLOW}[?] Enter Target (Username/Email): ")
+    print(f"{Fore.CYAN}[*] Searching Securely... (Waiting for Data)\n")
 
-    # Core engines
-    run_silent(f"sherlock {target} --timeout 1 --print-found", "Social Media")
-    run_silent(f"holehe {target} --only-used", "Email Presence")
-    
-    print(f"\n{Fore.BLUE}[*] Direct Verification Link:")
-    print(f"{Fore.WHITE}  ➤ {LINK} (Password: {PASS})")
-    print(f"\n{Fore.GREEN}================ SCAN COMPLETE ================")
+    # Core Engines (Sirf Found data hi screen par aayega)
+    run_engine(f"sherlock {target} --timeout 1 --print-found", "Social Media")
+    run_engine(f"holehe {target} --only-used", "Email Leak")
+
+    print(f"\n{Fore.CYAN}================ SCAN FINISHED ================")
 
 if __name__ == "__main__":
     main()
