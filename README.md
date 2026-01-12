@@ -1,16 +1,23 @@
 # osint
 
 
-# Tor aur SOCKS support install karein
-sudo apt-get update --fix-missing
-sudo apt-get install -y tor torsocks python3-pip
+# Home directory mein move karein aur purana folder saaf karein
+cd /home/kali && rm -rf osint
 
-# Pip dependencies install karein (No deletion mode)
-python3 -m pip install --user --break-system-packages --ignore-installed requests[socks] colorama beautifulsoup4 lxml jinja2 pdfkit
+# Repo clone karein
+git clone https://github.com/Khalidhusain786/osint.git && cd osint
 
-# Permission de kar installer run karein
+# System updates aur core tools
+sudo apt-get update && sudo apt-get install -y tor torsocks python3-pip nodejs npm
+
+# Python libraries (Kali Linux ke naye rules ke mutabik)
+python3 -m pip install --user --break-system-packages requests[socks] colorama beautifulsoup4 lxml jinja2 pdfkit sherlock maigret
+
+# Social-Analyzer global install
+sudo npm install -g social-analyzer
+
+# Installer ko permission de kar run karein
 chmod +x install.sh
 sudo ./install.sh
 
-# Final Tool Execution
-python3 khalid-osint.py
+cd /home/kali/osint && python3 khalid-osint.py
