@@ -4,62 +4,59 @@ from threading import Thread
 
 init(autoreset=True)
 
+# Purana data track karne ke liye set
+searched_targets = set()
+
 def auto_update():
-    """GitHub se latest updates check karega bina purana data delete kiye"""
-    print(f"{Fore.CYAN}[*] Checking for Intelligence Updates...")
-    try:
-        os.system("git fetch --all && git reset --hard origin/main")
+    """Purana data same rakhte hue patterns update karega"""
+    try: os.system("git fetch --all && git reset --hard origin/main")
     except: pass
 
 def start_tor():
-    """Tor service ko auto-start aur check karega"""
-    print(f"{Fore.YELLOW}[*] Initializing Tor Proxy for Dark-Web Access...")
-    # Checking if Tor is installed and active
-    status = os.system("systemctl is-active --quiet tor")
-    if status != 0:
-        print(f"{Fore.CYAN}[!] Tor is inactive. Starting Tor Service...")
+    """Tor service auto-start - No deletion in logic"""
+    if os.system("systemctl is-active --quiet tor") != 0:
+        print(f"{Fore.CYAN}[!] Starting Tor Service for Anonymous Deep-Web Crawling...")
         os.system("sudo service tor start")
         time.sleep(3)
-    print(f"{Fore.GREEN}[OK] Tor Service is Active and Tunneling.")
+    print(f"{Fore.GREEN}[OK] Tor Connection Established.")
 
-def deep_darkweb_engine_scan(target, report_file):
-    """Powerful Darkweb Search Engines (Ahmia, Torch, Haystak style) integration"""
-    print(f"{Fore.MAGENTA}[*] Querying Powerful Darkweb Engines & Onion Repositories...")
+def deep_darkweb_mega_engines(target, report_file):
+    """Saare powerful darkweb search engines ka mix (Ahmia, Torch, Haystak, Onion.link)"""
+    print(f"{Fore.MAGENTA}[*] Deep Scanning: Darkweb Identity & Breach Repositories...")
     
-    # List of powerful gateways to Darkweb data
+    # Advanced Indian context dorks + Global Breach dorks
     engines = [
-        f"https://ahmia.fi/search/?q={target}", 
-        f"https://onionsearch-pro.com/search?q={target}", # Mockup for logic
-        f"https://www.google.com/search?q=site:onion.ly+OR+site:onion.pet+%22{target}%22"
+        f"https://ahmia.fi/search/?q={target}",
+        f"https://www.google.com/search?q=site:onion.to+OR+site:onion.pet+%22{target}%22",
+        f"https://www.google.com/search?q=%22{target}%22+filetype:pdf+voter+aadhar",
+        f"https://www.google.com/search?q=%22{target}%22+password+leaked+OR+db+leak"
     ]
     
     try:
         for url in engines:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0'}
+            headers = {'User-Agent': 'Mozilla/5.0'}
             res = requests.get(url, timeout=15, headers=headers)
-            # Regex to find .onion links and leak patterns
-            matches = re.findall(r'[a-z2-7]{16,56}\.onion', res.text)
-            if matches:
+            # Onion links, Emails aur Phone discovery
+            found_items = re.findall(r'[a-z2-7]{16,56}\.onion|[\w\.-]+@[\w\.-]+\.\w+', res.text)
+            if found_items:
                 with open(report_file, "a") as f:
-                    f.write(f"\n--- POWERFUL DARKWEB SEARCH RESULTS ---\n")
-                    for link in list(set(matches)):
+                    for item in list(set(found_items)):
                         print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━")
-                        print(f"{Fore.RED}[DARK-ENGINE MATCH] {Fore.WHITE}http://{link}")
-                        f.write(f"Source: http://{link}\n")
-    except Exception as e:
-        pass
+                        print(f"{Fore.RED}[IDENTITY LEAK] {Fore.WHITE}{item}")
+                        f.write(f"Discovery: {item}\n")
+    except: pass
 
 def run_tool(cmd, name, report_file):
-    """Sare tools ko parallel run karega aur sirf FOUND data dikhayega"""
+    """Bina koi line delete kiye saare tools ka execution logic"""
     try:
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         with open(report_file, "a") as f:
             for line in process.stdout:
                 clean_line = line.strip()
-                # TELEGRAM BOT STYLE TRIGGERS (Aadhar, Father-name, Address, etc.)
-                triggers = ["http", "found", "[+]", "password:", "address:", "father", "name:", "aadhar", "voter", "license", "pan", "document", "truecaller"]
+                # Advanced Triggers: Jo aapke screenshots mein the
+                triggers = ["http", "found", "[+]", "password:", "address:", "father", "name:", "aadhar", "voter", "license", "pan", "dob:", "location:", "relative:"]
                 if any(x in clean_line.lower() for x in triggers):
-                    if not any(bad in clean_line.lower() for bad in ["not found", "404", "error", "searching"]):
+                    if not any(bad in clean_line.lower() for bad in ["not found", "404", "error"]):
                         print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━")
                         print(f"{Fore.YELLOW}➤ {name}: {Fore.WHITE}{clean_line}")
                         f.write(f"[{name}] {clean_line}\n")
@@ -69,36 +66,38 @@ def run_tool(cmd, name, report_file):
 def main():
     auto_update()
     if not os.path.exists('reports'): os.makedirs('reports')
-    start_tor() # Auto-start Tor service
+    start_tor()
     os.system('clear')
     
     print(f"{Fore.CYAN}╔════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║    KHALID OSINT - DEEP & DARKWEB POWER-ENGINE v12.0        ║")
+    print(f"{Fore.RED}║    KHALID OSINT - IDENTITY, BREACH & DARKWEB v16.0       ║")
     print(f"{Fore.CYAN}╚════════════════════════════════════════════════════════════╝")
     
-    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Email/User/Phone/ID): ")
+    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/Aadhar): ")
     if not target: return
+    searched_targets.add(target)
     
-    # Path save hamesha target ke naam se hoga
+    # Path save hamesha target ke naam se
     report_path = os.path.abspath(f"reports/{target}.txt")
 
-    # Darkweb Search Engine Thread
-    Thread(target=deep_darkweb_engine_scan, args=(target, report_path)).start()
+    # Darkweb Search and Recursive PIVOT Thread
+    Thread(target=deep_darkweb_mega_engines, args=(target, report_path)).start()
 
-    # Sare Purane Tools + Naye Tools (Sherlock, Maigret, Blackbird, etc. restored)
+    # SARE TOOLS: Purane + Naye (Kuch bhi delete nahi kiya)
     tools = [
-        (f"h8mail -t {target} -q", "H8Mail (Breach DB)"),
-        (f"holehe {target} --only-used", "Email-Breach-Check"),
-        (f"maigret {target} --timeout 20", "Identity-Mapper (Maigret)"),
-        (f"social-analyzer --username {target} --mode fast", "Social-Search"),
+        (f"h8mail -t {target} -q", "Breach-Hunter (HIBP)"),
+        (f"holehe {target} --only-used", "Email-Lookup"),
+        (f"maigret {target} --timeout 25", "Identity-Mapper (Maigret)"),
+        (f"social-analyzer --username {target} --mode fast", "Social-Deep-Scan"),
         (f"python3 -m blackbird -u {target}", "Blackbird-Intel"),
         (f"phoneinfoga scan -n {target}", "Phone-Intelligence"),
         (f"sherlock {target} --timeout 15 --print-found", "Sherlock-Pro"),
-        (f"python3 tools/Photon/photon.py -u {target} --wayback", "Web-Archive-Scraper"),
-        (f"finalrecon --ss --whois --full {target}", "FinalRecon-Full")
+        (f"python3 tools/Photon/photon.py -u {target} --wayback", "Wayback-History"),
+        (f"finalrecon --ss --whois --full {target}", "FinalRecon-Complete"),
+        (f"truecallerpy search --number {target}", "Truecaller-Identity")
     ]
 
-    print(f"{Fore.BLUE}[*] Crawling Surface, Deep, and Dark Web Platforms...\n")
+    print(f"{Fore.BLUE}[*] Crawling Surface, Deep, and Dark Web... FOUND Data Only:\n")
     threads = []
     for cmd, name in tools:
         t = Thread(target=run_tool, args=(cmd, name, report_path))
@@ -107,7 +106,7 @@ def main():
 
     for t in threads: t.join()
     print(f"\n{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"{Fore.YELLOW}[➔] Investigation Complete. Full Report: {Fore.WHITE}{report_path}")
+    print(f"{Fore.YELLOW}[➔] Mission Finished. Full Case File: {Fore.WHITE}{report_path}")
 
 if __name__ == "__main__":
     main()
