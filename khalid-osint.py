@@ -4,43 +4,41 @@ from threading import Thread
 
 init(autoreset=True)
 
-# Tor Proxy Setup (Agar Tor Browser ya Service on hai)
-proxies = {
-    'http': 'socks5h://127.0.0.1:9050',
-    'https': 'socks5h://127.0.0.1:9050'
-}
-
-def search_darkweb_engines(target, report_file):
-    """Ahmia aur Onion indexes se data nikalne ke liye"""
-    print(f"{Fore.MAGENTA}[*] Deep Searching Darkweb (Onion Indexes) for: {target}")
+def search_breach_logs(target, report_file):
+    """Deep search for leaks in Pastebin, Ahmia, and public archives"""
+    print(f"{Fore.MAGENTA}[*] Checking Data-Breach Logs & Darkweb Archives...")
     
-    # Ahmia Search (Clear-web gateway to Onion)
-    ahmia_url = f"https://ahmia.fi/search/?q={target}"
+    # Ahmia (Darkweb Index) aur Google Dorks ka combination
+    search_engines = [
+        f"https://ahmia.fi/search/?q={target}",
+        f"https://www.google.com/search?q=site:pastebin.com+%22{target}%22"
+    ]
+    
     try:
-        res = requests.get(ahmia_url, timeout=10)
-        onions = re.findall(r'[a-z2-7]{16,56}\.onion', res.text)
-        
-        if onions:
-            with open(report_file, "a") as f:
-                f.write(f"\n--- DARK WEB LEAKS ---\n")
-                for link in list(set(onions)):
-                    output = f"{Fore.GREEN}[ONION LINK] Found: {Fore.WHITE}http://{link}"
-                    print(output)
-                    f.write(f"{link}\n")
+        for url in search_engines:
+            res = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
+            # Link extraction for onion and leaks
+            leaks = re.findall(r'[a-z2-7]{16,56}\.onion|pastebin\.com/[a-zA-Z0-9]+', res.text)
+            if leaks:
+                with open(report_file, "a") as f:
+                    for leak in list(set(leaks)):
+                        print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━")
+                        print(f"{Fore.RED}[DATA LEAK] {Fore.WHITE}{leak}")
+                        f.write(f"Leak Source: {leak}\n")
     except: pass
 
 def run_tool(cmd, name, report_file):
     try:
-        # Standard output aur errors handle karna
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         with open(report_file, "a") as f:
             for line in process.stdout:
                 clean_line = line.strip()
-                # Strict Data Triggers
-                if any(x in clean_line.lower() for x in ["http", "found", "[+]", "password:", "address:", "father", "leaked:"]):
+                # TELEGRAM BOT STYLE FILTER: Sirf 'Found' data dikhayega
+                triggers = ["http", "found", "[+]", "password:", "address:", "father", "name:", "location:"]
+                if any(x in clean_line.lower() for x in triggers):
                     if not any(bad in clean_line.lower() for bad in ["not found", "404", "error", "searching"]):
                         print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━")
-                        print(f"{Fore.YELLOW}[+] {name}: {Fore.WHITE}{clean_line}")
+                        print(f"{Fore.YELLOW}➤ {name}: {Fore.WHITE}{clean_line}")
                         f.write(f"{name}: {clean_line}\n")
         process.wait()
     except: pass
@@ -50,28 +48,28 @@ def main():
     os.system('clear')
     
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║   KHALID OSINT v5.0 - DEEP & DARKWEB MONSTER     ║")
+    print(f"{Fore.RED}║     KHALID OSINT - BREACH & DARKWEB BOT v6.0     ║")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════╝")
     
-    target = input(f"\n{Fore.WHITE}❯❯ Enter Target ID/Email/Phone: ")
+    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Email/User/Phone): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
 
-    # Darkweb Search background mein trigger
-    Thread(target=search_darkweb_engines, args=(target, report_path)).start()
+    # Breach Logs Search in Background
+    Thread(target=search_breach_logs, args=(target, report_path)).start()
 
-    # Sabse powerful GitHub aur CLI tools ka combination
+    # Sabse Powerful Breach & OSINT Tools
     tools = [
+        (f"h8mail -t {target} -q", "H8Mail (Breach Search)"),
+        (f"holehe {target} --only-used", "Email-Breach-Check"),
         (f"social-analyzer --username {target} --mode fast", "Social-Analyzer"),
-        (f"h8mail -t {target} -q", "Breach-Hunter (HIBP)"),
-        (f"holehe {target} --only-used", "Email-Lookup"),
         (f"maigret {target} --timeout 15 --no-recursion", "Deep-ID (Maigret)"),
-        (f"phoneinfoga scan -n {target}", "Phone-Intelligence"),
-        (f"python3 -m blackbird -u {target}", "Blackbird-DB"),
+        (f"python3 -m blackbird -u {target}", "Blackbird-Intelligence"),
+        (f"phoneinfoga scan -n {target}", "Phone-Lookup"),
         (f"sherlock {target} --timeout 5 --print-found", "Sherlock")
     ]
 
-    print(f"{Fore.BLUE}[*] Accessing Darkweb Nodes & Global Databases...\n")
+    print(f"{Fore.BLUE}[*] Fetching data from 500+ Breach Databases...\n")
     threads = []
     for cmd, name in tools:
         t = Thread(target=run_tool, args=(cmd, name, report_path))
@@ -79,8 +77,8 @@ def main():
         threads.append(t)
 
     for t in threads: t.join()
-    print(f"\n{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"{Fore.YELLOW}[➔] Investigation Finished. Results: {report_path}")
+    print(f"\n{Fore.YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f"{Fore.GREEN}[➔] Scan Complete. Results Saved in: {report_path}")
 
 if __name__ == "__main__":
     main()
