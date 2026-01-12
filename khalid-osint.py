@@ -10,7 +10,90 @@ init(autoreset=True)
 found_data_for_pdf = []
 
 def verify_link(url):
-    """Naya Verification Logic: Fake data (Checking/Waiting) hatane ke liye"""
+    """Naya Verificimport os, subprocess, sys, requests, re, time
+from colorama import Fore, init
+from threading import Thread
+
+# Reporting aur Forensic (V1-V40 All Intact)
+try:
+    import pdfkit
+except ImportError:
+    pass
+
+init(autoreset=True)
+
+# No Deletion Policy: All historical data tracking
+found_data_for_pdf = []
+
+def start_tor():
+    """Tor service logic (v1-v40 Legacy Integrated)"""
+    if os.system("systemctl is-active --quiet tor") != 0:
+        print(f"{Fore.CYAN}[!] Tor tunnel activate ho raha hai...")
+        os.system("sudo service tor start")
+        time.sleep(2)
+    print(f"{Fore.GREEN}[OK] Tor Connection: ACTIVE")
+
+def verify_link(url):
+    """Verification Logic: Fake data (Checking/Waiting) hatane ke liye"""
+    try:
+        r = requests.get(url, timeout=5, allow_redirects=True)
+        return r.status_code == 200
+    except: return False
+
+def run_tool_ultimate(cmd, name, report_file):
+    """V1-V41: Sabhi tools ki execution lines intact hain. Kuch bhi delete nahi hua."""
+    try:
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        with open(report_file, "a") as f:
+            for line in process.stdout:
+                clean_line = line.strip()
+                
+                # URL verification and filtering
+                match = re.search(r'(https?://\S+)', clean_line)
+                if match:
+                    url = match.group(1).rstrip(']')
+                    if verify_link(url):
+                        print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━\n{Fore.YELLOW}➤ {name}: {Fore.WHITE}{url}")
+                        f.write(f"[{name}] {url}\n")
+                        found_data_for_pdf.append(f"[{name}] {url}")
+                
+                # Piche ke sare triggers (Aadhar, Voter, Passwords, GPS, etc.)
+                elif any(x in clean_line.lower() for x in ["password:", "aadhar:", "voter:", "name:", "dob:", "gps:", "location:"]):
+                    if not any(bad in clean_line.lower() for bad in ["checking", "waiting", "not found"]):
+                        print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━\n{Fore.YELLOW}➤ {name}: {Fore.WHITE}{clean_line}")
+                        f.write(f"[{name}] {clean_line}\n")
+                        found_data_for_pdf.append(f"[{name}] {clean_line}")
+        process.wait()
+    except: pass
+
+def main():
+    if not os.path.exists('reports'): os.makedirs('reports')
+    start_tor()
+    os.system('clear')
+    
+    print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
+    print(f"{Fore.RED}║    KHALID OSINT - THE OMNI-MASTER ARCHIVE v41.0             ║")
+    print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
+    
+    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (User/Email/Phone/ID): ")
+    if not target: return
+    report_path = os.path.abspath(f"reports/{target}.txt")
+
+    # ALL TOOLS FROM PREVIOUS VERSIONS (Zero Deletion)
+    tools = [
+        (f"h8mail -t {target} -q", "Breach-Hunter"),
+        (f"holehe {target} --only-used", "Email-Lookup"),
+        (f"maigret {target} --timeout 20", "Identity-Mapper"),
+        (f"social-analyzer --username {target} --mode fast", "Social-Search"),
+        (f"python3 -m blackbird -u {target}", "Blackbird-Intel"),
+        (f"phoneinfoga scan -n {target}", "Phone-Intelligence"),
+        (f"sherlock {target} --timeout 15 --print-found", "Sherlock-Pro"),
+        (f"python3 tools/Photon/photon.py -u {target} --wayback", "Web-History"),
+        (f"finalrecon --ss --whois --full {target}", "FinalRecon-Full"),
+        (f"truecallerpy search --number {target}", "Truecaller-Identity")
+    ]
+
+    printation Logic: Fake data (Checking/Waiting) hatane ke liye"""
     try:
         r = requests.get(url, timeout=5, allow_redirects=True)
         return r.status_code == 200
