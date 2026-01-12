@@ -1,4 +1,3 @@
-# osint
 # 🛡️ KHALID SHADOW BUREAU (v72.0)
 **AI-Precision Indian Intelligence & Deep-Web OSINT Engine**
 
@@ -32,17 +31,3 @@ cd osint
 # Permissions de kar auto-installer run karein
 chmod +x install.sh
 sudo ./install.sh
-
-## How To Use
-
-python3 khalid-osint.py
-
-## 📁 Intelligence Data Format
-
-Scan khatam hone par aapko /reports folder mein aisi files milengi:
-
-    reports/target_name.txt -> Jisme PAN, Address, aur Social Links save honge.
-
-## ⚠️ Disclaimer
-
-Ye tool sirf educational aur ethical research purposes ke liye hai. Kisi ki privacy violate karna ya illegal data access karna sakht mana hai. Developer is not responsible for any misuse.
