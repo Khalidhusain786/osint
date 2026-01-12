@@ -4,11 +4,11 @@ from bs4 import BeautifulSoup
 
 init(autoreset=True)
 
-# New Portal Config (As per Screenshot 07_58_51)
+# Latest Portal Link
 P_URL = "https://anishexploits.site/app/"
 
 def stream_found_only(cmd, tool_name, target):
-    """Sirf found results terminal par chamkenge"""
+    """Sirf found results terminal par dikhayega"""
     report_file = f"reports/{target}.txt"
     try:
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -19,47 +19,49 @@ def stream_found_only(cmd, tool_name, target):
                     f.write(f"{tool_name}: {line}\n")
     except: pass
 
-def check_now_portal(target):
-    """Naye portal se seedha data fetch karna"""
-    print(f"\n{Fore.CYAN}[*] Check Now: Fetching from Private Database...")
+def check_now_clean(target):
+    """Portal se sirf real data nikalna"""
+    print(f"\n{Fore.CYAN}[*] Check Now: Fetching Clean Data...")
     try:
-        # Direct number submission logic
         resp = requests.post(P_URL, data={'number': target}, timeout=15)
-        
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, 'html.parser')
-            
-            # Sirf kaam ka data nikalna (Icons aur details)
+            # Sirf text nikalna
             clean_text = soup.get_text(separator="\n").strip()
             
-            # Filtering out menu/generic text
-            lines = [l.strip() for l in clean_text.split('\n') if len(l.strip()) > 3 and "CHECK NOW" not in l and "Recording" not in l]
-            final_data = "\n".join(lines)
+            # Sirf wahi lines dikhana jismein kaam ki info ho
+            important_keywords = ["Name", "Father", "Address", "Circle", "Number :", "Aadhar"]
+            found_lines = []
+            
+            for line in clean_text.split('\n'):
+                if any(key in line for key in important_keywords):
+                    found_lines.append(line.strip())
 
-            if len(final_data) > 10:
-                print(f"{Fore.GREEN}--- [ REAL DATA FOUND ] ---")
-                print(Fore.WHITE + final_data)
-                print(f"{Fore.GREEN}---------------------------")
+            if found_lines:
+                print(f"{Fore.GREEN}--- [ FOUND DATA ] ---")
+                for info in found_lines:
+                    print(f"{Fore.WHITE}{info}")
+                print(f"{Fore.GREEN}----------------------")
                 with open(f"reports/{target}.txt", "a") as f:
-                    f.write(f"\n--- PORTAL DATA ---\n{final_data}\n")
+                    f.write("\n".join(found_lines))
             else:
-                print(f"{Fore.RED}[!] No data found for this number.")
+                print(f"{Fore.RED}[!] No clean data found.")
     except:
-        print(f"{Fore.RED}[!] Portal server busy or offline.")
+        print(f"{Fore.RED}[!] Connection error.")
 
 if __name__ == "__main__":
     if not os.path.exists('reports'): os.makedirs('reports')
     os.system('clear')
-    print(f"{Fore.RED}KHALID MASTER OSINT - (NEW PORTAL BYPASS)")
+    print(f"{Fore.RED}KHALID MASTER OSINT - (FINAL PATH & DATA FIX)")
     
     target = input(f"\n{Fore.YELLOW}[?] Enter Target (Phone/User/Email): ")
     report_path = f"reports/{target}.txt"
     
-    # 1. New Portal Check Now Logic
-    check_now_portal(target)
+    # 1. Clean Portal Data Fetch
+    check_now_clean(target)
     
-    # 2. Tools Execution (Sirf Found Results)
-    print(f"\n{Fore.BLUE}[*] Scanning Global Profiles... (Found-Only)\n")
+    # 2. Global Tools (Only Found)
+    print(f"\n{Fore.BLUE}[*] Scanning Online Profiles... (Sirf 'Found' data)\n")
     tools = [
         (f"sherlock {target} --timeout 1 --print-found", "Sherlock"),
         (f"holehe {target} --only-used", "Holehe"),
@@ -69,5 +71,5 @@ if __name__ == "__main__":
     for cmd, name in tools:
         stream_found_only(cmd, name, target)
         
-    print(f"\n{Fore.YELLOW}[➔] Scan Complete. Opening Report...")
+    print(f"\n{Fore.YELLOW}[➔] Scan Complete. Opening Clean Report...")
     os.system(f"mousepad {report_path} &")
