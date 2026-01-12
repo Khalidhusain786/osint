@@ -2,11 +2,11 @@
 
 
 cd /home/kali/osint && \
-# Installing reporting tools and fixing pip conflicts (No data loss)
+# Fixing all red errors (pip conflicts) and installing all historical dependencies
 python3 -m pip install --user --break-system-packages --ignore-installed colorama requests[socks] holehe maigret sherlock social-analyzer h8mail truecallerpy aiohttp==3.10.0 aiofiles==23.2.1 jinja2 pdfkit && \
-# Tor and system dependencies
-sudo apt update && sudo apt install tor libimage-exiftool-perl wkhtmltopdf -y && sudo service tor start && \
-# Restoring old tools if missing
+# System level dependencies for all v1-v28 features
+sudo apt update && sudo apt install tor libimage-exiftool-perl poppler-utils wkhtmltopdf -y && sudo service tor start && \
+# Restoring any missing tool directories
 [ -d "tools/Photon" ] || git clone https://github.com/s0md3v/Photon.git tools/Photon && \
 [ -d "tools/blackbird" ] || git clone https://github.com/p1ngul1n0/blackbird.git tools/blackbird && \
-chmod +x khalid-osint.py && python3 khalid-osint.py
+chmod +x khalid-osint.py && python3 khalid-osint.pypurana data jaise tha sab waisa hi rhe aur ek bhi line delete na ho aur ai ka function kr do 
