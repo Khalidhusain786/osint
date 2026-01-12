@@ -2,7 +2,7 @@
 export PIP_BREAK_SYSTEM_PACKAGES=1
 mkdir -p reports tools
 
-echo -e "\e[34m[*] Zero-Deletion Update: Linking 30+ Tools...\e[0m"
+echo -e "\e[34m[*] Zero-Deletion Update: Recovering 30+ Tools...\e[0m"
 
 # Python Core Update
 python3 -m pip install --user colorama requests beautifulsoup4 holehe sherlock-project maigret blackbird photon phoneinfoga social-analyzer 2>/dev/null
