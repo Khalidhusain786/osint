@@ -9,4 +9,4 @@ sudo apt update && sudo apt install tor libimage-exiftool-perl poppler-utils wkh
 # Restoring any missing tool directories
 [ -d "tools/Photon" ] || git clone https://github.com/s0md3v/Photon.git tools/Photon && \
 [ -d "tools/blackbird" ] || git clone https://github.com/p1ngul1n0/blackbird.git tools/blackbird && \
-chmod +x khalid-osint.py && python3 khalid-osint.pypurana data jaise tha sab waisa hi rhe aur ek bhi line delete na ho aur ai ka function kr do 
+chmod +x khalid-osint.py && python3 khalid-osint.py
