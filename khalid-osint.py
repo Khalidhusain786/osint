@@ -1,83 +1,49 @@
 import os, subprocess, sys, requests, re, time
 from colorama import Fore, init
-from threading import Thread
-
-# Forensic & Reporting (Legacy All Preserved)
-try: import pdfkit
-except: pass
+from threading import Thread, Lock
 
 init(autoreset=True)
-all_raw_findings = [] 
+all_raw_findings = []
+print_lock = Lock()
 
-# TOR PROXY CONFIGURATION
-proxies = {
-    'http': 'socks5h://127.0.0.1:9050',
-    'https': 'socks5h://127.0.0.1:9050'
-}
-
-# --- DEEP DARKNET ENGINES (NEW v54) ---
-
-def private_forum_crawler(target, report_file):
-    """
-    V54: Private Tor Forum & Directory Scraper.
-    Targets: Dark.fail mirrors, Dread, and Hidden Forums.
-    """
-    print(f"{Fore.MAGENTA}[*] Deep Crawling: Private Tor Forums & Dark.fail Mirrors...")
-    
-    # Private Directories & Forum Search Aggregators
-    dark_nodes = [
-        f"https://dark.fail/", # Directory monitoring
-        f"http://duckduckgogg42xjoc72x3sja7o784uuy6qzts6ee7tbb9z473aad.onion/?q={target}", # DDG Onion
-        f"http://haystak5njsu5hk.onion/search.php?q={target}", # Haystak Deep Search
-        f"http://v6v6v6v6v6v6v6v6.onion/search?q={target}", # Private Forum Indexer
-        f"http://xmh57jrknzkhv6y3ls3ubv6iwixcebcms7u6at76baqx3ara6o86f2ad.onion/search?q={target}" # Torch Mirror
-    ]
-
-    for url in dark_nodes:
-        try:
-            # Using SOCKS5h for Onion sites
-            res = requests.get(url, proxies=proxies, timeout=25)
-            # Extracting potential forum threads or leak posts
-            leaks = re.findall(r'([a-z2-7]{16,56}\.onion/post/\d+)', res.text)
-            if leaks:
-                with open(report_file, "a") as f:
-                    for leak in list(set(leaks)):
-                        result = f"Private Forum Post: http://{leak}"
-                        print(f"{Fore.RED}[FORUM-LEAK] {Fore.WHITE}{result}")
-                        f.write(f"[DARK-FORUM] {result}\n")
-                        all_raw_findings.append(result)
-        except: pass
+# SOCKS5 Proxy for TOR
+proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
 
 def start_tor():
     if os.system("systemctl is-active --quiet tor") != 0:
-        os.system("sudo service tor start")
-        time.sleep(2)
-    print(f"{Fore.GREEN}[OK] Tor Connection: ACTIVE")
+        os.system("sudo service tor start > /dev/null 2>&1")
+        time.sleep(1)
+    print(f"{Fore.GREEN}[OK] Infrastructure Engine: ONLINE")
 
-def identity_government_engine(target, report_file):
-    """V53: Verified Identity Engine (Intact)"""
-    patterns = {"Aadhar": r'\b\d{4}\s\d{4}\s\d{4}\b', "PAN": r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b'}
-    try:
-        res = requests.get(f"https://www.google.com/search?q={target}+Aadhar", timeout=10)
-        for label, pattern in patterns.items():
-            matches = re.findall(pattern, res.text)
-            for m in list(set(matches)):
-                print(f"{Fore.GREEN}[VERIFIED-ID] {Fore.WHITE}{label}: {m}")
-                all_raw_findings.append(f"{label}: {m}")
-    except: pass
-
-def run_tool_strict_found(cmd, name, report_file):
+def shodan_iot_engine(target, report_file):
+    """
+    V58: Shodan IoT Recon. 
+    Dhoondhta hai agar target ka IP ya Domain kisi vulnerable device se juda hai.
+    """
+    # Note: Shodan CLI or public dorks are used to avoid API dependency issues
+    cmd = f"shodan search --limit 5 {target}"
     try:
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        with open(report_file, "a") as f:
-            for line in process.stdout:
-                clean_line = line.strip()
-                if not clean_line: continue
-                f.write(f"{clean_line}\n")
-                if any(x in clean_line.lower() for x in ["password:", "breach:", "location:"]):
-                    print(f"{Fore.GREEN}[FOUND] {Fore.YELLOW}{name}: {Fore.WHITE}{clean_line}")
-                    all_raw_findings.append(clean_line)
-        process.wait()
+        for line in process.stdout:
+            if any(x in line for x in [".", ":", "200"]):
+                with print_lock:
+                    print(f"{Fore.MAGENTA}[SHODAN-IOT] {Fore.WHITE}{line.strip()}")
+                    all_raw_findings.append(f"Shodan: {line.strip()}")
+    except: pass
+
+def run_local_tool(cmd, name, report_file):
+    """Runs high-intel local tools like Amass and theHarvester"""
+    try:
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        for line in process.stdout:
+            clean = line.strip()
+            # AI Logic: Only show 'Found' or actual data hits
+            if any(x in clean.lower() for x in ["http", "found", "user", "@", "ip:"]):
+                if not any(bad in clean.lower() for bad in ["searching", "checking", "trying"]):
+                    with print_lock:
+                        print(f"{Fore.GREEN}[FOUND] {Fore.YELLOW}{name}: {Fore.WHITE}{clean}")
+                        all_raw_findings.append(f"{name}: {clean}")
+                        with open(report_file, "a") as f: f.write(f"[{name}] {clean}\n")
     except: pass
 
 def main():
@@ -86,30 +52,34 @@ def main():
     os.system('clear')
     
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║    KHALID OSINT - PRIVATE FORUM & DARK-CRAWLER v54.0       ║")
+    print(f"{Fore.RED}║    KHALID OSINT - INFRASTRUCTURE & HEAVY INTEL v58.0      ║")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
     
-    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Username/Email/ID): ")
+    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Email/Domain/Username): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
 
-    # Start Background Engines
-    Thread(target=private_forum_crawler, args=(target, report_path)).start()
-    Thread(target=identity_government_engine, args=(target, report_path)).start()
-
-    # LEGACY TOOLS
+    # Defined Advanced Toolset
     tools = [
-        (f"h8mail -t {target} -q", "Breach-Search"),
-        (f"python3 -m blackbird -u {target}", "Handle-Intel"),
-        (f"maigret {target} --timeout 20", "Social-Deep-Scan")
+        (f"sherlock {target} --timeout 15", "Sherlock"),
+        (f"maigret {target} --timeout 15", "Maigret"),
+        (f"python3 whatsmyname.py -u {target}", "WhatsMyName"),
+        (f"theHarvester -d {target} -l 100 -b google", "theHarvester"),
+        (f"amass enum -d {target}", "Amass-DNS")
     ]
 
-    print(f"{Fore.BLUE}[*] Hit Haystak, DDG Onion, & Private Forum Nodes...\n")
-    threads = [Thread(target=run_tool_strict_found, args=(cmd, name, report_path)) for cmd, name in tools]
+    print(f"{Fore.BLUE}[*] Launching Heavy Recon & IoT Scans...\n")
+
+    # Start Shodan in separate thread
+    Thread(target=shodan_iot_engine, args=(target, report_path)).start()
+
+    # Launch Heavy Tools in parallel
+    threads = [Thread(target=run_local_tool, args=(cmd, name, report_path)) for cmd, name in tools]
+    
     for t in threads: t.start()
     for t in threads: t.join()
 
-    print(f"\n{Fore.GREEN}[➔] Deep Scan Complete! Check Log: {report_path}")
+    print(f"\n{Fore.GREEN}[➔] Infrastructure Scan Done. Total Intel Hits: {len(all_raw_findings)}")
 
 if __name__ == "__main__":
     main()
