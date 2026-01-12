@@ -19,18 +19,13 @@ SURE_HITS = {
     "Address": r"(?i)(Gali\s?No|House\s?No|H\.No|Plot\s?No|Floor|Sector|Ward|Tehsil|District|Resident|PIN:)"
 }
 
-# --- BETTER ONION PROXY CONFIGURATION ---
 def get_onion_session():
-    """Majboot Onion Proxy Session with Auto-Retry"""
     session = requests.Session()
-    # Socks5h use kar rahe hain taaki DNS leak na ho
     proxies = {
         'http': 'socks5h://127.0.0.1:9050',
         'https': 'socks5h://127.0.0.1:9050'
     }
     session.proxies.update(proxies)
-    
-    # Retry logic agar connection slow ho (Deep Web common issue)
     retry_strategy = Retry(
         total=3,
         backoff_factor=1,
@@ -46,15 +41,15 @@ headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Ge
 def start_tor():
     if os.system("systemctl is-active --quiet tor") != 0:
         os.system("sudo service tor start > /dev/null 2>&1")
-    # Tor check ke liye test request
     try:
         test_session = get_onion_session()
         test_session.get("http://check.torproject.org", timeout=10)
         print(f"{Fore.GREEN}[OK] Ghost Tunnel: HIGH-SPEED ACTIVE")
     except:
-        print(f"{Fore.RED}[!] Tor is running but connection is weak. Check 'torrc' settings.")
+        print(f"{Fore.RED}[!] Tor is running but connection is weak.")
 
 def clean_and_verify(raw_html, target, report_file, source_label):
+    """FIXED: More accurate detection to show hidden data"""
     try:
         soup = BeautifulSoup(raw_html, 'lxml')
         for script in soup(["script", "style", "nav", "header", "footer", "aside"]): 
@@ -65,11 +60,9 @@ def clean_and_verify(raw_html, target, report_file, source_label):
 
         for line in lines:
             line = line.strip()
-            if len(line) < 10: continue
+            if len(line) < 5: continue
             
-            noise_words = ["skip to content", "mobile english", "one last step", "javascript", "browser"]
-            if any(noise in line.lower() for noise in noise_words): continue
-
+            # Smart Filtering: Target ya koi ID pattern milne par show karega
             id_found = False
             found_labels = []
             for label, pattern in SURE_HITS.items():
@@ -77,9 +70,15 @@ def clean_and_verify(raw_html, target, report_file, source_label):
                     id_found = True
                     found_labels.append(label)
 
+            # Agar target ka naam ya koi ID match ho, toh result show karein
             if (target.lower() in line.lower()) or id_found:
+                # Sirf Google ke technical kachre ko skip karein, real data ko nahi
+                if any(x in line.lower() for x in ["one last step", "javascript is disabled"]):
+                    continue
+
                 with print_lock:
-                    display_text = line[:150].replace('\t', ' ').strip()
+                    # Clean output display
+                    display_text = line[:180].replace('\t', ' ').strip()
                     print(f"{Fore.RED}[{source_label}-FOUND] {Fore.WHITE}{display_text}")
                     if found_labels:
                         print(f"   {Fore.YELLOW}➔ Detected: {', '.join(found_labels)}")
@@ -123,10 +122,9 @@ def shadow_crawler_ai(target, report_file):
         f"https://psbdmp.ws/api/search/{target}",
         f"https://www.google.com/search?q=site:facebook.com+OR+site:instagram.com+%22{target}%22"
     ]
-    session = get_onion_session() # Optimized Session for Onion Sites
+    session = get_onion_session()
     for url in gateways:
         try:
-            # Use onion session for Ahmia or onion links
             res = session.get(url, timeout=20, headers=headers)
             clean_and_verify(res.text, target, report_file, "LEAK-DATA")
         except: pass
@@ -148,13 +146,13 @@ def main():
     start_tor()
     os.system('clear')
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║    KHALID SHADOW BUREAU - TG + ACCURATE MODE v74.0       ║")
+    print(f"{Fore.RED}║        KHALID HUSAIN INVESTIGATOR - ACCURATE MODE v74.0      ║")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
     if os.path.exists(report_path): os.remove(report_path)
-    print(f"{Fore.BLUE}[*] Scanning with Enhanced Onion Proxy...\n")
+    print(f"{Fore.BLUE}[*] Searching Hidden Records with Onion Proxy...\n")
     threads = [
         Thread(target=pdf_document_finder, args=(target, report_path)),
         Thread(target=telegram_dork_engine, args=(target, report_path)),
@@ -165,7 +163,7 @@ def main():
     ]
     for t in threads: t.start()
     for t in threads: t.join()
-    print(f"\n{Fore.GREEN}[➔] Scan Complete. Reports: {report_path}")
+    print(f"\n{Fore.GREEN}[➔] Scan Complete. Accurate Matches Saved: {report_path}")
 
 if __name__ == "__main__":
     main()
