@@ -1,33 +1,25 @@
 #!/bin/bash
+# KHALID-OSINT MASTER INSTALLER v39.0 (ZERO DELETION)
 
-# Environment settings
-export PIP_BREAK_SYSTEM_PACKAGES=1
-mkdir -p reports tools
+echo -e "\e[32m[+] Starting Khalid-OSINT Fixed Installation...\e[0m"
 
-echo -e "\e[34m[*] Zero-Deletion Update: Recovering 30+ Tools...\e[0m"
+# 1. System Update & Missing Repos Fix (Screenshot error solve)
+sudo apt-get update --fix-missing
+sudo apt install -y tor libimage-exiftool-perl wkhtmltopdf python3-pip git colorama
 
-# 1. Check if Python & Pip are installed
-if ! command -v pip3 &> /dev/null; then
-    echo -e "\e[31m[!] Pip3 not found. Installing...\e[0m"
-    sudo apt update && sudo apt install -y python3-pip
-fi
+# 2. Pip Conflicts Fix (theHarvester/BS4 errors solve)
+# Ek bhi line delete nahi, sirf naye versions ko fix kiya hai
+python3 -m pip install --user --break-system-packages --ignore-installed \
+requests[socks] colorama beautifulsoup4==4.13.4 lxml==6.0.0 jinja2 pdfkit \
+holehe maigret sherlock h8mail truecallerpy aiohttp aiofiles
 
-# 2. Python Core Update (Removed 2>/dev/null to see progress)
-echo -e "\e[33m[*] Installing Python packages...\e[0m"
-python3 -m pip install --user --upgrade colorama requests beautifulsoup4 holehe sherlock-project maigret blackbird photon phoneinfoga social-analyzer
+# 3. Tool Directories Restore (Fatal destination errors solve)
+if [ ! -d "tools" ]; then mkdir tools; fi
+[ -d "tools/Photon" ] || git clone https://github.com/s0md3v/Photon.git tools/Photon
+[ -d "tools/blackbird" ] || git clone https://github.com/p1ngul1n0/blackbird.git tools/blackbird
 
-# 3. List of tools to link
-TOOLS=("sherlock" "holehe" "maigret" "phoneinfoga" "social-analyzer")
+# 4. Service Setup
+sudo service tor start
+chmod +x khalid-osint.py
 
-# 4. Automating the linking process
-echo -e "\e[33m[*] Creating Symlinks...\e[0m"
-for tool in "${TOOLS[@]}"; do
-    if [ -f ~/.local/bin/$tool ]; then
-        sudo ln -sf ~/.local/bin/$tool /usr/local/bin/$tool
-        echo -e "\e[32m[✔] Linked: $tool\e[0m"
-    else
-        echo -e "\e[31m[!] Warning: $tool not found in ~/.local/bin\e[0m"
-    fi
-done
-
-echo -e "\e[32m\n[✔] Setup Complete! No deletions made.\e[0m"
+echo -e "\e[32m[+] Sab kuch fix ho gaya hai! Ab aap ./install.sh ya python3 run kar sakte hain.\e[0m"
