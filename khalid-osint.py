@@ -1,59 +1,63 @@
-import os, subprocess, time, requests
+import os, subprocess, requests, time
 from colorama import Fore, init
+
 init(autoreset=True)
 
 def check_tor():
-    # Check if TOR is running for IP hiding
     try:
         r = requests.get('https://check.torproject.org', proxies={'http':'socks5://127.0.0.1:9050', 'https':'socks5://127.0.0.1:9050'}, timeout=5)
-        if "Congratulations" in r.text:
-            return True
-    except:
-        return False
-    return False
+        return "Congratulations" in r.text
+    except: return False
 
-def master_framework():
+def run_layer(cmd, name, target, color):
+    print(f"{color}[*] Scanning {name} Layer...")
+    # Background execution with silent error handling
+    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    out = res.stdout + res.stderr
+    
+    # Logic: Agar kuch kaam ka mila toh hi dikhao
+    findings = [l.strip() for l in out.split('\n') if any(k in l.lower() for k in ["found", "http", "database", "leaked", "+", "user"])]
+    
+    if findings:
+        print(f"{Fore.GREEN}[✔] SUCCESS: {name} found data!")
+        with open(f"reports/{target}_full_report.txt", "a") as f:
+            f.write(f"\n--- {name} Results ---\n")
+            for line in findings:
+                if "404" not in line:
+                    print(f"{Fore.WHITE}  ➤ {line}")
+                    f.write(line + "\n")
+    else:
+        # Screen par kuch nahi dikhega agar data nahi mila
+        pass
+
+def master_scan():
     os.system('clear')
-    print(f"{Fore.RED}======================================================")
-    print(f"{Fore.RED}   KHALID ULTIMATE ALL-IN-ONE OSINT (TOR ENABLED)     ")
-    print(f"{Fore.RED}======================================================")
+    print(f"{Fore.RED}KHALID ULTIMATE OSINT: SURFACE | DEEP | DARK | GOV")
+    print("-" * 50)
     
-    tor_status = check_tor()
-    if tor_status:
-        print(f"{Fore.GREEN}[✔] TOR CONNECTED: Your IP is Hidden (Dark Web Active)")
-        proxy_cmd = "proxychains4 "
-    else:
-        print(f"{Fore.YELLOW}[!] TOR NOT FOUND: Using Surface Web Mode (IP Visible)")
-        proxy_cmd = ""
-
-    target = input(f"\n{Fore.WHITE}[+] Target (Phone/Aadhar/Voter/Email/Name): ")
-    print(f"{Fore.YELLOW}[*] Scanning Gov Mirrors, Dark Web & Social Databases...")
-
-    # Layer 1: Social & Telegram Bot Mirroring
-    res_social = subprocess.run(f"{proxy_cmd}maigret {target} --brief", shell=True, capture_output=True, text=True)
+    tor = check_tor()
+    proxy = "proxychains4 " if tor else ""
+    target = input(f"{Fore.YELLOW}[+] Enter Target: ")
     
-    # Layer 2: Breach & Deep Web (Aadhar/Voter/Vehicle Public Mirrors)
-    res_breach = subprocess.run(f"{proxy_cmd}holehe {target} --only-used", shell=True, capture_output=True, text=True)
+    # --- LAYER 1: SURFACE WEB (Google/Dorks) ---
+    # Har govt domain par check karega target ke liye
+    run_layer(f"googler --nocolor -n 5 -w gov.in \"{target}\"", "Gov-India Mirrors", target, Fore.CYAN)
+    run_layer(f"googler --nocolor -n 5 \"{target}\" leaked database", "Surface Web Leaks", target, Fore.CYAN)
 
-    # Layer 3: RTO/Gov/Truecaller Style Logic
-    res_gov = subprocess.run(f"social-analyzer --username {target} --mode fast", shell=True, capture_output=True, text=True)
+    # --- LAYER 2: DEEP WEB (Social & Account Footprints) ---
+    run_layer(f"{proxy}maigret {target} --brief", "Deep-Social", target, Fore.MAGENTA)
+    run_layer(f"holehe {target} --only-used", "Email-Breach", target, Fore.MAGENTA)
+    run_layer(f"social-analyzer --username {target} --mode fast", "Social-Analyzer", target, Fore.MAGENTA)
 
-    combined = res_social.stdout + res_breach.stdout + res_gov.stdout
+    # --- LAYER 3: DARK WEB (Tor Search Engines) ---
+    if tor:
+        # Ahmia (Darkweb search engine) ko query karna via proxy
+        run_layer(f"proxychains4 curl -s \"https://ahmia.fi/search/?q={target}\" | grep -o 'http[s]*://[^\" ]*'", "Dark-Web Index", target, Fore.RED)
 
-    # Logic: "Data Found" Notification
-    if any(k in combined for k in ["Found", "http", "@", "yes"]):
-        print(f"\n{Fore.GREEN}🔔 DATA FOUND (ALL-IN-ONE REPORT):")
-        print(Fore.WHITE + "═"*65)
-        
-        lines = combined.split('\n')
-        for line in lines:
-            if any(x in line for x in ["Found", "http", "used"]):
-                print(f"{Fore.CYAN}➤ {line.strip()}")
-        
-        print(f"\n{Fore.BLUE}[*] Deep Scan Status: Gov Records & Dark Dumps Parsed.")
-        print(Fore.WHITE + "═"*65)
-    else:
-        print(Fore.RED + f"\n[!] NO DATA FOUND: {target} ka koi record mirrors mein nahi mila.")
+    # --- LAYER 4: TELEGRAM BOT MIRRORS (Optional Python Function) ---
+    # Yahan aap apna Telegram wala code call kar sakte hain
+
+    print(f"\n{Fore.GREEN}[!] Scan Complete. Full Path: reports/{target}_full_report.txt")
 
 if __name__ == "__main__":
-    master_framework()
+    master_scan()
