@@ -2,60 +2,93 @@ import os, subprocess, sys, requests, re, time
 from colorama import Fore, init
 from threading import Thread, Lock
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 init(autoreset=True)
 print_lock = Lock()
 
-# --- TARGET IDENTITY FILTERS (UPDATED FOR PASSPORT, BANK, ADDRESS) ---
+# --- TARGET IDENTITY FILTERS ---
 SURE_HITS = {
     "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
-    "Passport": r"[A-Z][0-9]{7}",                   # Indian Passport pattern
-    "Bank_Acc": r"\b[0-9]{9,18}\b",                 # Generic Bank Account (9-18 digits)
+    "Passport": r"[A-Z][0-9]{7}",
+    "Bank_Acc": r"\b[0-9]{9,18}\b",
     "VoterID": r"[A-Z]{3}[0-9]{7}",
     "Phone": r"(?:\+91|0)?[6-9]\d{9}",
     "Pincode": r"\b\d{6}\b",
-    "Address": r"(?i)(Gali\s?No|House\s?No|H\.No|Plot\s?No|Floor|Sector|Ward|Tehsil|District)"
+    "Address": r"(?i)(Gali\s?No|House\s?No|H\.No|Plot\s?No|Floor|Sector|Ward|Tehsil|District|Resident|PIN:)"
 }
 
-proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
-headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+# --- BETTER ONION PROXY CONFIGURATION ---
+def get_onion_session():
+    """Majboot Onion Proxy Session with Auto-Retry"""
+    session = requests.Session()
+    # Socks5h use kar rahe hain taaki DNS leak na ho
+    proxies = {
+        'http': 'socks5h://127.0.0.1:9050',
+        'https': 'socks5h://127.0.0.1:9050'
+    }
+    session.proxies.update(proxies)
+    
+    # Retry logic agar connection slow ho (Deep Web common issue)
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"}
 
 def start_tor():
     if os.system("systemctl is-active --quiet tor") != 0:
         os.system("sudo service tor start > /dev/null 2>&1")
-    print(f"{Fore.GREEN}[OK] Ghost Tunnel: ACTIVE")
+    # Tor check ke liye test request
+    try:
+        test_session = get_onion_session()
+        test_session.get("http://check.torproject.org", timeout=10)
+        print(f"{Fore.GREEN}[OK] Ghost Tunnel: HIGH-SPEED ACTIVE")
+    except:
+        print(f"{Fore.RED}[!] Tor is running but connection is weak. Check 'torrc' settings.")
 
 def clean_and_verify(raw_html, target, report_file, source_label):
     try:
         soup = BeautifulSoup(raw_html, 'lxml')
-        for script in soup(["script", "style", "nav", "header", "footer"]): 
+        for script in soup(["script", "style", "nav", "header", "footer", "aside"]): 
             script.decompose()
             
         text = soup.get_text(separator=' ')
-        lines = [line.strip() for line in text.split('\n') if target.lower() in line.lower() or any(re.search(p, line) for p in SURE_HITS.values())]
+        lines = text.split('\n')
 
         for line in lines:
-            if len(line) < 5: continue
+            line = line.strip()
+            if len(line) < 10: continue
             
-            found_ids = []
-            for label, pattern in SURE_HITS.items():
-                match = re.search(pattern, line)
-                if match:
-                    # Highlight specific data
-                    found_ids.append(f"{Fore.YELLOW}{label}: {match.group()}")
+            noise_words = ["skip to content", "mobile english", "one last step", "javascript", "browser"]
+            if any(noise in line.lower() for noise in noise_words): continue
 
-            if found_ids or target.lower() in line.lower():
-                output = " | ".join(found_ids) if found_ids else "Text Match"
+            id_found = False
+            found_labels = []
+            for label, pattern in SURE_HITS.items():
+                if re.search(pattern, line):
+                    id_found = True
+                    found_labels.append(label)
+
+            if (target.lower() in line.lower()) or id_found:
                 with print_lock:
-                    print(f"{Fore.RED}[{source_label}-FOUND] {Fore.CYAN}Target: {target} {Fore.WHITE}➔ {output}")
-                    # Full line save in report for context
+                    display_text = line[:150].replace('\t', ' ').strip()
+                    print(f"{Fore.RED}[{source_label}-FOUND] {Fore.WHITE}{display_text}")
+                    if found_labels:
+                        print(f"   {Fore.YELLOW}➔ Detected: {', '.join(found_labels)}")
+                    
                     with open(report_file, "a") as f: 
                         f.write(f"[{source_label}] {line}\n")
-    except: 
-        pass
+    except: pass
 
 def pdf_document_finder(target, report_file):
-    """Resume, PDF aur Documents search with Address/Passport context"""
     dorks = [
         f"https://www.google.com/search?q=site:*.in OR site:*.com filetype:pdf %22{target}%22",
         f"https://www.google.com/search?q=%22{target}%22 + passport OR address filetype:pdf",
@@ -63,7 +96,7 @@ def pdf_document_finder(target, report_file):
     ]
     for url in dorks:
         try:
-            res = requests.get(url, timeout=10, headers=headers)
+            res = requests.get(url, timeout=15, headers=headers)
             links = re.findall(r'(https?://[^\s<>"]+\.pdf)', res.text)
             for link in links:
                 with print_lock:
@@ -76,13 +109,11 @@ def telegram_dork_engine(target, report_file):
     tg_links = [
         f"https://www.google.com/search?q=site:t.me+%22{target}%22",
         f"https://www.bing.com/search?q=site:t.me+%22{target}%22",
-        f"https://yandex.com/search/?text=site:t.me+%22{target}%22",
-        f"https://ahmia.fi/search/?q=t.me+{target}"
+        f"https://yandex.com/search/?text=site:t.me+%22{target}%22"
     ]
     for url in tg_links:
         try:
-            is_onion = "ahmia" in url
-            res = requests.get(url, proxies=proxies if is_onion else None, timeout=10, headers=headers)
+            res = requests.get(url, timeout=15, headers=headers)
             clean_and_verify(res.text, target, report_file, "TG-DATA")
         except: pass
 
@@ -92,10 +123,11 @@ def shadow_crawler_ai(target, report_file):
         f"https://psbdmp.ws/api/search/{target}",
         f"https://www.google.com/search?q=site:facebook.com+OR+site:instagram.com+%22{target}%22"
     ]
+    session = get_onion_session() # Optimized Session for Onion Sites
     for url in gateways:
         try:
-            is_onion = "ahmia" in url
-            res = requests.get(url, proxies=proxies if is_onion else None, timeout=10, headers=headers)
+            # Use onion session for Ahmia or onion links
+            res = session.get(url, timeout=20, headers=headers)
             clean_and_verify(res.text, target, report_file, "LEAK-DATA")
         except: pass
 
@@ -115,19 +147,14 @@ def main():
     if not os.path.exists('reports'): os.makedirs('reports')
     start_tor()
     os.system('clear')
-    
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
     print(f"{Fore.RED}║    KHALID SHADOW BUREAU - TG + ACCURATE MODE v74.0       ║")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
-    
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN): ")
     if not target: return
-    
     report_path = os.path.abspath(f"reports/{target}.txt")
     if os.path.exists(report_path): os.remove(report_path)
-    
-    print(f"{Fore.BLUE}[*] Parallel Scanning: Extracting Accurate Matches Only...\n")
-    
+    print(f"{Fore.BLUE}[*] Scanning with Enhanced Onion Proxy...\n")
     threads = [
         Thread(target=pdf_document_finder, args=(target, report_path)),
         Thread(target=telegram_dork_engine, args=(target, report_path)),
@@ -136,11 +163,9 @@ def main():
         Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 10", "Sherlock", report_path)),
         Thread(target=silent_tool_runner, args=(f"maigret {target} --timeout 10", "Maigret", report_path))
     ]
-    
     for t in threads: t.start()
     for t in threads: t.join()
-    
-    print(f"\n{Fore.GREEN}[➔] Scan Complete. Accurate Matches Saved: {report_path}")
+    print(f"\n{Fore.GREEN}[➔] Scan Complete. Reports: {report_path}")
 
 if __name__ == "__main__":
     main()
