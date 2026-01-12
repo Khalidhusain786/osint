@@ -6,13 +6,15 @@ from bs4 import BeautifulSoup
 init(autoreset=True)
 print_lock = Lock()
 
-# --- TARGET IDENTITY FILTERS (ONLY HIGH ACCURACY) ---
+# --- TARGET IDENTITY FILTERS (UPDATED FOR PASSPORT, BANK, ADDRESS) ---
 SURE_HITS = {
     "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
+    "Passport": r"[A-Z][0-9]{7}",                   # Indian Passport pattern
+    "Bank_Acc": r"\b[0-9]{9,18}\b",                 # Generic Bank Account (9-18 digits)
     "VoterID": r"[A-Z]{3}[0-9]{7}",
-    "Vehicle": r"[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}",
     "Phone": r"(?:\+91|0)?[6-9]\d{9}",
-    "Pincode": r"\b\d{6}\b"
+    "Pincode": r"\b\d{6}\b",
+    "Address": r"(?i)(Gali\s?No|House\s?No|H\.No|Plot\s?No|Floor|Sector|Ward|Tehsil|District)"
 }
 
 proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
@@ -24,37 +26,52 @@ def start_tor():
     print(f"{Fore.GREEN}[OK] Ghost Tunnel: ACTIVE")
 
 def clean_and_verify(raw_html, target, report_file, source_label):
-    """Refined Deep Matching: Clean UI and Precise Data Extraction"""
     try:
         soup = BeautifulSoup(raw_html, 'lxml')
         for script in soup(["script", "style", "nav", "header", "footer"]): 
             script.decompose()
             
         text = soup.get_text(separator=' ')
-        # Target se related lines filter karein
         lines = [line.strip() for line in text.split('\n') if target.lower() in line.lower() or any(re.search(p, line) for p in SURE_HITS.values())]
 
         for line in lines:
             if len(line) < 5: continue
             
-            # Sirf kaam ka data extract karein (Regex se)
             found_ids = []
             for label, pattern in SURE_HITS.items():
                 match = re.search(pattern, line)
                 if match:
+                    # Highlight specific data
                     found_ids.append(f"{Fore.YELLOW}{label}: {match.group()}")
 
-            if found_ids:
-                output = " | ".join(found_ids)
+            if found_ids or target.lower() in line.lower():
+                output = " | ".join(found_ids) if found_ids else "Text Match"
                 with print_lock:
-                    # Clean output formatting
                     print(f"{Fore.RED}[{source_label}-FOUND] {Fore.CYAN}Target: {target} {Fore.WHITE}➔ {output}")
+                    # Full line save in report for context
                     with open(report_file, "a") as f: 
                         f.write(f"[{source_label}] {line}\n")
     except: 
         pass
 
-# --- NAYA TELEGRAM ENGINE (PUBLIC SEARCH) ---
+def pdf_document_finder(target, report_file):
+    """Resume, PDF aur Documents search with Address/Passport context"""
+    dorks = [
+        f"https://www.google.com/search?q=site:*.in OR site:*.com filetype:pdf %22{target}%22",
+        f"https://www.google.com/search?q=%22{target}%22 + passport OR address filetype:pdf",
+        f"https://www.bing.com/search?q=%22{target}%22 + filetype:doc OR filetype:docx"
+    ]
+    for url in dorks:
+        try:
+            res = requests.get(url, timeout=10, headers=headers)
+            links = re.findall(r'(https?://[^\s<>"]+\.pdf)', res.text)
+            for link in links:
+                with print_lock:
+                    print(f"{Fore.YELLOW}[DOC-LINK] {Fore.WHITE}{link}")
+                    with open(report_file, "a") as f: f.write(f"[DOCUMENT] {link}\n")
+            clean_and_verify(res.text, target, report_file, "DOC-DATA")
+        except: pass
+
 def telegram_dork_engine(target, report_file):
     tg_links = [
         f"https://www.google.com/search?q=site:t.me+%22{target}%22",
@@ -112,6 +129,7 @@ def main():
     print(f"{Fore.BLUE}[*] Parallel Scanning: Extracting Accurate Matches Only...\n")
     
     threads = [
+        Thread(target=pdf_document_finder, args=(target, report_path)),
         Thread(target=telegram_dork_engine, args=(target, report_path)),
         Thread(target=shadow_crawler_ai, args=(target, report_path)),
         Thread(target=silent_tool_runner, args=(f"social-analyzer --username {target} --mode fast --silent", "Social", report_path)),
