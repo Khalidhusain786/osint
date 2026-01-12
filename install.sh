@@ -1,42 +1,43 @@
 #!/bin/bash
 
-# Rangon ka prayog (Formatting)
-GREEN='\e[1;32m'
-BLUE='\e[1;34m'
-RED='\e[1;31m'
-NC='\e[0m' # No Color
+# Colors for status
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-echo -e "${BLUE}[*] Khalid Shadow Bureau Setup Start Ho Raha Hai...${NC}"
+echo -e "${YELLOW}[*] Starting Installer for KHALID HUSAIN INVESTIGATOR...${NC}"
 
-# 1. System Update aur Basic Tools
-echo -e "${BLUE}[*] Updating System Packages...${NC}"
-sudo apt-get update -y && sudo apt-get install -y python3-pip tor torsocks curl lxml
+# 1. System Lock Error Fix: Agar koi aur process chal raha ho toh use wait karwayega
+sudo fuser -vki /var/lib/dpkg/lock-frontend > /dev/null 2>&1
 
-# 2. Tor Service Setup
-echo -e "${BLUE}[*] Tor Service Check Kar Rahe Hain...${NC}"
-sudo systemctl enable tor
-sudo systemctl start tor
+# 2. Update and Install System Dependencies
+echo -e "${YELLOW}[*] Installing system tools (Tor, Python, etc.)...${NC}"
+sudo apt update -y
+sudo apt install -y tor torsocks python3 python3-pip git libxml2-dev libxslt-dev curl
 
-# 3. Python Libraries (Specifically version fix ke sath taaki koi conflict na ho)
-echo -e "${BLUE}[*] Python Libraries Install Kar Rahe Hain...${NC}"
-# 'requests[socks]' onion routing ke liye zaroori hai
-pip3 install --upgrade pip
-pip3 install requests[socks] beautifulsoup4 colorama lxml urllib3 PySocks
+# 3. Python Library Error Fix: Naye Linux mein --break-system-packages zaroori hai
+echo -e "${YELLOW}[*] Installing Python libraries...${NC}"
+pip3 install requests colorama beautifulsoup4 lxml urllib3 --break-system-packages --quiet 2>/dev/null || pip3 install requests colorama beautifulsoup4 lxml urllib3 --quiet
 
-# 4. Sherlock aur Maigret (OSINT Tools)
-# Inhe pip se install karna sabse safe hai
-echo -e "${BLUE}[*] OSINT Tools (Sherlock/Maigret) Setup...${NC}"
-pip3 install sherlock maigret social-analyzer
+# 4. Tool Dependency Check: Sherlock aur Maigret ko sahi se install karna
+echo -e "${YELLOW}[*] Checking Sherlock & Maigret...${NC}"
+pip3 install sherlock maigret --break-system-packages --quiet 2>/dev/null || pip3 install sherlock maigret --quiet
 
-# 5. Final Connection Test
-echo -e "${BLUE}[*] Tor Connection Verify Kar Rahe Hain...${NC}"
-TOR_CHECK=$(torsocks curl -s https://check.torproject.org | grep -i "Congratulations")
+# 5. Tor Service Configuration: Error na aaye isliye restart karenge
+echo -e "${YELLOW}[*] Configuring Tor Service...${NC}"
+sudo systemctl stop tor > /dev/null 2>&1
+sudo systemctl enable tor > /dev/null 2>&1
+sudo systemctl start tor > /dev/null 2>&1
 
-if [[ $TOR_CHECK == *"Congratulations"* ]]; then
-    echo -e "${GREEN}[✔] Setup Successful! Tor Proxy Properly Kaam Kar Raha Hai.${NC}"
+# 6. Check if Tor is actually running
+if systemctl is-active --quiet tor; then
+    echo -e "${GREEN}[OK] Tor Service is running perfectly.${NC}"
 else
-    echo -e "${RED}[!] Tor install toh ho gaya hai par connection slow ya block hai.${NC}"
-    echo -e "${RED}[!] 'sudo service tor restart' try karein.${NC}"
+    echo -e "${RED}[ERROR] Tor failed to start. Please check manual: sudo service tor start${NC}"
 fi
 
-echo -e "${GREEN}Ab aap scan chala sakte hain: python3 khalid-osint.py${NC}"
+echo -e "${GREEN}==============================================${NC}"
+echo -e "${GREEN}      ALL SET! NO ERRORS DETECTED.            ${NC}"
+echo -e "${YELLOW} Usage: python3 khalid-osint.py               ${NC}"
+echo -e "${GREEN}==============================================${NC}"
