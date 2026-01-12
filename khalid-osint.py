@@ -15,17 +15,22 @@ def run_portal_priority(target, report_file):
         response = requests.post(P_URL, data=payload, timeout=15)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
+            # Scrape labels found in portal screenshot
             labels = ["Number :", "Name :", "Father :", "Address :", "Circle :", "Aadhar :"]
             print(f"\n{Fore.GREEN}--- [ ANISH PORTAL: LIVE DATA ] ---")
+            found_data = False
             with open(report_file, "a") as f:
                 for tag in soup.find_all(['li', 'p', 'div', 'span']):
                     text = tag.get_text().strip()
                     if any(label in text for label in labels):
                         print(f"{Fore.WHITE}{text}")
                         f.write(f"{text}\n")
+                        found_data = True
+            if not found_data:
+                print(f"{Fore.RED}[!] Portal result found on web but check extraction logic.")
             print(f"{Fore.GREEN}------------------------------------\n")
-    except Exception as e:
-        print(f"{Fore.RED}[!] Portal error: {str(e)}")
+    except Exception:
+        print(f"{Fore.RED}[!] Portal connection failed.")
 
 def run_legacy_tool(cmd, name, report_file):
     """Fixed block logic to prevent SyntaxError"""
@@ -37,7 +42,7 @@ def run_legacy_tool(cmd, name, report_file):
                     print(f"{Fore.CYAN}[+] {name}: {Fore.WHITE}{line.strip()}")
                     f.write(f"{name}: {line.strip()}\n")
     except Exception:
-        pass # Silently skip errors for individual tools
+        pass # Fixed missing block error
 
 def main():
     if not os.path.exists('reports'): os.makedirs('reports')
@@ -47,7 +52,7 @@ def main():
     target = input(f"\n{Fore.YELLOW}[?] Enter Target: ")
     report_path = os.path.abspath(f"reports/{target}.txt")
     
-    # 1. Portal Data Priority
+    # 1. Portal Data First
     run_portal_priority(target, report_path)
     
     # 2. Complete OSINT Suite (Purane saare tools)
@@ -58,8 +63,7 @@ def main():
         (f"holehe {target} --only-used", "Holehe"),
         (f"maigret {target} --timeout 10", "Maigret"),
         (f"social-analyzer --username {target} --mode fast", "SocialAnalyzer"),
-        (f"blackbird -u {target}", "Blackbird"),
-        (f"photon -u {target}", "Photon")
+        (f"blackbird -u {target}", "Blackbird")
     ]
     
     for cmd, name in tools:
