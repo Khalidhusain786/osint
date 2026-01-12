@@ -1,19 +1,16 @@
 #!/bin/bash
-echo -e "\e[1;32m[*] Installing Khalid All-in-One OSINT Framework...\e[0m"
+echo -e "\e[1;32m[*] Installing Khalid Global-OSINT Framework...\e[0m"
 
-# 1. Install Networking & Tor
-sudo apt update
-sudo apt install tor proxychains4 whois dnsutils python3-pip -y
-
-# 2. Configure Proxychains (Silent Setup)
-sudo sed -i 's/strict_chain/#strict_chain/' /etc/proxychains4.conf
-sudo sed -i 's/#dynamic_chain/dynamic_chain/' /etc/proxychains4.conf
-
-# 3. Start Tor Service
+# 1. System & Tor Setup
+sudo apt update && sudo apt install tor proxychains4 python3-pip curl git lynx googler -y
 sudo service tor restart
 
-# 4. Install OSINT Engines
-pip install colorama requests[socks] holehe maigret social-analyzer --break-system-packages --ignore-installed
+# 2. Python Power-Tools
+pip install colorama requests[socks] telethon holehe maigret sherlock socialscan instaloader --break-system-packages
 
-mkdir -p /root/osint/reports
-echo -e "\e[1;34m[!] Setup Complete! Tor Service is now running in background.\e[0m"
+# 3. Phone & Meta Tools
+curl -sSL https://raw.githubusercontent.com/sundowndev/phoneinfoga/master/support/install | bash
+sudo mv ./phoneinfoga /usr/local/bin/
+
+mkdir -p reports
+echo -e "\e[1;34m[!] All layers (Surface, Deep, Dark) are ready.\e[0m"
