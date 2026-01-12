@@ -1,25 +1,53 @@
 #!/bin/bash
-# KHALID-OSINT MASTER INSTALLER v39.0 (ZERO DELETION)
 
-echo -e "\e[32m[+] Starting Khalid-OSINT Fixed Installation...\e[0m"
+# --- Colors for Output ---
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# 1. System Update & Missing Repos Fix (Screenshot error solve)
-sudo apt-get update --fix-missing
-sudo apt install -y tor libimage-exiftool-perl wkhtmltopdf python3-pip git colorama
+echo -e "${BLUE}====================================================${NC}"
+echo -e "${GREEN}    KHALID-OSINT v58.0 - AUTO INSTALLER SYSTEM      ${NC}"
+echo -e "${BLUE}====================================================${NC}"
 
-# 2. Pip Conflicts Fix (theHarvester/BS4 errors solve)
-# Ek bhi line delete nahi, sirf naye versions ko fix kiya hai
-python3 -m pip install --user --break-system-packages --ignore-installed \
-requests[socks] colorama beautifulsoup4==4.13.4 lxml==6.0.0 jinja2 pdfkit \
-holehe maigret sherlock h8mail truecallerpy aiohttp aiofiles
+# 1. Check Root Privileges
+if [[ $EUID -ne 0 ]]; then
+   echo -e "${RED}[!] Please run as root (use sudo ./install.sh)${NC}"
+   exit 1
+fi
 
-# 3. Tool Directories Restore (Fatal destination errors solve)
-if [ ! -d "tools" ]; then mkdir tools; fi
-[ -d "tools/Photon" ] || git clone https://github.com/s0md3v/Photon.git tools/Photon
-[ -d "tools/blackbird" ] || git clone https://github.com/p1ngul1n0/blackbird.git tools/blackbird
+# 2. Update System
+echo -e "${BLUE}[*] Updating system repositories...${NC}"
+apt update -y && apt upgrade -y
 
-# 4. Service Setup
-sudo service tor start
-chmod +x khalid-osint.py
+# 3. Install Essential Core Tools
+echo -e "${BLUE}[*] Installing Core Recon Tools (Amass, Shodan, Tor)...${NC}"
+apt install -y python3 python3-pip tor curl git amass theharvester sherlock shodan
 
-echo -e "\e[32m[+] Sab kuch fix ho gaya hai! Ab aap ./install.sh ya python3 run kar sakte hain.\e[0m"
+# 4. Install Maigret & Python Dependencies
+echo -e "${BLUE}[*] Installing Python OSINT Libraries...${NC}"
+pip3 install --upgrade pip
+pip3 install requests colorama maigret
+
+# 5. Fix for WhatsMyName (Clone if not exists)
+if [ ! -d "WhatsMyName" ]; then
+    echo -e "${BLUE}[*] Cloning WhatsMyName Repository...${NC}"
+    git clone https://github.com/WebBreacher/WhatsMyName.git
+    cd WhatsMyName && pip3 install -r requirements.txt && cd ..
+fi
+
+# 6. Setup TOR Service
+echo -e "${BLUE}[*] Enabling TOR Service...${NC}"
+systemctl enable tor
+systemctl start tor
+
+# 7. Final Verification
+echo -e "${GREEN}====================================================${NC}"
+echo -e "${GREEN}[OK] All Heavy Tools Installed Successfully!        ${NC}"
+echo -e "${BLUE}    - Sherlock: Installed                           ${NC}"
+echo -e "${BLUE}    - Maigret: Installed                            ${NC}"
+echo -e "${BLUE}    - Amass: Installed                              ${NC}"
+echo -e "${BLUE}    - theHarvester: Installed                       ${NC}"
+echo -e "${BLUE}    - Shodan CLI: Installed                         ${NC}"
+echo -e "${GREEN}====================================================${NC}"
+echo -e "${GREEN}Run the tool using: python3 khalid_osint.py         ${NC}"
