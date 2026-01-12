@@ -4,30 +4,19 @@ from threading import Thread
 
 init(autoreset=True)
 
-def check_anish_exploits(target):
-    """Automatic login and search for AnishExploits"""
-    # Note: Login logic adjusted for automated session
-    url = "https://anishexploits.site/app/"
-    try:
-        # Simple fetch to see if data is public or needs specific POST
-        res = requests.get(f"{url}?search={target}", timeout=5)
-        if "found" in res.text.lower():
-            print(f"{Fore.GREEN}[DATABASE] AnishExploits: Match found for {target}!")
-    except: pass
-
 def run_tool(cmd, name, report_file):
+    """Deep Filter: Sirf verified data hi dikhayega"""
     try:
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         with open(report_file, "a") as f:
             for line in process.stdout:
                 clean_line = line.strip()
-                # TELEGRAM BOT FILTER: Sirf kaam ka data dikhao
-                triggers = ["http", "found", "[+]", "name:", "address:", "father", "phone:"]
-                if any(x in clean_line.lower() for x in triggers):
-                    if not any(bad in clean_line.lower() for bad in ["not found", "404", "error"]):
-                        # Formatting like the screenshot
+                # Powerful Filter: Jo data screenshot ki tarah 'Found' ho
+                if any(x in clean_line.lower() for x in ["http", "found", "[+]", "target:", "name:", "address:", "father:"]):
+                    if not any(bad in clean_line.lower() for bad in ["not found", "404", "error", "failed"]):
+                        # Professional Telegram-Style Output
                         print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━")
-                        print(f"{Fore.YELLOW}➤ {name}: {Fore.WHITE}{clean_line}")
+                        print(f"{Fore.YELLOW}[Verified] {name}: {Fore.WHITE}{clean_line}")
                         f.write(f"{name}: {clean_line}\n")
         process.wait()
     except: pass
@@ -37,26 +26,25 @@ def main():
     os.system('clear')
     
     print(f"{Fore.CYAN}╔════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║        KHALID OSINT - DATABASE SEARCH      ║")
+    print(f"{Fore.RED}║     KHALID OSINT - GITHUB POWERFUL v2.0    ║")
     print(f"{Fore.CYAN}╚════════════════════════════════════════════╝")
     
-    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Username/Phone): ")
+    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Username/Phone/Email): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
 
-    # Start AnishExploits Check
-    Thread(target=check_anish_exploits, args=(target,)).start()
-
-    # Organized Tool List (Fastest First)
+    # Sabse Powerful Tools ki list jo Github par active hain
     tools = [
         (f"social-analyzer --username {target} --mode fast", "Social-Analyzer"),
-        (f"holehe {target} --only-used", "Email-Check"),
         (f"sherlock {target} --timeout 5 --print-found", "Sherlock"),
-        (f"maigret {target} --timeout 10", "Maigret"),
-        (f"phoneinfoga scan -n {target}", "Phone-Lookup")
+        (f"maigret {target} --timeout 10", "Maigret (Deep Search)"),
+        (f"holehe {target} --only-used", "Holehe (Email-DB)"),
+        (f"phoneinfoga scan -n {target}", "Phone-Intelligence"),
+        (f"python3 -m blackbird -u {target}", "Blackbird (Fixed)"),
+        (f"photon -u {target} --wayback -l 2", "Web-Crawler")
     ]
 
-    print(f"{Fore.BLUE}[*] Searching multiple databases... Please wait.\n")
+    print(f"{Fore.BLUE}[*] Triggering 7+ Powerful Tools in Parallel...\n")
     threads = []
     for cmd, name in tools:
         t = Thread(target=run_tool, args=(cmd, name, report_path))
@@ -64,8 +52,7 @@ def main():
         threads.append(t)
 
     for t in threads: t.join()
-    print(f"\n{Fore.YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"{Fore.GREEN}[!] Finished. Report Saved: {report_path}")
+    print(f"\n{Fore.GREEN}[➔] Finished. Data saved in: {report_path}")
 
 if __name__ == "__main__":
     main()
