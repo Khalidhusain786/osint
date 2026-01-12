@@ -14,6 +14,7 @@ def auto_update():
 def start_tor():
     """Tor service ko auto-start aur check karega"""
     print(f"{Fore.YELLOW}[*] Initializing Tor Proxy for Dark-Web Access...")
+    # Checking if Tor is installed and active
     status = os.system("systemctl is-active --quiet tor")
     if status != 0:
         print(f"{Fore.CYAN}[!] Tor is inactive. Starting Tor Service...")
@@ -21,29 +22,32 @@ def start_tor():
         time.sleep(3)
     print(f"{Fore.GREEN}[OK] Tor Service is Active and Tunneling.")
 
-def deep_breach_and_darkweb(target, report_file):
-    """Deep Web, Dark Web aur Indian Document Leaks ke liye advanced scraping"""
-    print(f"{Fore.MAGENTA}[*] Searching Breach Databases & Onion Repositories...")
+def deep_darkweb_engine_scan(target, report_file):
+    """Powerful Darkweb Search Engines (Ahmia, Torch, Haystak style) integration"""
+    print(f"{Fore.MAGENTA}[*] Querying Powerful Darkweb Engines & Onion Repositories...")
     
-    # Advanced Dorking logic (Aadhar, Voter, etc.)
-    search_engines = [
-        f"https://ahmia.fi/search/?q={target}",
-        f"https://www.google.com/search?q=site:pastebin.com+OR+site:ghostbin.com+%22{target}%22",
-        f"https://www.google.com/search?q=%22{target}%22+filetype:pdf+OR+filetype:sql+leak"
+    # List of powerful gateways to Darkweb data
+    engines = [
+        f"https://ahmia.fi/search/?q={target}", 
+        f"https://onionsearch-pro.com/search?q={target}", # Mockup for logic
+        f"https://www.google.com/search?q=site:onion.ly+OR+site:onion.pet+%22{target}%22"
     ]
     
     try:
-        for url in search_engines:
-            res = requests.get(url, timeout=12, headers={'User-Agent': 'Mozilla/5.0'})
-            # Onion links aur document patterns
-            matches = re.findall(r'[a-z2-7]{16,56}\.onion|[\w\.-]+@[\w\.-]+\.\w+', res.text)
+        for url in engines:
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0'}
+            res = requests.get(url, timeout=15, headers=headers)
+            # Regex to find .onion links and leak patterns
+            matches = re.findall(r'[a-z2-7]{16,56}\.onion', res.text)
             if matches:
                 with open(report_file, "a") as f:
-                    for item in list(set(matches)):
+                    f.write(f"\n--- POWERFUL DARKWEB SEARCH RESULTS ---\n")
+                    for link in list(set(matches)):
                         print(f"{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━")
-                        print(f"{Fore.RED}[FOUND ON DARKWEB] {Fore.WHITE}http://{item}")
-                        f.write(f"Darkweb Leak: http://{item}\n")
-    except: pass
+                        print(f"{Fore.RED}[DARK-ENGINE MATCH] {Fore.WHITE}http://{link}")
+                        f.write(f"Source: http://{link}\n")
+    except Exception as e:
+        pass
 
 def run_tool(cmd, name, report_file):
     """Sare tools ko parallel run karega aur sirf FOUND data dikhayega"""
@@ -52,7 +56,7 @@ def run_tool(cmd, name, report_file):
         with open(report_file, "a") as f:
             for line in process.stdout:
                 clean_line = line.strip()
-                # TELEGRAM BOT STYLE TRIGGERS (Aapke Screenshot ke mutabiq)
+                # TELEGRAM BOT STYLE TRIGGERS (Aadhar, Father-name, Address, etc.)
                 triggers = ["http", "found", "[+]", "password:", "address:", "father", "name:", "aadhar", "voter", "license", "pan", "document", "truecaller"]
                 if any(x in clean_line.lower() for x in triggers):
                     if not any(bad in clean_line.lower() for bad in ["not found", "404", "error", "searching"]):
@@ -65,11 +69,11 @@ def run_tool(cmd, name, report_file):
 def main():
     auto_update()
     if not os.path.exists('reports'): os.makedirs('reports')
-    start_tor()
+    start_tor() # Auto-start Tor service
     os.system('clear')
     
     print(f"{Fore.CYAN}╔════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║    KHALID OSINT - ULTIMATE IDENTITY & BREACH ENGINE        ║")
+    print(f"{Fore.RED}║    KHALID OSINT - DEEP & DARKWEB POWER-ENGINE v12.0        ║")
     print(f"{Fore.CYAN}╚════════════════════════════════════════════════════════════╝")
     
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Email/User/Phone/ID): ")
@@ -78,10 +82,10 @@ def main():
     # Path save hamesha target ke naam se hoga
     report_path = os.path.abspath(f"reports/{target}.txt")
 
-    # Darkweb Search background thread
-    Thread(target=deep_breach_and_darkweb, args=(target, report_path)).start()
+    # Darkweb Search Engine Thread
+    Thread(target=deep_darkweb_engine_scan, args=(target, report_path)).start()
 
-    # Sare Purane Tools + Naye Tools (Ek bhi delete nahi kiya gaya)
+    # Sare Purane Tools + Naye Tools (Sherlock, Maigret, Blackbird, etc. restored)
     tools = [
         (f"h8mail -t {target} -q", "H8Mail (Breach DB)"),
         (f"holehe {target} --only-used", "Email-Breach-Check"),
@@ -94,7 +98,7 @@ def main():
         (f"finalrecon --ss --whois --full {target}", "FinalRecon-Full")
     ]
 
-    print(f"{Fore.BLUE}[*] Accessing Global Breach Databases & Onion Nodes...\n")
+    print(f"{Fore.BLUE}[*] Crawling Surface, Deep, and Dark Web Platforms...\n")
     threads = []
     for cmd, name in tools:
         t = Thread(target=run_tool, args=(cmd, name, report_path))
@@ -103,7 +107,7 @@ def main():
 
     for t in threads: t.join()
     print(f"\n{Fore.GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"{Fore.YELLOW}[➔] Investigation Complete. Report Saved: {Fore.WHITE}{report_path}")
+    print(f"{Fore.YELLOW}[➔] Investigation Complete. Full Report: {Fore.WHITE}{report_path}")
 
 if __name__ == "__main__":
     main()
