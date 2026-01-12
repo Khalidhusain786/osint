@@ -1,63 +1,57 @@
-import os, subprocess, requests, time
+import os, time, requests, subprocess
 from colorama import Fore, init
+from telethon.sync import TelegramClient
 
 init(autoreset=True)
 
-def check_tor():
+# --- APNI DETAILS YAHAN BHAREIN ---
+API_ID = 'Aapka_API_ID' 
+API_HASH = 'Aapka_API_HASH'
+# Screenshot wale aur extra bots
+BOT_LIST = [
+    'osint_bot_link', 
+    'breacheddatabot', 
+    'HiTeck_Checker_bot', 
+    'Hiddnosint_bot'
+]
+
+def telegram_deep_scan(target):
+    print(f"{Fore.MAGENTA}[*] Mirroring Telegram Databases (Deep Scan)...")
     try:
-        r = requests.get('https://check.torproject.org', proxies={'http':'socks5://127.0.0.1:9050', 'https':'socks5://127.0.0.1:9050'}, timeout=5)
-        return "Congratulations" in r.text
-    except: return False
+        with TelegramClient('khalid_session', API_ID, API_HASH) as client:
+            for bot in BOT_LIST:
+                print(f"{Fore.CYAN}[>] Sending query to @{bot}...")
+                client.send_message(bot, target)
+                time.sleep(5) # Bot reply ke liye wait
+                
+                # Bot ka last reply read karein
+                messages = client.get_messages(bot, limit=1)
+                for msg in messages:
+                    if msg.text and any(k in msg.text.lower() for k in ["name", "address", "phone", "father", "document"]):
+                        print(f"{Fore.GREEN}\n[✔] DATA FOUND FROM @{bot}:")
+                        print(f"{Fore.WHITE}{msg.text}")
+                        # Save to report
+                        with open(f"reports/{target}_telegram.txt", "a") as f:
+                            f.write(f"\nSource: @{bot}\n{msg.text}\n{'-'*30}")
+                    else:
+                        print(f"{Fore.RED}[-] No direct hits in @{bot}")
+    except Exception as e:
+        print(f"{Fore.RED}[!] Telegram Error: {e}")
 
-def run_layer(cmd, name, target, color):
-    print(f"{color}[*] Scanning {name} Layer...")
-    # Background execution with silent error handling
-    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    out = res.stdout + res.stderr
-    
-    # Logic: Agar kuch kaam ka mila toh hi dikhao
-    findings = [l.strip() for l in out.split('\n') if any(k in l.lower() for k in ["found", "http", "database", "leaked", "+", "user"])]
-    
-    if findings:
-        print(f"{Fore.GREEN}[✔] SUCCESS: {name} found data!")
-        with open(f"reports/{target}_full_report.txt", "a") as f:
-            f.write(f"\n--- {name} Results ---\n")
-            for line in findings:
-                if "404" not in line:
-                    print(f"{Fore.WHITE}  ➤ {line}")
-                    f.write(line + "\n")
-    else:
-        # Screen par kuch nahi dikhega agar data nahi mila
-        pass
-
-def master_scan():
+def master():
     os.system('clear')
-    print(f"{Fore.RED}KHALID ULTIMATE OSINT: SURFACE | DEEP | DARK | GOV")
-    print("-" * 50)
+    print(f"{Fore.RED}=== KHALID DEEP-SEARCH OSINT (TELEGRAM MIRROR) ===")
     
-    tor = check_tor()
-    proxy = "proxychains4 " if tor else ""
-    target = input(f"{Fore.YELLOW}[+] Enter Target: ")
+    target = input(f"\n{Fore.YELLOW}[+] Enter Target (Phone/Name/Email): ")
     
-    # --- LAYER 1: SURFACE WEB (Google/Dorks) ---
-    # Har govt domain par check karega target ke liye
-    run_layer(f"googler --nocolor -n 5 -w gov.in \"{target}\"", "Gov-India Mirrors", target, Fore.CYAN)
-    run_layer(f"googler --nocolor -n 5 \"{target}\" leaked database", "Surface Web Leaks", target, Fore.CYAN)
-
-    # --- LAYER 2: DEEP WEB (Social & Account Footprints) ---
-    run_layer(f"{proxy}maigret {target} --brief", "Deep-Social", target, Fore.MAGENTA)
-    run_layer(f"holehe {target} --only-used", "Email-Breach", target, Fore.MAGENTA)
-    run_layer(f"social-analyzer --username {target} --mode fast", "Social-Analyzer", target, Fore.MAGENTA)
-
-    # --- LAYER 3: DARK WEB (Tor Search Engines) ---
-    if tor:
-        # Ahmia (Darkweb search engine) ko query karna via proxy
-        run_layer(f"proxychains4 curl -s \"https://ahmia.fi/search/?q={target}\" | grep -o 'http[s]*://[^\" ]*'", "Dark-Web Index", target, Fore.RED)
-
-    # --- LAYER 4: TELEGRAM BOT MIRRORS (Optional Python Function) ---
-    # Yahan aap apna Telegram wala code call kar sakte hain
-
-    print(f"\n{Fore.GREEN}[!] Scan Complete. Full Path: reports/{target}_full_report.txt")
+    # Layer 1: Normal Tools (Optional)
+    # subprocess.run(f"maigret {target} --brief", shell=True)
+    
+    # Layer 2: Telegram Bots (Screenshot Logic)
+    telegram_deep_scan(target)
+    
+    print(f"\n{Fore.GREEN}[!] All data saved in reports/{target}_telegram.txt")
 
 if __name__ == "__main__":
-    master_scan()
+    if not os.path.exists('reports'): os.makedirs('reports')
+    master()
