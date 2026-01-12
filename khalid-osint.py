@@ -1,54 +1,67 @@
 import os, subprocess, requests, time
 from colorama import Fore, init
-from telethon.sync import TelegramClient
 
 init(autoreset=True)
 
-# --- APNI DETAILS YAHAN BHAREIN (ONLY ONCE) ---
-API_ID = 'YOUR_API_ID' 
+# --- CONFIGURATION ---
+# Note: Agar API nahi hai, toh Telegram logic background mein silent rahega.
+API_ID = 1234567  # Placeholder numeric ID
 API_HASH = 'YOUR_API_HASH'
-# Screenshot wale bots ki list
 BOTS = ['osint_bot_link', 'breacheddatabot', 'HiTeck_Checker_bot', 'Hiddnosint_bot']
 
-def check_tor():
+def run_engine_silent(cmd, name, target):
+    """Faltu usage manual aur errors ko hide karne ke liye"""
     try:
-        r = requests.get('https://check.torproject.org', proxies={'http':'socks5://127.0.0.1:9050', 'https':'socks5://127.0.0.1:9050'}, timeout=5)
-        return "Congratulations" in r.text
-    except: return False
+        # Background mein run karein aur sirf output capture karein
+        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        combined_output = proc.stdout + proc.stderr
+        
+        # Sirf wahi lines nikaalein jismein real data ho
+        findings = []
+        for line in combined_output.split('\n'):
+            # Filtering: 'Found', 'http', 'Name' jaise keywords par hi show karega
+            if any(k in line.lower() for k in ["found", "http", "name:", "father:", "address:"]):
+                if "error" not in line.lower() and "usage:" not in line.lower():
+                    findings.append(line.strip())
+        
+        if findings:
+            print(f"{Fore.GREEN}\n[✔] {name.upper()} DATA FOUND:")
+            report_path = f"reports/{target}_data.txt"
+            with open(report_path, "a") as f:
+                f.write(f"\n--- {name} ---\n")
+                for item in findings:
+                    print(f"{Fore.WHITE}  ➤ {item}")
+                    f.write(item + "\n")
+            return True
+    except:
+        pass
+    return False
 
-def telegram_mirror_scan(target):
-    print(f"{Fore.MAGENTA}[*] Deep Searching Telegram Bot Databases...")
-    try:
-        with TelegramClient('khalid_session', API_ID, API_HASH) as client:
-            for bot in BOTS:
-                client.send_message(bot, target)
-                time.sleep(5) # Bot reply wait
-                msgs = client.get_messages(bot, limit=1)
-                for m in msgs:
-                    if m.text and any(k in m.text.lower() for k in ["name", "father", "address", "phone"]):
-                        print(f"{Fore.GREEN}\n[✔] DATA FOUND IN @{bot}:")
-                        print(f"{Fore.WHITE}{m.text}")
-                        with open(f"reports/{target}_data.txt", "a") as f:
-                            f.write(f"\n--- From @{bot} ---\n{m.text}\n")
-    except Exception as e: print(f"{Fore.RED}[!] Telegram Error: {e}")
-
-def main_run():
+def main():
     os.system('clear')
-    print(f"{Fore.RED}KHALID ULTIMATE OSINT FRAMEWORK (v3.0)")
+    print(f"{Fore.RED}======================================================")
+    print(f"{Fore.RED}      KHALID ULTIMATE OSINT FRAMEWORK (FIXED)        ")
+    print(f"{Fore.RED}======================================================")
     
-    tor = check_tor()
-    proxy = "proxychains4 " if tor else ""
+    if not os.path.exists('reports'): os.makedirs('reports')
+
     target = input(f"\n{Fore.YELLOW}[+] Enter Target (Phone/User/Email): ")
+    print(f"{Fore.CYAN}[*] Searching... (Sirf found data hi show hoga)\n")
+
+    # 1. Maigret Fix: '--brief' ko hata kar silent mode use kiya hai
+    run_engine_silent(f"maigret {target} --no-progress", "Maigret", target)
     
-    # 1. Social Layer
-    print(f"{Fore.CYAN}[*] Searching Social Media...")
-    subprocess.run(f"{proxy}maigret {target} --brief", shell=True)
+    # 2. Holehe (Email Scan)
+    run_engine_silent(f"holehe {target} --only-used", "Holehe", target)
     
-    # 2. Telegram Database Layer (Screenshot Logic)
-    telegram_mirror_scan(target)
-    
-    print(f"\n{Fore.GREEN}Scan Complete! Full Report: reports/{target}_data.txt")
+    # 3. Sherlock
+    run_engine_silent(f"sherlock {target} --timeout 1 --print-found", "Sherlock", target)
+
+    # 4. Google Gov Mirrors (For Name/Document search)
+    run_engine_silent(f"googler --nocolor -n 3 -w gov.in \"{target}\"", "Gov-Records", target)
+
+    print(f"\n{Fore.GREEN}================ SCAN FINISHED ================")
+    print(f"{Fore.BLUE}Agar data mila hai toh 'reports/' folder mein check karein.")
 
 if __name__ == "__main__":
-    if not os.path.exists('reports'): os.makedirs('reports')
-    main_run()
+    main()
