@@ -1,23 +1,19 @@
 # osint
 
-
-# Home directory mein move karein aur purana folder saaf karein
+# Home directory mein move karein aur purana setup saaf karein
 cd /home/kali && rm -rf osint
 
-# Repo clone karein
+# Repo clone karein aur dependencies install karein
 git clone https://github.com/Khalidhusain786/osint.git && cd osint
-
-# System updates aur core tools
 sudo apt-get update && sudo apt-get install -y tor torsocks python3-pip nodejs npm
 
-# Python libraries (Kali Linux ke naye rules ke mutabik)
-python3 -m pip install --user --break-system-packages requests[socks] colorama beautifulsoup4 lxml jinja2 pdfkit sherlock maigret
+# Superfast AI parsing ke liye zaroori libraries
+pip3 install beautifulsoup4 lxml requests[socks] colorama --break-system-packages
 
-# Social-Analyzer global install
+# Global OSINT tools setup
 sudo npm install -g social-analyzer
+pip3 install sherlock maigret --break-system-packages
 
 # Installer ko permission de kar run karein
 chmod +x install.sh
 sudo ./install.sh
-
-cd /home/kali/osint && python3 khalid-osint.py
