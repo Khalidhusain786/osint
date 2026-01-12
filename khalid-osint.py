@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 init(autoreset=True)
 print_lock = Lock()
 
-# --- TARGET IDENTITY FILTERS (ADVANCED PATTERNS) ---
+# --- TARGET IDENTITY FILTERS ---
 SURE_HITS = {
     "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
     "Aadhaar": r"\b\d{4}\s\d{4}\s\d{4}\b|\b\d{12}\b",
@@ -25,56 +25,73 @@ SURE_HITS = {
 
 def get_onion_session():
     session = requests.Session()
+    # Tor Proxy for .onion and HTTP access
     proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
     session.proxies.update(proxies)
-    retry_strategy = Retry(total=2, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+    retry_strategy = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
     session.mount("http://", HTTPAdapter(max_retries=retry_strategy))
     session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
     return session
 
-headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"}
 
 def start_tor():
     if os.system("systemctl is-active --quiet tor") != 0:
         os.system("sudo service tor start > /dev/null 2>&1")
-    print(f"{Fore.GREEN}[OK] Ghost Tunnel: HIGH-SPEED ACTIVE")
+    print(f"{Fore.GREEN}[OK] Ghost Tunnel: HTTP/HTTPS/ONION PROTOCOLS ACTIVE")
 
 def clean_and_verify(raw_html, target, report_file, source_label):
     try:
         soup = BeautifulSoup(raw_html, 'lxml')
-        for script in soup(["script", "style", "nav", "header", "footer", "aside"]): 
-            script.decompose()
+        for junk in soup(["script", "style", "nav", "header", "footer", "aside"]): 
+            junk.decompose()
         text = soup.get_text(separator=' ')
         lines = text.split('\n')
         for line in lines:
             line = line.strip()
-            if len(line) < 10: continue
-            noise_words = ["skip to content", "mobile english", "one last step", "javascript", "browser", "search about", "open links"]
-            if any(noise in line.lower() for noise in noise_words): continue
+            if len(line) < 15: continue
+            # Filtering garbage while keeping HTTP/Onion info
+            if any(x in line.lower() for x in ["search about", "open links", "javascript"]): continue
+            
             id_found = any(re.search(pattern, line) for pattern in SURE_HITS.values())
             if (target.lower() in line.lower()) or id_found:
+                clean_line = " ".join(line.split())[:300]
                 with print_lock:
-                    display_text = " ".join(line.split())[:250]
-                    print(f"{Fore.RED}[{source_label}-FOUND] {Fore.WHITE}{display_text}")
-                    with open(report_file, "a") as f: f.write(f"[{source_label}] {line}\n")
+                    print(f"{Fore.RED}[{source_label}-HIT] {Fore.WHITE}{clean_line}")
+                    with open(report_file, "a") as f: f.write(f"[{source_label}] {clean_line}\n")
     except: pass
 
-def pdf_document_finder(target, report_file):
-    # ADVANCED DORKS: Scanning HTTP and HTTPS results for documents and registrations
+def http_protocol_finder(target, report_file):
+    # Specifically targeting non-SSL (HTTP) sites and directories
     dorks = [
-        f"https://www.google.com/search?q=inurl:http OR inurl:https %22{target}%22 filetype:pdf OR filetype:xls",
-        f"https://www.google.com/search?q=%22{target}%22 + \"login\" OR \"signup\" OR \"portal\"",
-        f"https://www.bing.com/search?q=%22{target}%22 + site:*.in OR site:*.gov.in"
+        f"https://www.google.com/search?q=inurl:http:// -inurl:https:// %22{target}%22",
+        f"https://www.bing.com/search?q=%22{target}%22 + \"index of\" + http",
+        f"https://yandex.com/search/?text=site:*.in %22{target}%22"
     ]
     for url in dorks:
         try:
-            res = requests.get(url, timeout=12, headers=headers)
-            # Find links from both http and https sources
-            links = re.findall(r'(https?://[^\s<>"]+\.(?:pdf|doc|xls|xlsx|docx))', res.text)
+            res = requests.get(url, timeout=15, headers=headers)
+            # Pattern to catch all types of links (HTTP, HTTPS, ONION)
+            links = re.findall(r'(https?://[^\s<>"]+|[a-z2-7]{56}\.onion)', res.text)
             for link in links:
-                with print_lock:
-                    print(f"{Fore.YELLOW}[DOC-LINK] {Fore.WHITE}{link}")
-            clean_and_verify(res.text, target, report_file, "WEB-DATA")
+                if target in link:
+                    with print_lock: print(f"{Fore.YELLOW}[LINK-FOUND] {Fore.WHITE}{link}")
+            clean_and_verify(res.text, target, report_file, "HTTP-WEB")
+        except: pass
+
+def advanced_onion_scanner(target, report_file):
+    # Multi-engine Darknet Search (.onion access)
+    onion_gateways = [
+        f"http://jnv3gv3yuvpwhv7y.onion/search/?q={target}", # Torch Search Engine
+        f"https://ahmia.fi/search/?q={target}",              # Ahmia Darknet Search
+        f"http://phishsetvsnm4v5n.onion/search.php?q={target}" # Hidden Wiki related
+    ]
+    session = get_onion_session()
+    for url in onion_gateways:
+        try:
+            # Tor tunnel will handle .onion URLs automatically
+            res = session.get(url, timeout=25, headers=headers)
+            clean_and_verify(res.text, target, report_file, "DARK-DEEP")
         except: pass
 
 def telegram_dork_engine(target, report_file):
@@ -84,23 +101,20 @@ def telegram_dork_engine(target, report_file):
     ]
     for url in tg_links:
         try:
-            res = requests.get(url, timeout=12, headers=headers)
+            res = requests.get(url, timeout=15, headers=headers)
             clean_and_verify(res.text, target, report_file, "TG-DATA")
         except: pass
 
 def shadow_crawler_ai(target, report_file):
-    # Scanning both Clearnet (HTTP/HTTPS) and Darknet (Onion)
+    # Added Pastebin, ControlC, and Leak databases (Mixed Protocol)
     gateways = [
-        f"https://ahmia.fi/search/?q={target}+leak",
         f"https://psbdmp.ws/api/search/{target}",
         f"https://www.google.com/search?q=site:pastebin.com OR site:ghostbin.co OR site:controlc.com %22{target}%22"
     ]
-    session = get_onion_session()
     for url in gateways:
         try:
-            is_onion = "ahmia" in url
-            res = (session if is_onion else requests).get(url, timeout=15, headers=headers)
-            clean_and_verify(res.text, target, report_file, "LEAK-DATA")
+            res = requests.get(url, timeout=15, headers=headers)
+            clean_and_verify(res.text, target, report_file, "LEAK-DB")
         except: pass
 
 def silent_tool_runner(cmd, name, report_file):
@@ -108,7 +122,7 @@ def silent_tool_runner(cmd, name, report_file):
         process = subprocess.Popen(f"torsocks {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in process.stdout:
             clean = line.strip()
-            if any(x in clean.lower() for x in ["http", "found", "match:"]):
+            if any(x in clean.lower() for x in ["http", "found", "match:", "onion"]):
                 with print_lock:
                     print(f"{Fore.GREEN}[{name.upper()}-HIT] {Fore.WHITE}{clean}")
                     with open(report_file, "a") as f: f.write(f"[{name}] {clean}\n")
@@ -119,16 +133,17 @@ def main():
     start_tor()
     os.system('clear')
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║        KHALID HUSAIN INVESTIGATOR - FULL SCAN v75.0          ║")
+    print(f"{Fore.RED}║     KHALID HUSAIN INVESTIGATOR - UNIVERSAL PROTOCOL v76.0    ║")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN/ID): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
     if os.path.exists(report_path): os.remove(report_path)
     
-    print(f"{Fore.BLUE}[*] Advanced Discovery: Scanning HTTP, HTTPS, Social & Dark Web...\n")
+    print(f"{Fore.BLUE}[*] Full-Spectrum Scan: HTTP, HTTPS, ONION, Deep & Dark Web...\n")
     threads = [
-        Thread(target=pdf_document_finder, args=(target, report_path)),
+        Thread(target=http_protocol_finder, args=(target, report_path)),
+        Thread(target=advanced_onion_scanner, args=(target, report_path)),
         Thread(target=telegram_dork_engine, args=(target, report_path)),
         Thread(target=shadow_crawler_ai, args=(target, report_path)),
         Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 10", "Sherlock", report_path)),
@@ -136,7 +151,7 @@ def main():
     ]
     for t in threads: t.start()
     for t in threads: t.join()
-    print(f"\n{Fore.GREEN}[➔] Investigation Complete. Detailed Report Saved: {report_path}")
+    print(f"\n{Fore.GREEN}[➔] Investigation Complete. Comprehensive Report: {report_path}")
 
 if __name__ == "__main__":
     main()
