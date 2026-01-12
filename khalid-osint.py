@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 init(autoreset=True)
 print_lock = Lock()
 
-# --- TARGET IDENTITY FILTERS (SAME AS BEFORE) ---
+# --- TARGET IDENTITY FILTERS (ADVANCED PATTERNS) ---
 SURE_HITS = {
     "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
     "Aadhaar": r"\b\d{4}\s\d{4}\s\d{4}\b|\b\d{12}\b",
@@ -27,8 +27,7 @@ def get_onion_session():
     session = requests.Session()
     proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
     session.proxies.update(proxies)
-    # Fast Speed for Tor
-    retry_strategy = Retry(total=2, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+    retry_strategy = Retry(total=2, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
     session.mount("http://", HTTPAdapter(max_retries=retry_strategy))
     session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
     return session
@@ -42,7 +41,7 @@ def start_tor():
 
 def clean_and_verify(raw_html, target, report_file, source_label):
     try:
-        soup = BeautifulSoup(raw_html, 'lxml') # 'lxml' is fastest
+        soup = BeautifulSoup(raw_html, 'lxml')
         for script in soup(["script", "style", "nav", "header", "footer", "aside"]): 
             script.decompose()
         text = soup.get_text(separator=' ')
@@ -61,41 +60,46 @@ def clean_and_verify(raw_html, target, report_file, source_label):
     except: pass
 
 def pdf_document_finder(target, report_file):
+    # ADVANCED DORKS: Scanning HTTP and HTTPS results for documents and registrations
     dorks = [
-        f"https://www.google.com/search?q=site:*.in OR site:*.com filetype:pdf %22{target}%22",
-        f"https://www.bing.com/search?q=%22{target}%22 + filetype:doc OR filetype:xls"
+        f"https://www.google.com/search?q=inurl:http OR inurl:https %22{target}%22 filetype:pdf OR filetype:xls",
+        f"https://www.google.com/search?q=%22{target}%22 + \"login\" OR \"signup\" OR \"portal\"",
+        f"https://www.bing.com/search?q=%22{target}%22 + site:*.in OR site:*.gov.in"
     ]
     for url in dorks:
         try:
-            res = requests.get(url, timeout=10, headers=headers) # Fast timeout
-            links = re.findall(r'(https?://[^\s<>"]+\.(?:pdf|doc|docx|xls|xlsx))', res.text)
+            res = requests.get(url, timeout=12, headers=headers)
+            # Find links from both http and https sources
+            links = re.findall(r'(https?://[^\s<>"]+\.(?:pdf|doc|xls|xlsx|docx))', res.text)
             for link in links:
                 with print_lock:
                     print(f"{Fore.YELLOW}[DOC-LINK] {Fore.WHITE}{link}")
-                    with open(report_file, "a") as f: f.write(f"[DOCUMENT] {link}\n")
-            clean_and_verify(res.text, target, report_file, "DOC-DATA")
+            clean_and_verify(res.text, target, report_file, "WEB-DATA")
         except: pass
 
 def telegram_dork_engine(target, report_file):
     tg_links = [
-        f"https://www.google.com/search?q=site:t.me+%22{target}%22",
-        f"https://yandex.com/search/?text=site:t.me+%22{target}%22"
+        f"https://www.google.com/search?q=site:t.me OR site:telegram.me %22{target}%22",
+        f"https://yandex.com/search/?text=%22{target}%22 site:t.me"
     ]
     for url in tg_links:
         try:
-            res = requests.get(url, timeout=10, headers=headers)
+            res = requests.get(url, timeout=12, headers=headers)
             clean_and_verify(res.text, target, report_file, "TG-DATA")
         except: pass
 
 def shadow_crawler_ai(target, report_file):
+    # Scanning both Clearnet (HTTP/HTTPS) and Darknet (Onion)
     gateways = [
-        f"https://ahmia.fi/search/?q={target}+india+leak",
-        f"https://psbdmp.ws/api/search/{target}"
+        f"https://ahmia.fi/search/?q={target}+leak",
+        f"https://psbdmp.ws/api/search/{target}",
+        f"https://www.google.com/search?q=site:pastebin.com OR site:ghostbin.co OR site:controlc.com %22{target}%22"
     ]
     session = get_onion_session()
     for url in gateways:
         try:
-            res = (session if "ahmia" in url else requests).get(url, timeout=12, headers=headers)
+            is_onion = "ahmia" in url
+            res = (session if is_onion else requests).get(url, timeout=15, headers=headers)
             clean_and_verify(res.text, target, report_file, "LEAK-DATA")
         except: pass
 
@@ -115,25 +119,24 @@ def main():
     start_tor()
     os.system('clear')
     print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║        KHALID HUSAIN INVESTIGATOR - SPEED MODE v74.0         ║")
+    print(f"{Fore.RED}║        KHALID HUSAIN INVESTIGATOR - FULL SCAN v75.0          ║")
     print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN/ID): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
     if os.path.exists(report_path): os.remove(report_path)
     
-    print(f"{Fore.BLUE}[*] Launching High-Speed Parallel Scan...\n")
-    # Threads are triggered simultaneously for maximum speed
+    print(f"{Fore.BLUE}[*] Advanced Discovery: Scanning HTTP, HTTPS, Social & Dark Web...\n")
     threads = [
         Thread(target=pdf_document_finder, args=(target, report_path)),
         Thread(target=telegram_dork_engine, args=(target, report_path)),
         Thread(target=shadow_crawler_ai, args=(target, report_path)),
-        Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 5", "Sherlock", report_path)),
-        Thread(target=silent_tool_runner, args=(f"maigret {target} --timeout 5", "Maigret", report_path))
+        Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 10", "Sherlock", report_path)),
+        Thread(target=silent_tool_runner, args=(f"maigret {target} --timeout 10", "Maigret", report_path))
     ]
     for t in threads: t.start()
     for t in threads: t.join()
-    print(f"\n{Fore.GREEN}[➔] Investigation Complete. Report: {report_path}")
+    print(f"\n{Fore.GREEN}[➔] Investigation Complete. Detailed Report Saved: {report_path}")
 
 if __name__ == "__main__":
     main()
