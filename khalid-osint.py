@@ -1,68 +1,44 @@
-import os, subprocess, requests
+import os, subprocess, requests, sys
 from colorama import Fore, init
-from bs4 import BeautifulSoup
 
 init(autoreset=True)
 
-# Portal Configuration
-P_URL = "https://anishexploits.site/app/"
-ACCESS_KEY = "Anish123"
-
-def run_auto_portal(target):
-    """Website automatically open hogi aur data extract karegi"""
-    try:
-        print(f"{Fore.YELLOW}[*] Connecting to Anish Portal with Auto-Login...")
-        payload = {'access_key': ACCESS_KEY, 'number': target, 'submit': 'CHECK NOW'}
-        response = requests.post(P_URL, data=payload, timeout=15)
-        
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            # Extracting Name, Father, Address from the portal
-            labels = ["Number :", "Name :", "Father :", "Address :", "Circle :", "Aadhar :"]
-            
-            print(f"\n{Fore.GREEN}--- [ PORTAL FOUND DATA ] ---")
-            found = False
-            for tag in soup.find_all(['li', 'p', 'div', 'span']):
-                text = tag.get_text().strip()
-                if any(label in text for label in labels):
-                    print(f"{Fore.WHITE}{text}")
-                    found = True
-            
-            if not found:
-                print(f"{Fore.RED}[!] Website opened but no data found for this number.")
-            print(f"{Fore.GREEN}-----------------------------\n")
-    except Exception as e:
-        print(f"{Fore.RED}[!] Connection Error: {str(e)}")
-
-def run_other_tools(cmd, name):
-    """Running Sherlock, Holehe, etc."""
+def run_legacy_tool(cmd, name, report_file):
+    """Sahi try-except logic taaki script break na ho"""
     try:
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
-        for line in process.stdout:
-            if any(x in line.lower() for x in ["http", "found", "[+]"]):
-                print(f"{Fore.CYAN}[+] {name}: {Fore.WHITE}{line.strip()}")
-    except:
+        with open(report_file, "a") as f:
+            for line in process.stdout:
+                if any(x in line.lower() for x in ["http", "found", "[+]", "link:"]):
+                    print(f"{Fore.CYAN}[+] {name}: {Fore.WHITE}{line.strip()}")
+                    f.write(f"{name}: {line.strip()}\n")
+    except Exception:
+        # Syntax fix: except block ab missing nahi hai
         pass
 
 def main():
+    if not os.path.exists('reports'): os.makedirs('reports')
     os.system('clear')
-    print(f"{Fore.RED}KHALID MASTER OSINT - AUTO PORTAL MODE")
-    target = input(f"\n{Fore.YELLOW}[?] Enter Target Number: ")
+    print(f"{Fore.RED}KHALID OSINT - FULL RECOVERY MODE")
     
-    # Step 1: Portal Auto-Login & Extraction
-    run_auto_portal(target)
+    target = input(f"\n{Fore.YELLOW}[?] Enter Target: ")
+    report_path = os.path.abspath(f"reports/{target}.txt")
     
-    # Step 2: All Other Tools (No deletion)
-    print(f"{Fore.BLUE}[*] Running 30+ Secondary OSINT Tools...\n")
+    # Saare purane tools wapis active hain
+    print(f"{Fore.BLUE}[*] Scanning all secondary modules...\n")
     tools = [
-        (f"sherlock {target} --timeout 1", "Sherlock"),
-        (f"holehe {target}", "Holehe"),
+        (f"phoneinfoga scan -n {target}", "PhoneInfo"),
+        (f"sherlock {target} --timeout 1 --print-found", "Sherlock"),
+        (f"holehe {target} --only-used", "Holehe"),
         (f"maigret {target} --timeout 10", "Maigret"),
-        (f"phoneinfoga scan -n {target}", "PhoneInfo")
+        (f"social-analyzer --username {target} --mode fast", "SocialAnalyzer"),
+        (f"blackbird -u {target}", "Blackbird")
     ]
     
     for cmd, name in tools:
-        run_other_tools(cmd, name)
+        run_legacy_tool(cmd, name, report_path)
+        
+    print(f"\n{Fore.YELLOW}[➔] Process Finished. Report: {Fore.WHITE}{report_path}")
 
 if __name__ == "__main__":
     main()
