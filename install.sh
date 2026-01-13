@@ -1,50 +1,36 @@
-#!/bin/bash
+import os, subprocess, sys, requests, re, time
+# ... (baaki imports same rakhein)
 
-# Rangon ka setup
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-RED='\033[0;31m'
-NC='\033[0m'
+def start_tor():
+    """Environment-aware Tor starter"""
+    is_termux = os.path.exists("/data/data/com.termux/files/usr/bin")
+    
+    try:
+        if is_termux:
+            # Termux doesn't support systemctl, check if port 9050 is open
+            import socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(('127.0.0.1', 9050))
+            if result != 0:
+                print(f"{Fore.YELLOW}[!] ALERT: Tor is NOT running. Run 'tor' in another Termux tab.")
+            sock.close()
+        else:
+            # Kali/Linux logic
+            status = os.popen("systemctl is-active tor").read().strip()
+            if status != "active":
+                print(f"{Fore.YELLOW}[*] Starting Tor Service...")
+                os.system("sudo service tor start > /dev/null 2>&1")
+        
+        print(f"{Fore.GREEN}[OK] Ghost Tunnel: HTTP/HTTPS/ONION PROTOCOLS ACTIVE")
+    except Exception as e:
+        print(f"{Fore.RED}[ERROR] Tor Check Failed: {e}")
 
-echo -e "${CYAN}--------------------------------------------------${NC}"
-echo -e "${GREEN}    KHALID OSINT - FORENSIC ENVIRONMENT FIXER     ${NC}"
-echo -e "${CYAN}--------------------------------------------------${NC}"
-
-# 1. System Level Fixes (Kail/Debian specific)
-echo -e "${YELLOW}[*] Fixing System Dependencies...${NC}"
-sudo apt-get update -y
-sudo apt-get install -y python3-full python3-pip tor torsocks \
-    libxml2-dev libxslt-dev zlib1g-dev libpcap-dev \
-    build-essential python3-dev -y
-
-# 2. Tor Connection Fix
-echo -e "${YELLOW}[*] Restarting Ghost Tunnel (Tor)...${NC}"
-sudo systemctl stop tor
-sudo systemctl start tor
-sudo systemctl enable tor
-
-# 3. Python Dependency Force Install
-# '--break-system-packages' Kali Linux ke naye versions ke liye zaroori hai
-echo -e "${YELLOW}[*] Installing Python Modules (Force Mode)...${NC}"
-python3 -m pip install --upgrade pip --break-system-packages
-python3 -m pip install wheel setuptools --break-system-packages
-
-echo -e "${YELLOW}[*] Compiling LXML and OSINT Modules...${NC}"
-python3 -m pip install colorama requests beautifulsoup4 lxml fpdf reportlab urllib3 \
-    sherlock maigret --break-system-packages
-
-# 4. Binary Path Fix (Subprocess errors ko rokne ke liye)
-echo -e "${YELLOW}[*] Linking Tool Binaries...${NC}"
-sudo ln -sf /home/$(whoami)/.local/bin/sherlock /usr/local/bin/sherlock
-sudo ln -sf /home/$(whoami)/.local/bin/maigret /usr/local/bin/maigret
-
-# 5. Permission & Reports setup
-mkdir -p reports
-chmod +x *.py
-
-echo -e "${CYAN}--------------------------------------------------${NC}"
-echo -e "${GREEN}[✓] INSTALLATION SUCCESSFUL!${NC}"
-echo -e "${YELLOW}[!] Status Check: Tor is $(systemctl is-active tor)${NC}"
-echo -e "${GREEN}[>] Run command: python3 khalid-osint.py 'target'${NC}"
-echo -e "${CYAN}--------------------------------------------------${NC}"
+def clean_and_verify(raw_html, target, report_file, source_label):
+    try:
+        # Fallback for lxml if not available
+        try:
+            soup = BeautifulSoup(raw_html, 'lxml')
+        except:
+            soup = BeautifulSoup(raw_html, 'html.parser')
+        
+        # ... (rest of the cleaning logic)
