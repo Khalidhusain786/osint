@@ -1,4 +1,4 @@
-import os, subprocess, sys, requests, re, time
+import os, subprocess, sys, requests, re, time, random
 from colorama import Fore, init
 from threading import Thread, Lock
 from bs4 import BeautifulSoup
@@ -25,6 +25,16 @@ SURE_HITS = {
     "Location": r"(?i)(Village|City|State|Country|Map|Lat|Long)"
 }
 
+# --- DYNAMIC HEADERS TO AVOID BLOCKS ---
+def get_headers():
+    agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1"
+    ]
+    return {"User-Agent": random.choice(agents)}
+
 def get_onion_session():
     session = requests.Session()
     proxies = {
@@ -38,10 +48,6 @@ def get_onion_session():
     session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
     return session
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"
-}
-
 def start_tor():
     if os.system("systemctl is-active --quiet tor") != 0:
         os.system("sudo service tor start > /dev/null 2>&1")
@@ -49,7 +55,12 @@ def start_tor():
 
 def clean_and_verify(raw_html, target, report_file, source_label):
     try:
-        soup = BeautifulSoup(raw_html, 'lxml')
+        # Fallback if lxml is missing
+        try:
+            soup = BeautifulSoup(raw_html, 'lxml')
+        except:
+            soup = BeautifulSoup(raw_html, 'html.parser')
+
         for junk in soup(["script", "style", "nav", "header", "footer", "aside"]):
             junk.decompose()
 
@@ -78,7 +89,7 @@ def check_breach_databases(target, report_file):
         if "@" in target:
             res = requests.get(
                 f"https://www.google.com/search?q=%22{target}%22+site:leak-lookup.com+OR+site:intelx.io",
-                headers=headers
+                headers=get_headers()
             )
             clean_and_verify(res.text, target, report_file, "BREACH-INFO")
     except:
@@ -92,7 +103,7 @@ def http_protocol_finder(target, report_file):
     ]
     for url in dorks:
         try:
-            res = requests.get(url, timeout=15, headers=headers)
+            res = requests.get(url, timeout=15, headers=get_headers())
             links = re.findall(r'(https?://[^\s<>"]+|[a-z2-7]{56}\.onion)', res.text)
             for link in links:
                 if target in link:
@@ -111,7 +122,7 @@ def advanced_onion_scanner(target, report_file):
     session = get_onion_session()
     for url in onion_gateways:
         try:
-            res = session.get(url, timeout=25, headers=headers)
+            res = session.get(url, timeout=25, headers=get_headers())
             clean_and_verify(res.text, target, report_file, "DARK-DEEP")
         except:
             pass
@@ -123,7 +134,7 @@ def telegram_dork_engine(target, report_file):
     ]
     for url in tg_links:
         try:
-            res = requests.get(url, timeout=15, headers=headers)
+            res = requests.get(url, timeout=15, headers=get_headers())
             clean_and_verify(res.text, target, report_file, "TG-DATA")
         except:
             pass
@@ -135,13 +146,20 @@ def shadow_crawler_ai(target, report_file):
     ]
     for url in gateways:
         try:
-            res = requests.get(url, timeout=15, headers=headers)
+            res = requests.get(url, timeout=15, headers=get_headers())
             clean_and_verify(res.text, target, report_file, "LEAK-DB")
         except:
             pass
 
 def silent_tool_runner(cmd, name, report_file):
     try:
+        # Verify if tool is installed before execution
+        tool_check = cmd.split()[0]
+        if subprocess.run(f"command -v {tool_check}", shell=True, capture_output=True).returncode != 0:
+            with print_lock:
+                print(f"{Fore.YELLOW}[!] {name} not found in system. Skipping...")
+            return
+
         process = subprocess.Popen(
             f"torsocks {cmd}", shell=True,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
@@ -189,6 +207,8 @@ def main():
 
     for t in threads:
         t.start()
+        time.sleep(1) # Chhota gap rate limiting se bachne ke liye
+        
     for t in threads:
         t.join()
 
