@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 init(autoreset=True)
 print_lock = Lock()
 
-# --- TARGET IDENTITY FILTERS ---
+# --- EXTENDED TARGET IDENTITY FILTERS ---
 SURE_HITS = {
     "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
     "Aadhaar": r"\b\d{4}\s\d{4}\s\d{4}\b|\b\d{12}\b",
@@ -18,6 +18,8 @@ SURE_HITS = {
     "Phone": r"(?:\+91|0)?[6-9]\d{9}",
     "Pincode": r"\b\d{6}\b",
     "Vehicle": r"[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}",
+    "IP_Address": r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
+    "BTC_Address": r"\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b",
     "Address": r"(?i)(Gali\s?No|H\.No|Plot|Sector|Ward|Tehsil|District|PIN:)",
     "Relations": r"(?i)(Father|Mother|W/O|S/O|D/O|Relative|Alternative|Nominee)",
     "Location": r"(?i)(Village|City|State|Country|Map|Lat|Long)"
@@ -25,7 +27,6 @@ SURE_HITS = {
 
 def get_onion_session():
     session = requests.Session()
-    # Tor Proxy for .onion and HTTP access
     proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
     session.proxies.update(proxies)
     retry_strategy = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
@@ -50,7 +51,6 @@ def clean_and_verify(raw_html, target, report_file, source_label):
         for line in lines:
             line = line.strip()
             if len(line) < 15: continue
-            # Filtering garbage while keeping HTTP/Onion info
             if any(x in line.lower() for x in ["search about", "open links", "javascript"]): continue
             
             id_found = any(re.search(pattern, line) for pattern in SURE_HITS.values())
@@ -61,8 +61,17 @@ def clean_and_verify(raw_html, target, report_file, source_label):
                     with open(report_file, "a") as f: f.write(f"[{source_label}] {clean_line}\n")
     except: pass
 
+# --- NEW: DATA BREACH CHECKER (HIBP API) ---
+def check_breach_databases(target, report_file):
+    if "@" in target:
+        url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{target}"
+        # Note: Needs API Key for full use, but standard dorks can also find leak mentions
+        try:
+            res = requests.get(f"https://www.google.com/search?q=%22{target}%22+site:leak-lookup.com+OR+site:intelx.io", headers=headers)
+            clean_and_verify(res.text, target, report_file, "BREACH-INFO")
+        except: pass
+
 def http_protocol_finder(target, report_file):
-    # Specifically targeting non-SSL (HTTP) sites and directories
     dorks = [
         f"https://www.google.com/search?q=inurl:http:// -inurl:https:// %22{target}%22",
         f"https://www.bing.com/search?q=%22{target}%22 + \"index of\" + http",
@@ -71,7 +80,6 @@ def http_protocol_finder(target, report_file):
     for url in dorks:
         try:
             res = requests.get(url, timeout=15, headers=headers)
-            # Pattern to catch all types of links (HTTP, HTTPS, ONION)
             links = re.findall(r'(https?://[^\s<>"]+|[a-z2-7]{56}\.onion)', res.text)
             for link in links:
                 if target in link:
@@ -80,16 +88,14 @@ def http_protocol_finder(target, report_file):
         except: pass
 
 def advanced_onion_scanner(target, report_file):
-    # Multi-engine Darknet Search (.onion access)
     onion_gateways = [
-        f"http://jnv3gv3yuvpwhv7y.onion/search/?q={target}", # Torch Search Engine
-        f"https://ahmia.fi/search/?q={target}",              # Ahmia Darknet Search
-        f"http://phishsetvsnm4v5n.onion/search.php?q={target}" # Hidden Wiki related
+        f"http://jnv3gv3yuvpwhv7y.onion/search/?q={target}", 
+        f"https://ahmia.fi/search/?q={target}",               
+        f"http://phishsetvsnm4v5n.onion/search.php?q={target}" 
     ]
     session = get_onion_session()
     for url in onion_gateways:
         try:
-            # Tor tunnel will handle .onion URLs automatically
             res = session.get(url, timeout=25, headers=headers)
             clean_and_verify(res.text, target, report_file, "DARK-DEEP")
         except: pass
@@ -106,7 +112,6 @@ def telegram_dork_engine(target, report_file):
         except: pass
 
 def shadow_crawler_ai(target, report_file):
-    # Added Pastebin, ControlC, and Leak databases (Mixed Protocol)
     gateways = [
         f"https://psbdmp.ws/api/search/{target}",
         f"https://www.google.com/search?q=site:pastebin.com OR site:ghostbin.co OR site:controlc.com %22{target}%22"
@@ -140,12 +145,13 @@ def main():
     report_path = os.path.abspath(f"reports/{target}.txt")
     if os.path.exists(report_path): os.remove(report_path)
     
-    print(f"{Fore.BLUE}[*] Full-Spectrum Scan: HTTP, HTTPS, ONION, Deep & Dark Web...\n")
+    print(f"{Fore.BLUE}[*] Full-Spectrum Scan: Breach DBs, HTTP, Onion, Deep & Dark Web...\n")
     threads = [
         Thread(target=http_protocol_finder, args=(target, report_path)),
         Thread(target=advanced_onion_scanner, args=(target, report_path)),
         Thread(target=telegram_dork_engine, args=(target, report_path)),
         Thread(target=shadow_crawler_ai, args=(target, report_path)),
+        Thread(target=check_breach_databases, args=(target, report_path)),
         Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 10", "Sherlock", report_path)),
         Thread(target=silent_tool_runner, args=(f"maigret {target} --timeout 10", "Maigret", report_path))
     ]
