@@ -1,36 +1,43 @@
-import os, subprocess, sys, requests, re, time
-# ... (baaki imports same rakhein)
+#!/bin/bash
 
-def start_tor():
-    """Environment-aware Tor starter"""
-    is_termux = os.path.exists("/data/data/com.termux/files/usr/bin")
+# Visual styling
+G='\033[0;32m'
+R='\033[0;31m'
+C='\033[0;36m'
+NC='\033[0m'
+
+echo -e "${C}[*] Checking System Environment...${NC}"
+
+if [ -d "/data/data/com.termux/files/usr/bin" ]; then
+    # TERMUX SETUP
+    echo -e "${G}[+] Termux Detected. Starting Auto-Setup...${NC}"
+    pkg update -y && pkg upgrade -y
+    pkg install python git tor clang make libxml2 libxslt libffi openssl -y
     
-    try:
-        if is_termux:
-            # Termux doesn't support systemctl, check if port 9050 is open
-            import socket
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            result = sock.connect_ex(('127.0.0.1', 9050))
-            if result != 0:
-                print(f"{Fore.YELLOW}[!] ALERT: Tor is NOT running. Run 'tor' in another Termux tab.")
-            sock.close()
-        else:
-            # Kali/Linux logic
-            status = os.popen("systemctl is-active tor").read().strip()
-            if status != "active":
-                print(f"{Fore.YELLOW}[*] Starting Tor Service...")
-                os.system("sudo service tor start > /dev/null 2>&1")
-        
-        print(f"{Fore.GREEN}[OK] Ghost Tunnel: HTTP/HTTPS/ONION PROTOCOLS ACTIVE")
-    except Exception as e:
-        print(f"{Fore.RED}[ERROR] Tor Check Failed: {e}")
+    # Fix for LXML and heavy libraries in Termux
+    export LDFLAGS="-L${PREFIX}/lib"
+    export CPPFLAGS="-I${PREFIX}/include"
+    
+    pip install --upgrade pip
+    pip install colorama requests beautifulsoup4 lxml urllib3 pysocks sherlock maigret
+else
+    # KALI / DEBIAN SETUP
+    echo -e "${G}[+] Kali Linux Detected. Starting Auto-Setup...${NC}"
+    sudo apt-get update
+    sudo apt-get install -y python3 python3-pip git tor torsocks libxml2-dev libxslt-dev python3-lxml
+    
+    # Enable Tor
+    sudo systemctl enable tor
+    sudo systemctl start tor
+    
+    # Handle PEP 668 (break-system-packages) for newer Kali versions
+    pip3 install colorama requests beautifulsoup4 lxml urllib3 pysocks sherlock maigret --break-system-packages || \
+    pip3 install colorama requests beautifulsoup4 lxml urllib3 pysocks sherlock maigret
+fi
 
-def clean_and_verify(raw_html, target, report_file, source_label):
-    try:
-        # Fallback for lxml if not available
-        try:
-            soup = BeautifulSoup(raw_html, 'lxml')
-        except:
-            soup = BeautifulSoup(raw_html, 'html.parser')
-        
-        # ... (rest of the cleaning logic)
+# Finalizing
+mkdir -p reports
+chmod +x * 2>/dev/null
+
+echo -e "${G}[SUCCESS] Setup complete. No errors found.${NC}"
+echo -e "${C}[*] Tip: If using Termux, run 'tor' in a second tab before starting the tool.${NC}"
