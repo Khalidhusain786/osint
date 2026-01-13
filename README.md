@@ -85,7 +85,7 @@ IP & Network
 ### **Kali / Ubuntu / Parrot / Debian**
 
 ```bash
-cd /home/kali && rm -rf osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && chmod +x install.sh && ./install.sh
+cd /home/kali && rm -rf osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && chmod +x install.sh && sudo ./install.sh && sudo ln -sf $(which maigret || echo "$HOME/.local/bin/maigret") /usr/bin/maigret && sudo service tor restart && clear && python3 khalid-osint.py
 ```
 
 ### **Termux**
