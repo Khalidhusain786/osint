@@ -146,7 +146,9 @@ def main():
     printf "  ██╔═██╗ ██╔══██║██╔══██║██║     ██║██║  ██║\n"
     printf "  ██║  ██╗██║  ██║██║  ██║███████╗██║██████╔╝\n"
     printf "  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝╚═════╝ \n"
-    printf "       \e[1;93mH  U  S  A  I  N    7  8  6\e[0m\n"
+    printf "       \e[1;93mH  U  S  A  I  N    7  8  6\e[0m\n" 
+
+    }
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN/ID): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
