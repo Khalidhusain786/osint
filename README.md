@@ -91,7 +91,7 @@ cd /home/kali && rm -rf osint && git clone https://github.com/Khalidhusain786/os
 ### **Termux**
 
 ```bash
-pkg update -y && pkg upgrade -y && pkg install python git tor libxml2 libxslt clang make -y || (sudo apt update && sudo apt install -y python3 python3-pip git tor torsocks libxml2-dev libxslt-dev build-essential) && git clone https://github.com/Khalidhusain786/osint.git && cd osint && pip install --upgrade pip && pip install -r requirements.txt && chmod +x * && python3 main.py
+cd $HOME && pkg update -y && pkg upgrade -y && pkg install python git tor libxml2 libxslt clang make -y || (sudo apt update && sudo apt install -y python3 python3-pip git tor torsocks libxml2-dev libxslt-dev build-essential) && rm -rf osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && pip install --upgrade pip && pip install -r requirements.txt && chmod +x * && ([ -f khalid-osint.py ] && mv khalid-osint.py main.py || echo "File Ready"); python3 main.py
 ```
 
 ---
