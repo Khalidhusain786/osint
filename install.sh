@@ -1,43 +1,30 @@
 #!/bin/bash
-
-# Visual Styling
+# Visual Colors
 G='\033[0;32m'
-R='\033[0;31m'
 C='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${C}[*] Khalid Husain OSINT: Auto-Fix & Fast Setup Mode...${NC}"
+echo -e "${C}[*] Khalid Husain OSINT: Fixing Maigret & Sherlock Paths Permanently...${NC}"
 
-# 1. Rename File (Consistent with main script)
-if [ -f "khalid-osint.py" ]; then
-    echo -e "${G}[FIX] Renaming to main.py...${NC}"
-    mv khalid-osint.py main.py
-fi
+# 1. Necessary Packages
+sudo apt update -qq
+sudo apt install -y python3-pip tor torsocks sherlock libxml2-dev libxslt-dev -y
 
-# 2. Install Core Dependencies
-if [ -d "/data/data/com.termux/files/usr/bin" ]; then
-    echo -e "${G}[+] Termux Detected...${NC}"
-    pkg install python git tor clang make libxml2 libxslt -y
-    # Install Sherlock & Maigret for Termux
-    pip install sherlock maigret --no-cache-dir
-    tor > /dev/null 2>&1 &
-else
-    echo -e "${G}[+] Kali/Linux Detected...${NC}"
-    sudo apt update -qq
-    sudo apt install -y python3-pip tor torsocks sherlock libxml2-dev libxslt-dev -y
-    # Install Maigret via pip (Kali repo me nahi hota aksar)
-    pip install maigret --break-system-packages --no-cache-dir
-    sudo service tor restart
-fi
+# 2. Maigret Installation
+echo -e "${G}[+] Installing Maigret via PIP...${NC}"
+pip install maigret --break-system-packages --no-cache-dir
 
-# 3. Python Libraries
-echo -e "${C}[*] Installing Python dependencies...${NC}"
-pip install --no-cache-dir requests[socks] colorama beautifulsoup4 lxml urllib3 --break-system-packages
+# 3. PERMANENT LINKING (Yeh sabse important step hai)
+# Isse system ko 'maigret' command ka pata chal jayega
+M_PATH=$(which maigret || echo "$HOME/.local/bin/maigret")
+sudo ln -sf "$M_PATH" /usr/local/bin/maigret
 
-# 4. Final Permissions
+S_PATH=$(which sherlock || echo "$HOME/.local/bin/sherlock")
+sudo ln -sf "$S_PATH" /usr/local/bin/sherlock
+
+# 4. Permissions & Tor
+sudo service tor restart
+chmod +x khalid-osint.py
 mkdir -p reports
-chmod +x main.py
 
-clear
-echo -e "${G}[SUCCESS] Sherlock, Maigret, and Tor are ready! Starting Tool...${NC}"
-python3 main.py
+echo -e "${G}[SUCCESS] System paths synchronized. Run your script now.${NC}"
