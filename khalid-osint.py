@@ -137,9 +137,16 @@ def main():
     if not os.path.exists('reports'): os.makedirs('reports')
     start_tor()
     os.system('clear')
-    print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
-    print(f"{Fore.RED}║     KHALID HUSAIN INVESTIGATOR - UNIVERSAL PROTOCOL v76.0    ║")
-    print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
+    banner() {
+    clear
+    printf "\e[1;92m"
+    printf "  ██╗  ██╗██╗  ██╗ █████╗ ██╗     ██╗██████╗ \n"
+    printf "  ██║ ██╔╝██║  ██║██╔══██╗██║     ██║██╔══██╗\n"
+    printf "  █████╔╝ ███████║███████║██║     ██║██║  ██║\n"
+    printf "  ██╔═██╗ ██╔══██║██╔══██║██║     ██║██║  ██║\n"
+    printf "  ██║  ██╗██║  ██║██║  ██║███████╗██║██████╔╝\n"
+    printf "  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝╚═════╝ \n"
+    printf "       \e[1;93mH  U  S  A  I  N    7  8  6\e[0m\n"
     target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN/ID): ")
     if not target: return
     report_path = os.path.abspath(f"reports/{target}.txt")
