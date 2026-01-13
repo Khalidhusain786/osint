@@ -1,51 +1,51 @@
 #!/bin/bash
 
-# Status Colors
+# Colors for professional output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}==============================================${NC}"
-echo -e "${GREEN}      KHALID HUSAIN - DIRECT INSTALLER        ${NC}"
-echo -e "${GREEN}==============================================${NC}"
+echo -e "${CYAN}--------------------------------------------------${NC}"
+echo -e "${GREEN}    KHALID OSINT - INSTALLER & DEPENDENCY FIXER   ${NC}"
+echo -e "${CYAN}--------------------------------------------------${NC}"
 
-# 1. System Update & Lock Fix (Directly handles busy packages)
-echo -e "${YELLOW}[*] Preparing system for HTTP/HTTPS/Onion access...${NC}"
-sudo rm /var/lib/dpkg/lock-frontend > /dev/null 2>&1
-sudo rm /var/lib/apt/lists/lock > /dev/null 2>&1
-sudo apt update -y
+# 1. Update and System Dependencies
+echo -e "${YELLOW}[*] Installing System Dependencies (Sudo required)...${NC}"
+sudo apt-get update -y
+sudo apt-get install -y python3 python3-pip tor torsocks libxml2-dev libxslt-dev zlib1g-dev libpcap-dev
 
-# 2. Universal Dependencies (Adding lxml support specifically)
-echo -e "${YELLOW}[*] Installing Core Tools...${NC}"
-sudo apt install -y tor torsocks python3 python3-pip git libxml2-dev libxslt-dev curl python3-lxml
+# 2. Fix Tor Configuration
+echo -e "${YELLOW}[*] Configuring and Starting Tor Service...${NC}"
+sudo systemctl enable tor
+sudo systemctl start tor
 
-# 3. Python Library Force-Install (Bypassing OS restrictions)
-echo -e "${YELLOW}[*] Installing Python Modules...${NC}"
-# lxml, requests, aur bs4 ke bina code crash ho jayega, isliye inhe force install kiya hai
-pip3 install requests colorama beautifulsoup4 lxml urllib3 --break-system-packages --quiet 2>/dev/null || \
-pip3 install requests colorama beautifulsoup4 lxml urllib3 --quiet
+# 3. Fix Python Environment & Libraries
+echo -e "${YELLOW}[*] Installing Python Libraries...${NC}"
+# lxml and beautifulsoup4 are critical for your clean_and_verify function
+pip3 install --upgrade pip
+pip3 install wheel setuptools
+pip3 install colorama requests beautifulsoup4 lxml fpdf reportlab urllib3
 
-# 4. OSINT Tools (Sherlock & Maigret)
-echo -e "${YELLOW}[*] Installing Sherlock & Maigret for Registration Search...${NC}"
-pip3 install sherlock maigret --break-system-packages --quiet 2>/dev/null || \
-pip3 install sherlock maigret --quiet
-
-# 5. Tor Service Direct Start
-echo -e "${YELLOW}[*] Configuring Ghost Tunnel...${NC}"
-sudo systemctl enable tor > /dev/null 2>&1
-sudo systemctl restart tor > /dev/null 2>&1
-
-# 6. Final Integrity Check
-echo -e "${YELLOW}[*] Verification...${NC}"
-if python3 -c "import lxml, requests, bs4, colorama" 2>/dev/null; then
-    echo -e "${GREEN}[OK] All HTTP/HTTPS/Onion protocols ready.${NC}"
-else
-    echo -e "${RED}[!] Some modules failed. Retrying one last time...${NC}"
-    sudo apt install -y python3-requests python3-bs4 python3-colorama
+# 4. Tool Specific Fixes (Sherlock/Maigret)
+echo -e "${YELLOW}[*] Checking for OSINT Tools...${NC}"
+if ! command -v sherlock &> /dev/null; then
+    echo -e "${YELLOW}[!] Sherlock not found. Installing via pip...${NC}"
+    pip3 install sherlock
 fi
 
-echo -e "${GREEN}==============================================${NC}"
-echo -e "${GREEN}       DIRECT INSTALLATION SUCCESSFUL         ${NC}"
-echo -e "${YELLOW} Run Now: python3 khalid-osint.py             ${NC}"
-echo -e "${GREEN}==============================================${NC}"
+if ! command -v maigret &> /dev/null; then
+    echo -e "${YELLOW}[!] Maigret not found. Installing via pip...${NC}"
+    pip3 install maigret
+fi
+
+# 5. Directory Setup
+echo -e "${YELLOW}[*] Finalizing Workspace...${NC}"
+mkdir -p reports
+chmod +x khalid-osint.py
+
+echo -e "${CYAN}--------------------------------------------------${NC}"
+echo -e "${GREEN}[✓] SUCCESS: Environment is ready.${NC}"
+echo -e "${YELLOW}[!] Ensure Tor is running (Status: $(systemctl is-active tor))${NC}"
+echo -e "${CYAN}--------------------------------------------------${NC}"
