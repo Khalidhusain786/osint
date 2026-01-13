@@ -1,104 +1,217 @@
-# 🛰️ KHALID HYBRID OSINT ENGINE
+<h1 align="center">🕵️‍♂️ KHALID HYBRID OSINT ENGINE</h1>
+<p align="center">
+<b>Surface + Deep + Dark Recon • Telegram • Data Breaches • Onion Spider • Identity Extractor</b>
+</p>
 
-> **Full-Spectrum Recon Framework**  
-> Surface Web + Deep Web + Dark Web + Telegram + Breach DB + Identity & Phone + Export
-
----
-
-## 🏷️ Status & Info
-
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
-![Type](https://img.shields.io/badge/Engine-Hybrid%20OSINT-blue)
-![Layer](https://img.shields.io/badge/Web%20Layers-Surface%20%2B%20Deep%20%2B%20Dark-black)
-![Report](https://img.shields.io/badge/Export-PDF%20%2B%20TXT-orange)
-![Language](https://img.shields.io/badge/Language-Python-yellow)
-![Platform](https://img.shields.io/badge/Platform-Kali%20%7C%20Ubuntu%20%7C%20Termux-informational)
+<p align="center">
+<img src="https://img.shields.io/badge/Recon-OSINT-blue?style=for-the-badge">
+<img src="https://img.shields.io/badge/Mode-HYBRID-orange?style=for-the-badge">
+<img src="https://img.shields.io/badge/Tor-AUTO-green?style=for-the-badge">
+<img src="https://img.shields.io/badge/Report-TXT%2FPDF-yellow?style=for-the-badge">
+<img src="https://img.shields.io/badge/Platform-Kali%20%7C%20Ubuntu%20%7C%20Termux-red?style=for-the-badge">
+</p>
 
 ---
 
-## 🎯 Mission
+## 🚀 **About The Engine**
 
-**OSINT — Hybrid Recon Engine (Surface + Deep + Dark)**  
-Designed for investigators, red-teamers, analyst & cyber forensic tasks.
+> **Khalid Hybrid OSINT Engine** is a full-spectrum recon suite that performs:
+✔ Surface Web  
+✔ Deep Web  
+✔ Dark Web  
+✔ Telegram Dorks  
+✔ Leak Databases  
+✔ Identity Extraction  
+✔ Breach Checks  
+✔ Final Reports  
 
----
-
-## ⚙️ Modules & Capabilities
-
-✔ **Surface Layer**
-- Sherlock / Maigret (username OSINT)
-- Email OSINT
-- Phone lookup
-- Social enumerations
-- Public Breach DB
-
-✔ **Deep / Dark Layer**
-- Onion crawling
-- Marketplace lookup
-- Dumps / DB breach artifacts
-- Ghost relay for Dark requests
-
-✔ **Identity & Number Intelligence**
-- Phone
-- WhatsApp metadata
-- Telegram
-- Truecaller (API optional)
-
-✔ **Telegram Recon**
-- Username / Mention / Group / Channel intel
-
-✔ **Breach Dump Recon**
-- Combo leaks
-- Mail-pass dumps
-- Credential search
-
-✔ **Export**
-- PDF
-- TXT
-- Terminal minimal hits
+All through one unified pipeline.
 
 ---
 
-## 🧩 Architecture Tree
+## 🧬 **Core Abilities**
+
+✔ Automatic TOR routing (No manual start)  
+✔ Deep + Dark onion spider gateways  
+✔ Telegram intelligence dorks  
+✔ Leak databases enumeration  
+✔ Data breach hunter  
+✔ WHOIS & platform lookups  
+✔ Entity Identity Classification (PAN, Aadhaar, Phone, Address etc.)  
+✔ PDF & TXT reporting  
+✔ Artifact link retention  
+✔ Colorized output  
+✔ Threaded high-speed mode  
+
+---
+
+## 🔍 **Supported Targets**
 
 ```
-KHALID HYBRID OSINT ENGINE
-├── Surface Recon
-│   ├── Sherlock
-│   ├── Maigret
-│   ├── Email
-│   ├── Phone
-│   └── Breach DB
-├── Deep Recon
-│   ├── Breach Dumps
-│   ├── DB Lookup
-│   └── Dark Market
-└── Dark Web
-    ├── Tor Relay
-    ├── Onion Support
-    └── Ghost Tunnel
+Name
+Email
+Phone
+PAN
+Aadhaar
+Voter ID
+Domain
+Username
+Address Patterns
+Bitcoin Wallets
+IP & Network
 ```
 
 ---
 
-## 📦 Requirements
+## 🧩 **Recon Modules**
 
-> Auto installed by script
-
-- Python3
-- pip
-- tor (if dark web active)
-- system packages
+| Module | Layer |
+|---|---|
+| HTTP Dorks | Surface |
+| Telegram Dorks | Semi-Deep |
+| Pastebin/Leak Dumps | Deep |
+| Onion Spider | Deep/Dark |
+| Breach Check | LeakNet |
+| Sherlock | Surface OSINT |
+| Maigret | Aggregated OSINT |
+| Identity Extraction | NLP |
+| PDF Builder | Reporting |
+| Tor Router | Transport |
 
 ---
 
-## 🚀 Installation + Run (One Line, Color)
+## 🛠 **Installation**
 
-**Just copy → paste → run**
+### **Kali / Ubuntu / Parrot / Debian**
 
 ```bash
-cd /home/kali && rm -rf /home/kali/osint && echo -e "\033[1;32m[CLONING REPO]\033[0m" && git clone https://github.com/Khalidhusain786/osint.git && cd osint && echo -e "\033[1;33m[INSTALLING DEPENDENCIES]\033[0m" && chmod +x install.sh && ./install.sh && echo -e "\033[1;35m[LAUNCHING OSINT — Hybrid Recon Engine (Surface + Deep + Dark)]\033[0m" && python3 khalid-osint.py
+cd /home/kali && rm -rf /home/kali/osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && chmod +x install.sh && ./install.sh
 ```
+
+### **Termux**
+
+```bash
+pkg update -y && pkg upgrade -y && pkg install python git tor -y && git clone https://github.com/Khalidhusain786/osint.git && cd osint && pip install -r requirements.txt
+```
+
+---
+
+## ▶ **Run**
+
+Direct launch:
+
+```bash
+python3 khalid-osint.py
+```
+
+---
+
+## 🎛 **AUTO-TOR Mode**
+
+✔ Automatically starts TOR  
+✔ Applies onion socks proxy  
+✔ No manual config required  
+
+---
+
+## 📁 **Folder Layout**
+
+```
+osint/
+ ├─ khalid-osint.py
+ ├─ install.sh
+ ├─ requirements.txt
+ ├─ api_keys.json
+ ├─ reports/
+ ├─ assets/
+ │   └─ banner.png
+ └─ screenshots/
+```
+
+---
+
+## 📜 **Report Output**
+
+Formats:
+
+```
+/reports/<target>.txt
+/reports/<target>.pdf
+```
+
+Includes:
+
+✔ Found Data  
+✔ Sources  
+✔ Dork hits  
+✔ Onion links  
+✔ Platform profiles  
+✔ Evidence chain  
+
+---
+
+## 📸 **Screenshots**
+
+```
+screenshots/terminal.png
+screenshots/report.png
+```
+
+(Will be auto added)
+
+---
+
+## 🔑 **Optional API Keys**
+
+`api_keys.json`
+
+```json
+{
+  "truecaller": "",
+  "hunter": "",
+  "email_hippo": "",
+  "hlr_lookup": ""
+}
+```
+
+---
+
+## ⚡ Performance Notes
+
+✔ Multi-threaded  
+✔ Proxy aware  
+✔ Timeout hardened  
+✔ Onion fallback  
+✔ Leak redundancy  
+
+---
+
+## 🧾 **Legal Notice**
+
+> This tool is intended for **education + investigative OSINT** only.  
+> User assumes all liability.  
+> Do not violate privacy or local laws.
+
+---
+
+## 👑 **Author**
+
+**Developer:** `Khalid Husain`  
+**Engine:** `Hybrid Recon AI v1`
+
+---
+
+## 📜 **License**
+
+```
+MIT License
+```
+
+---
+
+## ⭐ **Give it a Star**
+
+If this helps your work, star the repo 🙂```
 
 ---
 
