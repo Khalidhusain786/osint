@@ -85,13 +85,13 @@ IP & Network
 ### **Kali / Ubuntu / Parrot / Debian**
 
 ```bash
-cd /home/kali && rm -rf /home/kali/osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && chmod +x install.sh && ./install.sh
+cd /home/kali && rm -rf osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && chmod +x install.sh && ./install.sh
 ```
 
 ### **Termux**
 
 ```bash
-pkg update -y && pkg upgrade -y && pkg install python git tor -y && git clone https://github.com/Khalidhusain786/osint.git && cd osint && pip install -r requirements.txt
+pkg update -y && pkg upgrade -y && pkg install python git tor libxml2 libxslt clang make -y || (sudo apt update && sudo apt install -y python3 python3-pip git tor torsocks libxml2-dev libxslt-dev build-essential) && git clone https://github.com/Khalidhusain786/osint.git && cd osint && pip install --upgrade pip && pip install -r requirements.txt && chmod +x * && python3 main.py
 ```
 
 ---
