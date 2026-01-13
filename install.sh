@@ -1,37 +1,43 @@
 #!/bin/bash
-# Colors
-G='\033[0;32m'
-R='\033[0;31m'
-C='\033[0;36m'
-NC='\033[0m'
 
-echo -e "${C}[*] System Scan & Setup Start Ho Raha Hai...${NC}"
+# Fast color codes
+G='\e[1;32m'
+B='\e[1;34m'
+R='\e[1;31m'
+N='\e[0m'
 
-# Check for Termux
-if [ -d "/data/data/com.termux/files/usr/bin" ]; then
-    echo -e "${G}[+] Termux Detected. Installing optimized packages...${NC}"
-    pkg update -y && pkg upgrade -y
-    # Important: Termux mein 'binutils' aur 'rust' zaroori hain latest python packages ke liye
-    pkg install python git tor clang make libxml2 libxslt libffi openssl libcrypt rust binutils -y
-    
-    pip install --upgrade pip
-    pip install colorama requests beautifulsoup4 lxml urllib3[socks] pysocks sherlock maigret
-else
-    # Kali / Debian Setup
-    echo -e "${G}[+] Kali/Linux Detected. Fixing Permissions...${NC}"
-    sudo apt-get update
-    # Essential build tools for Python C-extensions
-    sudo apt-get install -y python3 python3-pip python3-dev git tor torsocks \
-    libxml2-dev libxslt-dev build-essential libssl-dev libffi-dev
+echo -e "${B}[*] Khalid Husain OSINT - Fast Setup Starting...${N}"
 
-    # Tor Service fix
-    sudo systemctl enable tor
-    sudo systemctl start tor
-    
-    # Python package fix (PEP 668)
-    pip3 install colorama requests beautifulsoup4 lxml urllib3[socks] pysocks sherlock maigret --break-system-packages
+# Check environment (Kali or Termux) and install only missing core deps
+if [ -f /usr/bin/apt ]; then
+    # Kali Linux: Silent install zaroori libraries
+    sudo apt update -qq
+    sudo apt install -y python3-pip tor torsocks libxml2-dev libxslt-dev > /dev/null 2>&1
+elif [ -f /usr/bin/pkg ]; then
+    # Termux: Silent install
+    pkg install -y python tor libxml2 libxslt clang make > /dev/null 2>&1
 fi
 
+# Install Python requirements silently
+echo -e "${G}[*] Installing Python Dependencies...${N}"
+pip install --no-cache-dir requests[socks] colorama beautifulsoup4 lxml urllib3 > /dev/null 2>&1
+
+# Setup Reports Directory
 mkdir -p reports
-chmod +x * 2>/dev/null
-echo -e "${G}[SUCCESS] Setup Complete. Ab aap tool run kar sakte hain.${NC}"
+
+# Start Tor Service (Background)
+echo -e "${G}[*] Activating Ghost Tunnel (Tor)...${N}"
+if [ -f /usr/bin/apt ]; then
+    sudo service tor start > /dev/null 2>&1
+else
+    tor > /dev/null 2>&1 &
+fi
+
+# Permissions fix
+chmod +x *
+
+# Auto-Start the Tool
+echo -e "${B}[OK] Setup Complete. Launching Investigator...${N}"
+sleep 2
+clear
+python3 main.py
