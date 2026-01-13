@@ -100,7 +100,9 @@ pkg update -y && pkg upgrade -y && pkg install python git tor torsocks libxml2 l
 Direct launch:
 
 ```bash
+
 python3 khalid-osint.py
+
 ```
 
 ---
