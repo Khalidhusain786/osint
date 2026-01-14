@@ -10,7 +10,6 @@ from weasyprint import HTML
 import urllib.parse
 import base64
 import hashlib
-from PIL import Image
 import pytesseract
 import exifread
 import argparse
