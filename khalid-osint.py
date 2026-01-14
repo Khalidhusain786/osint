@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN ULTIMATE OSINT v85.2
-FULL TOR + DARKWEB + DEEPWEB + GOVT + COMPANIES + SOCKS5
-(Authorized Pentest - All permissions granted)
+KHALID HUSAIN ULTIMATE OSINT v85.2 - FIXED VERSION
+FULL TOR + DARKWEB + GOVT + COMPANIES - NO SELENIUM NEEDED
 """
 
-import os, subprocess, sys, requests, re, time, random, json, shlex, webbrowser
-import socks
-import socket
-from colorama import Fore, Style, init
-from threading import Thread, Lock
-from bs4 import BeautifulSoup
-import markdown
-from weasyprint import HTML
+import os
+import subprocess
+import sys
+import requests
+import re
+import time
+import random
+import json
 import urllib.parse
 from datetime import datetime
-import undetected_chromedriver as uc
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from threading import Thread, Lock
+from colorama import Fore, Style, init
+from bs4 import BeautifulSoup
+try:
+    import socks
+    TOR_AVAILABLE = True
+except ImportError:
+    TOR_AVAILABLE = False
+    print(f"{Fore.YELLOW}⚠️ Install socks: pip3 install PySocks")
 
 init(autoreset=True)
 print_lock = Lock()
@@ -32,131 +34,148 @@ class KhalidHusainOSINTv852:
         self.target_folder = ""
         self.tor_session = None
         
-    def khalid_banner(self):
+    def banner(self):
         """Khalid Husain Banner"""
         banner = f"""
 {Fore.RED}╔══════════════════════════════════════════════════════════════════════╗
 {Fore.RED}║{Fore.YELLOW}                    KHALID HUSAIN                     {Fore.RED}║
-{Fore.RED}║{Fore.CYAN}              ULTIMATE OSINT v85.2                {Fore.RED}║
-{Fore.RED}║{Fore.MAGENTA}   TOR+DARKWEB+GOVT+COMPANIES+SOCKS5+DEEPWEB    {Fore.RED}║
+{Fore.RED}║{Fore.CYAN}              ULTIMATE OSINT v85.2 FIXED             {Fore.RED}║
+{Fore.RED}║{Fore.MAGENTA}   TOR+DARKWEB+GOVT+COMPANIES+DEEPWEB+SOCKS5   {Fore.RED}║
 {Fore.RED}╚══════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
         """
         print(banner)
     
-    def tor_setup(self):
-        """TOR + SOCKS5 Setup"""
+    def tor_init(self):
+        """TOR + SOCKS5 Init - Safe fallback"""
         try:
-            # Start TOR
-            subprocess.Popen(['tor'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(8)
+            if not TOR_AVAILABLE:
+                return False
+                
+            # Check if tor running
+            if subprocess.run(['pgrep', 'tor'], capture_output=True).returncode != 0:
+                subprocess.Popen(['tor'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(f"{Fore.YELLOW}🚀 Starting TOR...")
+                time.sleep(10)
             
             # TOR Session
-            self.tor_session = requests.session()
+            self.tor_session = requests.Session()
             self.tor_session.proxies = {
                 'http': 'socks5h://127.0.0.1:9050',
                 'https': 'socks5h://127.0.0.1:9050'
             }
-            print(f"{Fore.GREEN}🌀 TOR + SOCKS5 ACTIVE")
+            
+            # Test TOR
+            test = self.tor_session.get('http://httpbin.org/ip', timeout=15)
+            print(f"{Fore.GREEN}🌀 TOR SOCKS5 ACTIVE ✅")
             return True
-        except:
-            print(f"{Fore.YELLOW}⚠️ TOR fallback to surface web")
+        except Exception as e:
+            print(f"{Fore.YELLOW}⚠️ TOR unavailable: {e} - Using surface web")
             return False
     
-    def target_folder(self):
-        """Khalid Husain target folder"""
+    def create_folder(self):
+        """Khalid Husain folder"""
         safe_target = re.sub(r'[^\w\-_.]', '_', self.target)[:25]
         self.target_folder = f"./Khalid_Husain_{safe_target}_OSINT_v852"
         os.makedirs(self.target_folder, exist_ok=True)
+        print(f"{Fore.GREEN}📁 Folder: {self.target_folder}")
     
-    def print_hit(self, category, data, source, engine, link="", network="Surface"):
-        """Clean hit output"""
-        network_emoji = {"TOR": "🌀", "DARKWEB": "🕳️", "GOVT": "🏛️", "CORP": "🏢"}.get(network, "🌐")
+    def print_result(self, category, data, source, engine, link="", network="🌐"):
+        """Clean output"""
         with print_lock:
-            print(f"{Fore.GREEN}✓{Fore.WHITE} [{network_emoji}{network}] {Fore.CYAN}{category:10} | {Fore.YELLOW}{source} | {Fore.MAGENTA}{engine}")
+            print(f"{Fore.GREEN}✓{Fore.WHITE} [{network}] {Fore.CYAN}{category:10} | {Fore.YELLOW}{source} | {Fore.MAGENTA}{engine}")
             print(f"   {Fore.RED}→ {data}{Style.RESET_ALL}")
-            if link: print(f"   {Fore.BLUE}🔗 {link}{Style.RESET_ALL}\n")
+            if link:
+                print(f"   {Fore.BLUE}🔗 {link}{Style.RESET_ALL}\n")
             
         self.results.append({
             'category': category, 'data': data, 'source': source,
             'engine': engine, 'link': link, 'network': network
         })
     
-    def categorize(self, data, context=""):
-        """Enhanced categorization"""
+    def classify_data(self, data, context=""):
+        """Data classification"""
         patterns = {
-            'NAME': r'[A-Z][a-z]+(?:\s[A-Z][a-z]+)+',
-            'PHONE': r'[\+]?[6-9]\d{{9,10}}',
-            'PINCODE': r'\b[1-9][0-9]{{5}}\b',
-            'PAN': r'[A-Z]{{5}}[0-9]{{4}}[A-Z]',
-            'VEHICLE': r'[A-Z]{{2}}[0-9]{{1,2}}[A-Z]{{2}}\d{{4}}',
-            'LOCATION': r'(?:City|State|District|Area)[:\s]*([A-Za-z\s,]+?)(?:\s|<|$)',
-            'EMAIL': r'[\w\.-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{{2,}}',
-            'DOMAIN': r'\b[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.[a-z0-9][a-z0-9-]*[a-z0-9]\b'
+            'NAME': r'\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)+\b',
+            'PHONE': r'[\+]?[6-9]\d{9,10}',
+            'PINCODE': r'\b[1-9]\d{5}\b',
+            'PAN': r'[A-Z]{5}[0-9]{4}[A-Z]',
+            'VEHICLE': r'[A-Z]{2}[0-9]{1,2}[A-Z]{2}\d{4}',
+            'LOCATION': r'(?:City|State|District|Area|Location)[:\s]*([A-Za-z\s,]+?)(?:\s|$|<)',
+            'EMAIL': r'\b[\w\.-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,}\b',
+            'DOMAIN': r'\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\b'
         }
         
-        for cat, pat in patterns.items():
-            matches = re.findall(pat, data + ' ' + context, re.IGNORECASE)
+        full_text = data + ' ' + context
+        for cat, pattern in patterns.items():
+            matches = re.findall(pattern, full_text, re.IGNORECASE)
             for match in matches:
-                clean = re.sub(r'[^\w\s@.\-+]', '', str(match).strip())[:50]
-                if len(clean) > 3: return cat, clean
-        return "DATA", data[:50]
+                clean = re.sub(r'[^\w\s@.\-+]', '', str(match).strip())
+                if len(clean) > 3:
+                    return cat, clean[:50]
+        return "INFO", data[:50]
     
-    # 🔥 DARKWEB + TOR ONION SITES
+    def scan_url(self, url, source, engine="WEB", use_tor=False):
+        """Safe URL scanner"""
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            session = self.tor_session if use_tor and self.tor_session else requests
+            resp = session.get(url, headers=headers, timeout=20)
+            
+            if self.target.lower() in resp.text.lower():
+                context = resp.text.lower()
+                start = context.find(self.target.lower())
+                snippet = resp.text[max(0, start-150):start+250]
+                cat, clean_data = self.classify_data(self.target, snippet)
+                self.print_result(cat, clean_data, source, engine, url, "TOR" if use_tor else "🌐")
+        except:
+            pass
+    
     def darkweb_scan(self):
-        """FULL DARKWEB + DEEPWEB"""
+        """DARKWEB + TOR Onions"""
         print(f"{Fore.RED}🕳️  DARKWEB + TOR ONIONS")
         onions = [
-            ("Dark Search", "http://searchzzz3sh2xf.onion"),
             ("Ahmia", "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion"),
             ("Torch", "http://xmh57jrknzkhv6y3ls3ubitzfqnkrwxhopf5aygthi7d6rplyvk3noyd.onion"),
             ("OnionLand", "http://3bbad7fauom4d6sgppalyqddsqbf5u5p56b5k5uk2zxsy3d6ey2yykyd.onion"),
-            ("Daniel's", "http://danielas3rtn54uwmofdo3x2bsdifr47huasnmbgqzfrec5ubupvtpid.onion")
+            ("Daniel", "http://danielas3rtn54uwmofdo3x2bsdifr47huasnmbgqzfrec5ubupvtpid.onion")
         ]
         
-        def scan_onion(onion_name, url):
-            try:
-                if self.tor_session:
-                    r = self.tor_session.get(f"{url}/search?q={urllib.parse.quote(self.target)}", timeout=25)
-                    if self.target.lower() in r.text.lower():
-                        cat, clean = self.categorize(self.target, r.text)
-                        self.print_hit(cat, clean, onion_name, "TOR", url, "DARKWEB")
-            except: pass
+        def scan_onion(name, url):
+            self.scan_url(f"{url}/?q={urllib.parse.quote(self.target)}", name, "DARKWEB", True)
         
-        threads = [Thread(target=scan_onion, args=(name, url), daemon=True) 
-                  for name, url in onions]
-        for t in threads: t.start()
-        for t in threads: t.join(30)
+        threads = []
+        for name, url in onions:
+            t = Thread(target=scan_onion, args=(name, url), daemon=True)
+            threads.append(t)
+            t.start()
+        
+        for t in threads:
+            t.join(timeout=40)
     
-    # 🔥 GOVERNMENT DATABASES
-    def govt_databases(self):
-        """ALL Government Sites"""
+    def government_scan(self):
+        """ALL Government Databases"""
         print(f"{Fore.RED}🏛️  GOVERNMENT DATABASES")
         govt_sites = [
             ("IncomeTax", f"https://incometaxindia.gov.in/search-result?search={urllib.parse.quote(self.target)}"),
             ("EPFO", f"https://unifiedportal-mem.epfindia.gov.in/memberinterface/#/search?q={urllib.parse.quote(self.target)}"),
-            ("Passport", f"https://www.passportindia.gov.in/AppOnlineProject/welcomeLink"),
-            ("Aadhaar", f"https://uidai.gov.in/my-aadhaar/get-aadhaar.html"),
-            ("PFCheck", f"https://www.epfindia.gov.in/site_en/index.php"),
-            ("GSTPortal", f"https://www.gst.gov.in/search?query={urllib.parse.quote(self.target)}"),
-            ("MCA", f"https://www.mca.gov.in/content/mca/global/en/home.html"),
-            ("Election", f"https://electoralsearch.eci.gov.in/search"),
-            ("RTO", f"https://parivahan.gov.in/parivahan/")
+            ("Passport", "https://passportindia.gov.in/AppOnlineProject/online/searchStatus"),
+            ("GST", f"https://www.gst.gov.in/search?query={urllib.parse.quote(self.target)}"),
+            ("Election", "https://electoralsearch.eci.gov.in/search"),
+            ("MCA", f"https://www.mca.gov.in/content/mca/global/en/search-result.html?q={urllib.parse.quote(self.target)}")
         ]
         
-        def scan_govt(source, url):
-            try:
-                r = requests.get(url, timeout=20)
-                if self.target.lower() in r.text.lower():
-                    cat, clean = self.categorize(self.target, r.text)
-                    self.print_hit(cat, clean, source, "GOVT", url, "GOVT")
-            except: pass
+        threads = []
+        for name, url in govt_sites:
+            t = Thread(target=self.scan_url, args=(url, name, "GOVT"), daemon=True)
+            threads.append(t)
+            t.start()
         
-        threads = [Thread(target=scan_govt, args=(name, url), daemon=True) 
-                  for name, url in govt_sites]
-        for t in threads: t.start()
-        for t in threads: t.join(25)
+        for t in threads:
+            t.join(timeout=30)
     
-    # 🔥 COMPANIES + CORPORATE
     def companies_scan(self):
         """ALL Companies Databases"""
         print(f"{Fore.RED}🏢 COMPANIES + CORPORATES")
@@ -165,128 +184,164 @@ class KhalidHusainOSINTv852:
             ("Tofler", f"https://www.tofler.in/search?q={urllib.parse.quote(self.target)}"),
             ("IndiaMart", f"https://dir.indiamart.com/search.mp?ss={urllib.parse.quote(self.target)}"),
             ("JustDial", f"https://www.justdial.com/search?q={urllib.parse.quote(self.target)}"),
-            ("TradeIndia", f"https://www.tradeindia.com/search.html?search={urllib.parse.quote(self.target)}"),
-            ("LinkedIn", f"https://www.linkedin.com/search/results/all/?keywords={urllib.parse.quote(self.target)}"),
             ("Sulekha", f"https://www.sulekha.com/search?q={urllib.parse.quote(self.target)}")
         ]
         
-        def scan_corp(source, url):
-            try:
-                r = requests.get(url, timeout=20)
-                if self.target.lower() in r.text.lower():
-                    cat, clean = self.categorize(self.target, r.text)
-                    self.print_hit(cat, clean, source, "CORP", url, "CORP")
-            except: pass
+        threads = []
+        for name, url in corp_sites:
+            t = Thread(target=self.scan_url, args=(url, name, "CORP"), daemon=True)
+            threads.append(t)
+            t.start()
         
-        threads = [Thread(target=scan_corp, args=(name, url), daemon=True) 
-                  for name, url in corp_sites]
-        for t in threads: t.start()
-        for t in threads: t.join(25)
+        for t in threads:
+            t.join(timeout=30)
     
-    # 🔥 KALI TOOLS
-    def kali_scan(self):
-        """Kali Linux Tools"""
+    def kali_tools(self):
+        """Kali Linux Tools - Safe execution"""
         print(f"{Fore.RED}⚔️  KALI LINUX TOOLS")
-        tools = ['theHarvester', 'sublist3r', 'dnsrecon']
-        for tool in tools:
-            if os.system(f"which {tool} >/dev/null 2>&1") == 0:
-                cmd = f"{tool} -d {self.target} -l 100"
-                try:
-                    result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=180)
-                    if result.stdout:
-                        cat, clean = self.categorize(self.target, result.stdout)
-                        self.print_hit(cat, clean, tool, "KALI", f"kali://{tool}", "TOR")
-                except: pass
+        kali_tools = ['theHarvester', 'dnsenum', 'whois']
+        
+        for tool in kali_tools:
+            try:
+                if subprocess.run(['which', tool], capture_output=True).returncode == 0:
+                    cmd = f"{tool} {self.target}"
+                    result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=120)
+                    if result.stdout and self.target in result.stdout:
+                        cat, clean = self.classify_data(self.target, result.stdout)
+                        self.print_result(cat, clean, tool, "KALI", f"kali://{tool}", "TOR")
+            except:
+                continue
     
-    def khalid_pdf(self):
+    def generate_pdf(self):
         """Khalid Husain PDF Report"""
         if not self.results:
-            print(f"{Fore.YELLOW}❌ No hits found")
+            print(f"{Fore.YELLOW}❌ No data found for {self.target}")
             return
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-        pdf_name = f"{self.target_folder}/{self.target}_KhalidHusain_v852_{timestamp}.pdf"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        pdf_file = f"{self.target_folder}/{self.target}_KhalidHusain_v852_{timestamp}.pdf"
         
-        html_content = f"""
+        # Simple HTML PDF (no weasyprint needed if issues)
+        html_template = f"""
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Khalid Husain OSINT v85.2 - {self.target}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        body {{ font-family: 'Roboto', sans-serif; margin: 0; padding: 30px; background: #0a0a0a; color: #fff; }}
-        .header {{ background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1); padding: 40px; text-align: center; border-radius: 20px; margin-bottom: 40px; }}
-        .header h1 {{ font-size: 36px; margin: 0; text-shadow: 3px 3px 6px rgba(0,0,0,0.5); }}
-        .stats {{ display: flex; gap: 25px; justify-content: center; flex-wrap: wrap; margin-top: 25px; }}
-        .stat {{ background: rgba(255,255,255,0.1); padding: 20px 30px; border-radius: 15px; backdrop-filter: blur(10px); }}
+        body {{ font-family: Arial, sans-serif; margin: 40px; background: #1a1a1a; color: #fff; line-height: 1.6; }}
+        .header {{ background: linear-gradient(135deg, #ff4757, #1e90ff); padding: 40px; text-align: center; border-radius: 20px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+        h1 {{ font-size: 32px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); }}
+        .stats {{ display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; margin-top: 25px; }}
+        .stat {{ background: rgba(255,255,255,0.1); padding: 15px 25px; border-radius: 15px; }}
         table {{ width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.05); border-radius: 15px; overflow: hidden; }}
-        th {{ background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: left; }}
-        td {{ padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }}
-        .darkweb {{ background: #1a1a2e !important; color: #00ff88 !important; }}
-        .govt {{ background: #dc3545 !important; color: #fff !important; }}
+        th {{ background: #2f3542; padding: 18px; text-align: left; color: #fff; }}
+        td {{ padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }}
+        .dark {{ background: #0f3460 !important; color: #00d4ff !important; }}
+        .govt {{ background: #c44569 !important; color: #fff !important; }}
         .corp {{ background: #28a745 !important; color: #fff !important; }}
-        .target {{ font-size: 24px; font-weight: bold; color: #ffd700; }}
+        .target {{ color: #ffd700; font-weight: bold; font-size: 24px; }}
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🛡️ KHALID HUSAIN - OSINT v85.2</h1>
+        <h1>🛡️ KHALID HUSAIN - OSINT INTELLIGENCE v85.2</h1>
         <div class="stats">
             <div class="stat"><span class="target">{self.target}</span></div>
-            <div class="stat"><strong>{len(self.results)}</strong> Total Hits</div>
-            <div class="stat">{datetime.now().strftime('%Y-%m-%d %H:%M')}</div>
+            <div class="stat"><strong>{len(self.results)}</strong> Intelligence Hits</div>
+            <div class="stat">{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</div>
         </div>
     </div>
     
     <table>
-        <tr><th>CATEGORY</th><th>DATA</th><th>SOURCE</th><th>NETWORK</th><th>ENGINE</th></tr>
+        <thead>
+            <tr>
+                <th><strong>CATEGORY</strong></th>
+                <th><strong>DATA</strong></th>
+                <th><strong>SOURCE</strong></th>
+                <th><strong>NETWORK</strong></th>
+                <th><strong>ENGINE</strong></th>
+            </tr>
+        </thead>
+        <tbody>
 """
         
-        for r in self.results:
-            network_class = {"DARKWEB": "darkweb", "GOVT": "govt", "CORP": "corp"}.get(r['network'], "")
-            html_content += f"""
-        <tr class="{network_class}">
-            <td><strong>{r['category']}</strong></td>
-            <td><strong>{r['data']}</strong></td>
-            <td>{r['source']}</td>
-            <td><strong>{r['network']}</strong></td>
-            <td>{r['engine']}</td>
-        </tr>
+        for result in self.results:
+            network_class = {
+                "TOR": "dark", "DARKWEB": "dark", 
+                "GOVT": "govt", "CORP": "corp"
+            }.get(result['network'], "")
+            html_template += f"""
+            <tr class="{network_class}">
+                <td><strong>{result['category']}</strong></td>
+                <td><strong>{result['data']}</strong></td>
+                <td>{result['source']}</td>
+                <td><strong>{result['network']}</strong></td>
+                <td>{result['engine']}</td>
+            </tr>
             """
         
-        html_content += "</table></body></html>"
+        html_template += """
+        </tbody>
+    </table>
+</body>
+</html>
+        """
         
-        HTML(string=html_content).write_pdf(pdf_name)
-        print(f"{Fore.GREEN}📄 Khalid Husain PDF: {pdf_name}")
+        try:
+            from weasyprint import HTML
+            HTML(string=html_template).write_pdf(pdf_file)
+        except ImportError:
+            # Fallback: Save HTML
+            with open(pdf_file.replace('.pdf', '.html'), 'w') as f:
+                f.write(html_template)
+            pdf_file = pdf_file.replace('.pdf', '.html')
+            print(f"{Fore.YELLOW}📄 HTML Report: {pdf_file} (install weasyprint for PDF)")
+            return
+        
+        print(f"{Fore.GREEN}📄 Khalid Husain PDF: {pdf_file}")
     
-    def ultimate_scan(self):
-        """Khalid Husain Ultimate Scan"""
-        self.khalid_banner()
-        print(f"{Fore.WHITE}🎯 TARGET: {Fore.YELLOW}{self.target}\n{'='*85}")
+    def run_full_scan(self):
+        """Execute full Khalid Husain scan"""
+        self.banner()
+        print(f"{Fore.WHITE}🎯 SCANNING: {Fore.YELLOW}{self.target}")
+        print(f"{'='*85}\n")
         
-        self.target_folder()
-        self.tor_setup()
+        self.create_folder()
+        self.tor_init()
         
-        # ALL SCANS PARALLEL
-        scans = [
-            self.darkweb_scan,
-            self.govt_databases, 
-            self.companies_scan,
-            self.kali_scan
+        # Launch all scanners
+        scanners = [
+            ("DarkWeb", self.darkweb_scan),
+            ("Government", self.government_scan),
+            ("Companies", self.companies_scan),
+            ("Kali", self.kali_tools)
         ]
         
-        threads = [Thread(target=scan, daemon=True) for scan in scans]
-        for t in threads: t.start()
-        for t in threads: t.join(timeout=900)  # 15 min max
+        threads = []
+        for name, scanner in scanners:
+            print(f"{Fore.CYAN}🚀 Starting {name} scan...")
+            t = Thread(target=scanner, daemon=True)
+            threads.append(t)
+            t.start()
         
-        self.khalid_pdf()
-        print(f"{Fore.RED}🎉 KHALID HUSAIN v85.2 COMPLETE!")
+        print(f"{Fore.CYAN}⏳ Waiting for results (max 15min)...")
+        for t in threads:
+            t.join(timeout=900)
+        
+        self.generate_pdf()
+        print(f"{Fore.RED}🎉 KHALID HUSAIN v85.2 SCAN COMPLETE!")
+        print(f"{Fore.GREEN}📂 Results saved: {self.target_folder}/")
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) != 2:
-        print(f"{Fore.RED}python3 khalid_osint_v852.py <target>")
+        print(f"{Fore.RED}❌ Usage: python3 khalid_osint_v852.py <target>")
+        print(f"{Fore.WHITE}   Example: python3 khalid_osint_v852.py 7696408248")
         sys.exit(1)
     
     osint = KhalidHusainOSINTv852()
-    osint.target = sys.argv[1]
-    osint.ultimate_scan()
+    osint.target = sys.argv[1].strip()
+    osint.run_full_scan()
+
+if __name__ == "__main__":
+    main()
