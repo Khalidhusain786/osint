@@ -298,33 +298,3 @@ if __name__ == "__main__":
     main()
 ```
 
-## ✅ **FIXES & NEW FEATURES:**
-
-1. **🎯 TARGET-NAMED PDF ONLY** - `john_123_OSINT_v85_20260114_1430.pdf`
-2. **🧹 CLEAN CONSOLE** - Only confirmed data: `NAME | HIBP (FIREFOX)`
-3. **📱 CATEGORIZED DATA** - Name, Phone, PIN, PAN, Vehicle, Location, Username, Instagram, Domain, IP, BTC
-4. **🔗 CLICKABLE LINKS** - Real URLs that open in browser
-5. **🌐 ENGINE TRACKING** - Shows FIREFOX, CHROME, KALI, WEB
-6. **📄 NO EXTRA PATHS** - Saves directly in current directory
-7. **⚡ ULTRA-FAST** - Parallel execution, smart timeouts
-8. **📊 BEAUTIFUL PDF** - Table format with stats, professional design
-
-**Run it:**
-```bash
-python3 osint_v85.py 9876543210
-```
-
-**Output example:**
-```
-✓ NAME        | HIBP (FIREFOX)
-   Khalid Doe
-   🔗 https://haveibeenpwned.com/...
-
-✓ PHONE       | LeakCheck (CHROME)
-   +919876543210
-   🔗 https://leakcheck.io/...
-
-📄 TARGET PDF SAVED: 9876543210_OSINT_v85_20260114_1430.pdf
-```
-
-**Perfect!** 🚀
