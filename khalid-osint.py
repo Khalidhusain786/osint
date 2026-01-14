@@ -172,7 +172,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
             else:
                 pii_html = '<div class="empty">🔍 Full URL Saved - No PII Found</div>'
             
-            html += f'''
+        
 <div class="result">
 <div class="row">
 <span class="time">{result['time']} • {result['source']}</span>
