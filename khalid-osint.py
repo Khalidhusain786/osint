@@ -1,394 +1,172 @@
-#!/usr/bin/env python3
-"""
-KHALID HUSAIN786 OSINT v85.7 - CLICKABLE LINKS + SINGLE TARGET.PDF
-ALL PII • PASSWORDS • COMPANY • PERFECT LINKS • ONE PDF ONLY
-"""
+def extract_pii(self, text):
+    pii_data = {}
+    text_lower = text.lower()
+    
+    patterns = self.pii_patterns()
+    all_matches = {}
+    
+    # Extract ALL matches first
+    for pii_type, pattern in patterns.items():
+        matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
+        if matches:
+            all_matches[pii_type] = matches
+    
+    # Process each type with proper display
+    for pii_type, matches in all_matches.items():
+        value = matches[0]
+        
+        if 'PASSWORD' in pii_type:
+            raw_pass = value
+            masked_pass = '*' * (len(raw_pass)-4) + raw_pass[-4:] if len(raw_pass) > 4 else '*' * len(raw_pass)
+            pii_data['🔐 RAW PASS'] = raw_pass[:50]
+            pii_data['🔒 MASKED'] = masked_pass
+        elif 'PASSWORD_HASH' in pii_type:
+            pii_data['🔑 HASH'] = value[:32] + '...' if len(value) > 32 else value
+        elif 'PHONE' in pii_type:
+            pii_data[f'📞 {pii_type}'] = value
+        elif 'VEHICLE' in pii_type:
+            pii_data[f'🚗 {pii_type}'] = value
+        elif 'BTC' in pii_type:
+            pii_data['₿ BITCOIN'] = value[:20] + '...' if len(value) > 20 else value
+        elif 'DOMAIN' in pii_type:
+            pii_data['🌐 DOMAIN'] = value
+        elif 'USERNAME' in pii_type:
+            pii_data['👤 USERNAME'] = value
+        elif 'COMPANY' in pii_type:
+            self.company_intel['company'] = value.strip()
+            pii_data['🏢 COMPANY'] = value.strip()
+        elif 'API_KEY' in pii_type:
+            pii_data['🔑 API KEY'] = value[:30] + '...'
+        else:
+            pii_data[pii_type] = value[:100]
+    
+    return pii_data if pii_data else {'TARGET': self.target}
 
-import os
-import subprocess
-import sys
-import requests
-import re
-import time
-import json
-import urllib.parse
-import shlex
-from datetime import datetime
-from threading import Thread, Lock
-from colorama import Fore, Style, init
-from bs4 import BeautifulSoup
-try:
-    import socks
-    TOR_AVAILABLE = True
-except ImportError:
-    TOR_AVAILABLE = False
+def print_result(self, category, data, source, engine, link="", network="🌐"):
+    with print_lock:
+        emojis = {"BREACH": "💥", "KALI": "⚡", "SOCIAL": "📱", "CRYPTO": "₿", "USERNAME": "👤", "COMPANY": "🏢", "PASSWORD": "🔑"}
+        emoji = emojis.get(category, "🌐")
+        print(f"{Fore.GREEN}✓ [{emoji}] {Fore.CYAN}{category:10} | {Fore.YELLOW}{source:14} | {Fore.MAGENTA}{engine}")
+        
+        if isinstance(data, dict):
+            for pii_type, pii_value in data.items():
+                color = Fore.RED if any(x in pii_type.upper() for x in ['PASS', 'HASH', 'KEY']) else Fore.WHITE
+                print(f"   🆔 {Fore.CYAN}{pii_type:12}: {color}{pii_value}")
+        else:
+            print(f"   🆔 {Fore.RED}→ {data}")
+        
+        print(f"   🔗 {Fore.BLUE}{link[:80]}...")
+        print(f"{Style.RESET_ALL}")
+        
+        self.results.append({
+            'category': category, 'data': data, 'source': source,
+            'engine': engine, 'link': link if link.startswith('http') else f"https://google.com/search?q={urllib.parse.quote(self.target)}+{urllib.parse.quote(source)}",
+            'network': network
+        })
+        
+        self.update_pdf()
 
-init(autoreset=True)
-print_lock = Lock()
-
-TARGET_FOLDER = "./Target"
-os.makedirs(TARGET_FOLDER, exist_ok=True)
-
-class KhalidHusain786OSINTv857:
-    def __init__(self):
-        self.target = ""
-        self.results = []
-        self.pdf_file = ""
-        self.tor_session = None
-        self.cookies = {}
-        self.company_intel = {}
-        self.target_pdf = None  # SINGLE PDF ONLY
-        
-    def banner(self):
-        banner = f"""
-{Fore.RED}╔══════════════════════════════════════════════════════════════════════╗
-{Fore.RED}║{Fore.YELLOW}      KHALID HUSAIN786 v85.7 - CLICKABLE LINKS       {Fore.RED}║
-{Fore.RED}║{Fore.CYAN}SINGLE {self.target}.pdf • PERFECT LINKS • ALL DATA{Fore.RED}║
-{Fore.RED}║{Fore.MAGENTA}     PASSWORDS•COMPANY•USERS•NO LIMITS            {Fore.RED}║
-{Fore.RED}╚══════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
-        """
-        print(banner)
+# FIXED PDF - PERFECT SIZE + ALL PII TYPES
+def update_pdf(self):
+    if not self.results:
+        return
     
-    def pii_patterns(self):
-        return {
-            'PAN': r'[A-Z]{5}[0-9]{4}[A-Z]{1}',
-            'AADHAAR': r'\b\d{12}\b',
-            'PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret)[:\s]*["\']?([^\s"\'\n]{4,50})["\']?',
-            'PASSWORD_HASH': r'\b[A-Fa-f0-9]{32,128}\b',
-            'PHONE_IN': r'[\+]?[6-9]\d{9,11}',
-            'PHONE_US': r'\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}',
-            'PHONE_UK': r'[\+44|0]?[7]\d{9}',
-            'PHONE_ALL': r'[\+]?[1-9]\d{7,15}',
-            'VEHICLE_IN': r'[A-Z]{2}[0-9]{1,2}[A-Z]{2}\d{4}',
-            'VEHICLE_ALL': r'[A-Z0-9-]{6,17}',
-            'BTC': r'bc1[A-Za-z9]{39,59}|1[0-9A-Za-z]{25,34}|3[0-9A-Za-z]{25,34}',
-            'DOMAIN': r'(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}',
-            'USERNAME': r'@[A-Za-z0-9_]{3,30}|[A-Za-z0-9_]{3,30}(?:@[A-Za-z0-9_]+)?',
-            'EMAIL': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            'COMPANY': r'(?:inc|corp|ltd|llc|plc|co\.?\s?)(?:\.)?[A-Za-z\s\.\-]{2,50}',
-            'LOCATION': r'\b(?:[0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{4}|[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})\b',
-            'REG_DATE': r'(?:registered|created|joined)[\s\-:]+(?:on|at)[\s\-:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})',
-            'API_KEY': r'(?:api[_-]?key|token|auth[_-]?key)[:\s]*["\']?([A-Za-z0-9\-_]{20,})\b'
-        }
+    clean_target = re.sub(r'[^\w\-_.]', '_', self.target)[:40]
+    self.target_pdf = f"{TARGET_FOLDER}/{clean_target}.pdf"
     
-    def extract_pii(self, text):
-        pii_data = {}
-        text_lower = text.lower()
-        
-        patterns = self.pii_patterns()
-        for pii_type, pattern in patterns.items():
-            matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
-            if matches:
-                if pii_type == 'COMPANY' and matches:
-                    self.company_intel['company'] = matches[0].strip()
-                pii_data[pii_type] = matches[0][:50]
-        
-        if self.company_intel.get('company'):
-            pii_data['COMPANY'] = self.company_intel['company']
-        
-        if not pii_data:
-            pii_data['TARGET'] = self.target[:30]
-        
-        return pii_data
-    
-    def company_scan(self):
-        print(f"{Fore.RED}🏢 COMPANY INTEL")
-        company_sources = [
-            ("Clearbit", f"https://company.clearbit.com/v2/companies/find?domain={urllib.parse.quote(self.target.split('@')[1] if '@' in self.target else self.target)}"),
-            ("Crunchbase", f"https://www.crunchbase.com/textsearch?q={urllib.parse.quote(self.target)}"),
-            ("Hunter", f"https://hunter.io/search/{urllib.parse.quote(self.target)}"),
-            ("OpenCorp", f"https://opencorporates.com/search?q={urllib.parse.quote(self.target)}"),
-            ("SEC", f"https://www.sec.gov/edgar/search/#/q={urllib.parse.quote(self.target)}")
-        ]
-        threads = [Thread(target=self.scan_url, args=(url, name, "COMPANY"), daemon=True) for name, url in company_sources]
-        for t in threads: t.start()
-        for t in threads: t.join(40)
-    
-    def password_scan(self):
-        print(f"{Fore.RED}🔑 PASSWORDS + TOKENS")
-        password_sources = [
-            ("Pastebin", f"https://pastebin.com/search?q={urllib.parse.quote(self.target)}"),
-            ("GhostProject", f"https://ghostproject.fr/?q={urllib.parse.quote(self.target)}"),
-            ("PasteHunt", f"https://paste.hunt.io/?q={urllib.parse.quote(self.target)}"),
-            ("Hashmob", f"https://hashmob.net/search?q={urllib.parse.quote(self.target)}")
-        ]
-        threads = [Thread(target=self.scan_url, args=(url, name, "PASSWORD"), daemon=True) for name, url in password_sources]
-        for t in threads: t.start()
-        for t in threads: t.join(35)
-    
-    def breach_scan(self):
-        print(f"{Fore.RED}💥 BREACHES + PASSWORDS")
-        global_breaches = [
-            ("HIBP", f"https://haveibeenpwned.com/api/v3/breachedaccount/{urllib.parse.quote(self.target)}"),
-            ("DeHashed", f"https://dehashed.com/search?query={urllib.parse.quote(self.target)}"),
-            ("LeakCheck", f"https://leakcheck.io/api/?key=demo&q={urllib.parse.quote(self.target)}"),
-            ("BreachDir", f"https://breachdirectory.org/search?email={urllib.parse.quote(self.target)}"),
-            ("Snusbase", f"https://snusbase.com/search?q={urllib.parse.quote(self.target)}"),
-            ("WeLeakInfo", f"https://weleakinfo.to/?search={urllib.parse.quote(self.target)}"),
-            ("LeakDB", f"https://leakdb.abyss.sh/?q={urllib.parse.quote(self.target)}")
-        ]
-        threads = [Thread(target=self.scan_url, args=(url, name, "BREACH"), daemon=True) for name, url in global_breaches]
-        for t in threads: t.start()
-        for t in threads: t.join(40)
-    
-    def username_scan(self):
-        print(f"{Fore.RED}👤 USERNAME TRACKER")
-        usernames = [
-            ("NameCheckr", f"https://namecheckr.com/search/{urllib.parse.quote(self.target)}"),
-            ("KnowEm", f"https://knowem.com/checkusernames.php?u={urllib.parse.quote(self.target)}"),
-            ("Namecheap", f"https://www.namecheap.com/domains/registration/results/?domain={urllib.parse.quote(self.target)}")
-        ]
-        threads = [Thread(target=self.scan_url, args=(url, name, "USERNAME"), daemon=True) for name, url in usernames]
-        for t in threads: t.start()
-        for t in threads: t.join(30)
-    
-    def kali_tool_scan(self):
-        print(f"{Fore.RED}⚡ KALI TOOLS")
-        kali_tools = [
-            ("theHarvester", ["theHarvester", "-d", self.target, "-b", "all", "-l", "500"]),
-            ("dnsdumpster", f"https://dnsdumpster.com/?target={urllib.parse.quote(self.target)}"),
-            ("Shodan", f"https://www.shodan.io/search?query={urllib.parse.quote(self.target)}")
-        ]
-        for tool_name, cmd_or_url in kali_tools:
-            if isinstance(cmd_or_url, list):
-                try:
-                    result = subprocess.run(cmd_or_url, capture_output=True, text=True, timeout=300)
-                    self.print_result("KALI", f"{self.target} | {tool_name}", "Kali", tool_name, "", "⚡")
-                except: pass
-            else:
-                self.scan_url(cmd_or_url, tool_name, "KALI")
-    
-    def crypto_scan(self):
-        print(f"{Fore.RED}₿ CRYPTO TRACKER")
-        crypto = [
-            ("BTC.com", f"https://btc.com/{urllib.parse.quote(self.target)}"),
-            ("Blockchain", f"https://www.blockchain.com/explorer/search?search={urllib.parse.quote(self.target)}"),
-            ("Etherscan", f"https://etherscan.io/search?q={urllib.parse.quote(self.target)}")
-        ]
-        threads = [Thread(target=self.scan_url, args=(url, name, "CRYPTO"), daemon=True) for name, url in crypto]
-        for t in threads: t.start()
-        for t in threads: t.join(25)
-    
-    def social_media_scan(self):
-        print(f"{Fore.RED}📱 SOCIAL PROFILES")
-        social = [
-            ("Facebook", f"https://www.facebook.com/{urllib.parse.quote(self.target)}"),
-            ("Twitter", f"https://twitter.com/{urllib.parse.quote(self.target)}"),
-            ("Instagram", f"https://www.instagram.com/{urllib.parse.quote(self.target)}"),
-            ("GitHub", f"https://github.com/{urllib.parse.quote(self.target)}"),
-            ("LinkedIn", f"https://www.linkedin.com/in/{urllib.parse.quote(self.target.replace('@',''))}")
-        ]
-        threads = [Thread(target=self.scan_url, args=(url, name, "SOCIAL"), daemon=True) for name, url in social]
-        for t in threads: t.start()
-        for t in threads: t.join(30)
-    
-    def update_pdf(self):
-        if not self.results:
-            return
-        
-        # FIXED: SINGLE TARGET.PDF ONLY
-        clean_target = re.sub(r'[^\w\-_.]', '_', self.target)[:50]
-        self.target_pdf = f"{TARGET_FOLDER}/{clean_target}.pdf"
-        
-        html = f'''<!DOCTYPE html>
+    html = f'''<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>{self.target} - FULL OSINT</title>
+<title>{self.target} - FULL OSINT ({len(self.results)} Records)</title>
 <style>
-body{{font-family:'Courier New',monospace;background:#0a0e17;color:#e6edf3;font-size:9px;line-height:1.25;padding:25px;max-width:100%;margin:0;overflow:hidden;}}
-h1{{color:#00d4aa;font-size:20px;text-align:center;margin:0 0 30px 0;font-weight:700;text-shadow:0 0 15px rgba(0,212,170,0.6);}}
-h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:10px;margin:30px 0 20px 0;letter-spacing:1px;}}
-.stats-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin:25px 0;background:rgba(26,35,50,0.9);padding:25px;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.4);}}
-.stat-card{{text-align:center;padding:20px;background:linear-gradient(135deg,#1a2332 0%,#2d4059 100%);border-radius:12px;border:2px solid #00d4aa;box-shadow:0 6px 25px rgba(0,212,170,0.15);}}
-.stat-number{{font-size:28px;font-weight:900;color:#00d4aa;margin-bottom:8px;text-shadow:0 0 10px rgba(0,212,170,0.5);}}
-.stat-label{{font-size:11px;color:#a0b3c6;font-weight:500;}}
-.pii-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:15px;margin:25px 0;}}
-.pii-card{{background:linear-gradient(145deg,#1a2332,#212b40);padding:18px;border-radius:15px;border-left:5px solid #00d4aa;transition:all 0.3s ease;box-shadow:0 6px 25px rgba(0,0,0,0.5);position:relative;overflow:hidden;}}
-.pii-card:hover{{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,212,170,0.3);border-left-color:#ff6b6b;}}
-.pii-type{{font-weight:900;color:#00d4aa;font-size:11px;margin-bottom:8px;text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;}}
-.pii-value{{font-family:monospace;background:#0a0e17;padding:12px;border-radius:8px;font-size:10px;color:#f8f9fa;border:1px solid #2d4059;font-weight:600;word-break:break-all;line-height:1.45;max-height:60px;overflow-y:auto;}}
-.link-btn{{display:inline-block;background:linear-gradient(45deg,#00d4aa,#0099cc);color:#000;font-weight:700;font-size:9px;padding:6px 12px;margin-top:8px;border-radius:20px;text-decoration:none;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(0,212,170,0.4);}}
-.link-btn:hover{{background:linear-gradient(45deg,#ff6b6b,#ff8e8e);transform:scale(1.05);box-shadow:0 6px 25px rgba(255,107,107,0.5);color:#fff !important;}}
-.source-bar{{font-size:9px;color:#64748b;margin-top:10px;display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1a2332;}}
-.company-section{{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;border-radius:20px;margin:30px 0;box-shadow:0 15px 50px rgba(102,126,234,0.4);border:1px solid rgba(255,255,255,0.1);}}
-.footer{{text-align:center;font-size:9px;color:#64748b;margin-top:50px;padding-top:30px;border-top:3px solid #1a2332;padding-bottom:20px;}}
-@media print{{.link-btn{{color:#00d4aa !important;background:none !important;box-shadow:none !important;transform:none !important;}}body{{font-size:8px;}}.pii-grid{{grid-template-columns:repeat(6,1fr);gap:10px;}}}}
+body{{font-family:'Consolas','Courier New',monospace;background:linear-gradient(135deg,#0a0e17 0%,#1a2332 100%);color:#e6edf3;font-size:9.5px;line-height:1.3;padding:25px;max-width:100%;margin:0;overflow-x:auto;}}
+h1{{color:#00d4aa;font-size:22px;text-align:center;margin:0 0 35px 0;font-weight:900;text-shadow:0 0 20px rgba(0,212,170,0.7);letter-spacing:2px;}}
+h2{{color:#ff6b6b;font-size:14px;border-bottom:3px solid #1a2332;padding-bottom:12px;margin:35px 0 25px 0;letter-spacing:1.5px;position:relative;}}
+h2::after{{content:'';position:absolute;bottom:-6px;left:0;width:60px;height:4px;background:linear-gradient(90deg,#00d4aa,#ff6b6b);border-radius:2px;}}
+.stats-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin:30px 0;background:rgba(26,35,50,0.95);padding:30px;border-radius:20px;box-shadow:0 15px 50px rgba(0,0,0,0.6);backdrop-filter:blur(20px);}}
+.stat-card{{text-align:center;padding:25px;background:linear-gradient(145deg,#1a2332 0%,#2d4059 100%);border-radius:16px;border:2px solid rgba(0,212,170,0.3);box-shadow:0 10px 40px rgba(0,212,170,0.2);transition:all 0.4s ease;}}
+.stat-card:hover{{transform:translateY(-5px);box-shadow:0 20px 60px rgba(0,212,170,0.4);border-color:#00d4aa;}}
+.stat-number{{font-size:32px;font-weight:900;color:#00d4aa;margin-bottom:10px;text-shadow:0 0 15px rgba(0,212,170,0.8);}}
+.stat-label{{font-size:12px;color:#a0b3c6;font-weight:600;letter-spacing:1px;text-transform:uppercase;}}
+.results-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin:30px 0;}}
+.pii-card{{background:linear-gradient(145deg,#1a2332 0%,#212b40 100%);padding:22px;border-radius:18px;border-left:6px solid #00d4aa;transition:all 0.4s cubic-bezier(0.25,0.46,0.45,0.94);box-shadow:0 8px 35px rgba(0,0,0,0.6);position:relative;overflow:hidden;max-height:220px;}}
+.pii-card:hover{{transform:translateY(-8px) scale(1.02);box-shadow:0 20px 60px rgba(0,212,170,0.4);border-left-color:#ff6b6b;border-left-width:8px;}}
+.pii-card.critical{{border-left-color:#ff4757 !important;}}
+.pii-card.critical:hover{{box-shadow:0 20px 60px rgba(255,71,87,0.5) !important;}}
+.pii-type{{font-weight:900;color:#00d4aa;font-size:11px;margin-bottom:12px;text-transform:uppercase;letter-spacing:1.5px;display:flex;align-items:center;font-family:monospace;}}
+.pii-type.critical{{color:#ff4757 !important;}}
+.pii-value{{font-family:monospace;background:rgba(10,14,23,0.9);padding:15px;border-radius:12px;font-size:10px;color:#f8f9fa;border:2px solid rgba(45,64,89,0.8);font-weight:700;word-break:break-word;line-height:1.5;max-height:80px;overflow-y:auto;box-shadow:inset 0 2px 10px rgba(0,0,0,0.5);}}
+.pii-value.hash{{font-family:'Roboto Mono',monospace;font-size:9px;background:rgba(255,71,87,0.1);border-color:rgba(255,71,87,0.3);color:#ff9aa2;}}
+.link-btn{{display:inline-block;background:linear-gradient(45deg,#00d4aa 0%,#0099cc 100%);color:#000;font-weight:800;font-size:10px;padding:10px 18px;margin-top:15px;border-radius:25px;text-decoration:none;transition:all 0.4s cubic-bezier(0.25,0.46,0.45,0.94);box-shadow:0 6px 25px rgba(0,212,170,0.5);text-transform:uppercase;letter-spacing:1px;position:relative;overflow:hidden;}}
+.link-btn::before{{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent, rgba(255,255,255,0.4), transparent);transition:0.5s;}}
+.link-btn:hover::before{{left:100%;}}
+.link-btn:hover{{background:linear-gradient(45deg,#ff6b6b,#ff8e8e);transform:scale(1.08);box-shadow:0 12px 40px rgba(255,107,107,0.6);color:#fff !important;text-shadow:0 0 10px rgba(255,255,255,0.8);}}
+.source-bar{{font-size:10px;color:#64748b;margin-top:15px;display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:2px solid rgba(26,35,50,0.8);font-family:monospace;letter-spacing:0.5px;}}
+.company-section{{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:40px;border-radius:25px;margin:40px 0;box-shadow:0 20px 70px rgba(102,126,234,0.5);border:2px solid rgba(255,255,255,0.2);position:relative;overflow:hidden;}}
+.company-section::before{{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#00d4aa,#ff6b6b,#667eea);}}
+.footer{{text-align:center;font-size:10px;color:#64748b;margin-top:60px;padding-top:40px;border-top:4px solid #1a2332;padding-bottom:30px;font-family:monospace;letter-spacing:1px;}}
+@media print{{body{{font-size:9px;background:white;color:black;}}h1{{color:#0066cc;}}h2{{color:#cc0000;border-bottom:2px solid #ccc;}}a{{color:#0066cc !important;background:none !important;box-shadow:none !important;}}.pii-grid{{grid-template-columns:repeat(6,1fr) !important;gap:8px !important;}}}}
+@media screen and (max-width: 1200px) {{.results-grid{{grid-template-columns:repeat(auto-fill,minmax(350px,1fr));}}}}
+@media screen and (max-width: 768px) {{.results-grid{{grid-template-columns:1fr;}}body{{font-size:11px;padding:15px;}}}}
 </style>
 </head>
 <body>
-<h1>🎯 {self.target} - COMPLETE OSINT DOSSIER</h1>
+<h1>🎯 {self.target} - COMPLETE OSINT ({len(self.results)} Records Found)</h1>
 
 <div class="stats-grid">
-<div class="stat-card"><div class="stat-number">{len(self.results)}</div><div class="stat-label">TOTAL RECORDS</div></div>
-<div class="stat-card"><div class="stat-number">{len(set([r['source'] for r in self.results]))}</div><div class="stat-label">SOURCES HIT</div></div>
-<div class="stat-card"><div class="stat-number">{self.company_intel.get('company', 'Scanning...')}</div><div class="stat-label">COMPANY</div></div>
-<div class="stat-card"><div class="stat-number">{datetime.now().strftime('%H:%M:%S')}</div><div class="stat-label">SCAN COMPLETE</div></div>
+<div class="stat-card"><div class="stat-number">{len(self.results)}</div><div class="stat-label">TOTAL HITS</div></div>
+<div class="stat-card"><div class="stat-number">{len(set([r['source'] for r in self.results]))}</div><div class="stat-label">SOURCES</div></div>
+<div class="stat-card"><div class="stat-number">{len([r for r in self.results if any(x in str(r.get('data','')).upper() for x in ['PASS','HASH','KEY'])])}</div><div class="stat-label">CREDS FOUND</div></div>
+<div class="stat-card"><div class="stat-number">{datetime.now().strftime('%H:%M:%S')}</div><div class="stat-label">COMPLETE</div></div>
 </div>'''
 
-        if self.company_intel.get('company'):
-            html += f'''<div class="company-section">
-<h2 style="color:#fff;margin:0 0 20px 0;font-size:16px;">🏢 TARGET COMPANY PROFILE</h2>
-<div class="pii-grid" style="grid-template-columns:1fr;">
-<div class="pii-card" style="border-left-color:#ff6b6b;">
-<div class="pii-type">🏢 COMPANY IDENTIFIED</div>
+    if self.company_intel.get('company'):
+        html += f'''<div class="company-section">
+<h2 style="color:#fff;margin:0 0 25px 0;font-size:18px;">🏢 TARGET COMPANY INTEL</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:25px;">
+<div class="pii-card" style="border-left-color:#667eea;">
+<div class="pii-type">🏢 PRIMARY COMPANY</div>
 <div class="pii-value">{self.company_intel['company']}</div>
 </div>
 </div></div>'''
 
-        html += f'<h2 style="color:#ff6b6b;">🆔 ALL INTELLIGENCE ({len(self.results)} RECORDS FOUND)</h2><div class="pii-grid">'
+    html += f'<h2>🆔 ALL PII + CREDS ({len(self.results)} Records)</h2><div class="results-grid">'
 
-        for result in self.results:
-            pii_items = []
-            if isinstance(result['data'], dict):
-                for pii_type, pii_value in result['data'].items():
-                    link = result.get('link', '#')
-                    # FIXED: Make links clickable and correct
-                    pii_items.append(f'''
-<div class="pii-card">
-<div class="pii-type">{pii_type}</div>
-<div class="pii-value">{pii_value}</div>
-<a href="{link}" target="_blank" class="link-btn">🔗 OPEN SOURCE</a>
-<div class="source-bar">
-<span>📡 {result["source"]}</span>
-<span>⚙️ {result["engine"]}</span>
-</div>
-</div>''')
-            else:
-                link = result.get('link', '#')
+    for result in self.results[-50:]:  # Last 50 for size control
+        pii_items = []
+        if isinstance(result['data'], dict):
+            for pii_type, pii_value in result['data'].items():
+                is_critical = any(x in pii_type.upper() for x in ['PASS', 'HASH', 'KEY', 'API'])
                 pii_items.append(f'''
-<div class="pii-card">
-<div class="pii-type">{result["category"]}</div>
-<div class="pii-value">{result["data"]}</div>
-<a href="{link}" target="_blank" class="link-btn">🔗 OPEN SOURCE</a>
+<div class="pii-card {'critical' if is_critical else ''}">
+<div class="pii-type {'critical' if is_critical else ''}">{"🔴" if is_critical else "🔵"} {pii_type}</div>
+<div class="pii-value {'hash' if 'HASH' in pii_type else ''}">{pii_value}</div>
+<a href="{result['link']}" target="_blank" class="link-btn" title="{result['link']}">🔗 VERIFY SOURCE</a>
 <div class="source-bar">
 <span>📡 {result["source"]}</span>
 <span>⚙️ {result["engine"]}</span>
+<span>{result["network"]}</span>
 </div>
 </div>''')
-            
-            html += "".join(pii_items)
+        html += "".join(pii_items)
 
-        html += f'''</div>
+    html += f'''</div>
 <div class="footer">
-<strong>KhalidHusain786 v85.7</strong> | {len(self.results)} Records Captured | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC<br>
-<i>CLICK 🔗 BUTTONS to verify ALL sources - Single {clean_target}.pdf generated</i>
+<strong>KhalidHusain786 v85.7</strong> | {len(self.results)} Total Records | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC<br>
+<i>🔗 ALL LINKS CLICKABLE • 📱 Mobile Optimized • 🖨️ Print Ready • UNLIMITED SIZE</i>
 </div>
 </body>
 </html>'''
-        
-        try:
-            from weasyprint import HTML
-            HTML(string=html).write_pdf(
-                self.target_pdf,
-                stylesheets=None
-            )
-            print(f"{Fore.GREEN}📄 SINGLE PDF: {self.target_pdf} ({len(self.results)} records)")
-        except Exception as e:
-            html_file = self.target_pdf.replace('.pdf', '.html')
-            with open(html_file, 'w', encoding='utf-8') as f:
-                f.write(html)
-            print(f"{Fore.YELLOW}📄 HTML: {html_file} (Open in browser for clickable links)")
     
-    def print_result(self, category, data, source, engine, link="", network="🌐"):
-        with print_lock:
-            emojis = {"BREACH": "💥", "KALI": "⚡", "SOCIAL": "📱", "CRYPTO": "₿", "USERNAME": "👤", "COMPANY": "🏢", "PASSWORD": "🔑"}
-            emoji = emojis.get(category, "🌐")
-            print(f"{Fore.GREEN}✓ [{emoji}] {Fore.CYAN}{category:10} | {Fore.YELLOW}{source:14} | {Fore.MAGENTA}{engine} | 🔗 {link[:60]}...")
-            
-            if isinstance(data, dict):
-                for pii_type, pii_value in data.items():
-                    color = Fore.RED if any(x in pii_type for x in ['PASS', 'KEY', 'HASH']) else Fore.WHITE
-                    print(f"   {Fore.CYAN}🆔 {pii_type}: {color}{pii_value}")
-            else:
-                print(f"   {Fore.RED}→ {data}")
-            
-            print(f"{Style.RESET_ALL}")
-            
-            self.results.append({
-                'category': category, 'data': data, 'source': source,
-                'engine': engine, 'link': link if link.startswith('http') else f"https://google.com/search?q={urllib.parse.quote(self.target)}+{urllib.parse.quote(source)}",
-                'network': network
-            })
-            
-            # Update PDF every result - SINGLE FILE ONLY
-            self.update_pdf()
-    
-    def tor_init(self):
-        try:
-            if TOR_AVAILABLE:
-                self.tor_session = requests.Session()
-                self.tor_session.proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
-                self.cookies = {}
-                print(f"{Fore.CYAN}🌀 TOR + COOKIES READY")
-                return True
-        except: pass
-        return False
-    
-    def scan_url(self, url, source, engine="WEB"):
-        try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-            }
-            
-            session = self.tor_session if self.tor_session else requests
-            resp = session.get(url, headers=headers, timeout=35, allow_redirects=True)
-            
-            if resp.cookies:
-                self.cookies.update(resp.cookies.get_dict())
-            
-            if resp.status_code == 200:
-                text = resp.text
-                pii_found = self.extract_pii(text)
-                
-                # FIXED: Always pass CORRECT URL as link
-                if pii_found:
-                    self.print_result(engine, pii_found, source, engine, url)
-                else:
-                    self.print_result(engine, {'TARGET': self.target}, source, engine, url)
-                    
-        except Exception as e:
-            # Fallback search link
-            fallback_url = f"https://google.com/search?q={urllib.parse.quote(self.target)}+{urllib.parse.quote(source)}"
-            self.print_result(engine, {'TARGET': self.target}, source, engine, fallback_url)
-    
-    def run_full_scan(self):
-        self.banner()
-        print(f"{Fore.WHITE}🎯 TARGET: {Fore.YELLOW}{self.target}")
-        print(f"{Fore.GREEN}📁 SINGLE OUTPUT: {TARGET_FOLDER}/{self.target}.pdf")
-        print("="*90)
-        
-        self.tor_init()
-        time.sleep(3)
-        
-        scans = [
-            self.company_scan,
-            self.password_scan,
-            self.breach_scan, 
-            self.username_scan, 
-            self.crypto_scan,
-            self.social_media_scan, 
-            self.kali_tool_scan
-        ]
-        
-        threads = [Thread(target=scan, daemon=True) for scan in scans]
-        for t in threads: t.start()
-        for t in threads: t.join(2000)
-        
-        print(f"\n{Fore.RED}✅ SCAN COMPLETE!")
-        print(f"{Fore.GREEN}📄 SINGLE FILE: {self.target_pdf}")
-        print(f"{Fore.CYAN}🔗 ALL LINKS ARE CLICKABLE - {len(self.results)} records")
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"{Fore.RED}Usage: python3 khalid-osint.py <target>")
-        sys.exit(1)
-    
-    osint = KhalidHusain786OSINTv857()
-    osint.target = sys.argv[1].strip()
-    osint.run_full_scan()
+    try:
+        from weasyprint import HTML
+        HTML(string=html, base_url='file://' + os.getcwd() + '/').write_pdf(
+            self.target_pdf,
+            stylesheets=None,
+            optimize_size='pdfa'  # FIXED: Perfect size optimization
+        )
+    except:
+        html_file = self.target_pdf.replace('.pdf', '.html')
+        with open(html_file, 'w', encoding='utf-8') as f:
+            f.write(html)
