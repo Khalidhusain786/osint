@@ -1,37 +1,50 @@
 #!/bin/bash
 
-# --- KHALID HUSAIN PENTEST PRO v84.0 INSTALLER ---
-# Colors for output
+# --- KHALID HUSAIN PENTEST PRO v84.0 AUTO-ENGINE ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${CYAN}--- Starting Khalid Pentest Pro Installation ---${NC}"
+echo -e "${CYAN}--- [!] Khalid Engine: Auto-Fixing & Installing Tools ---${NC}"
 
-# 1. Update System
-echo -e "${GREEN}[+] Updating system packages...${NC}"
-sudo apt-get update -y
+# Function to install/update without upgrading the whole system
+auto_tool() {
+    if ! command -v $1 &> /dev/null; then
+        echo -e "${YELLOW}[+] Installing $1...${NC}"
+        sudo apt-get install -y $1
+    else
+        echo -e "${GREEN}[✔] Updating $1...${NC}"
+        sudo apt-get install --only-upgrade -y $1 &> /dev/null || true
+    fi
+}
 
-# 2. Install System Dependencies (Kali/Debian/Ubuntu)
-echo -e "${GREEN}[+] Installing system binaries (Tor, Subfinder, etc.)...${NC}"
-sudo apt-get install -y python3-pip tor torsocks nmap subfinder amass theharvester dnsrecon libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
+# 1. System Dependencies
+echo -e "${CYAN}\n[1] Checking System Tools...${NC}"
+sudo apt-get update -y # Only update package lists
+tools=(tor torsocks nmap subfinder amass theharvester dnsrecon python3-pip curl git libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0)
 
-# 3. Setup Tor
-echo -e "${GREEN}[+] Enabling Tor service...${NC}"
-sudo systemctl enable tor
-sudo systemctl start tor
+for tool in "${tools[@]}"; do
+    auto_tool $tool
+done
 
-# 4. Install Python Dependencies
-echo -e "${GREEN}[+] Installing Python libraries...${NC}"
-pip3 install --upgrade pip
-pip3 install aiohttp colorama weasyprint
+# 2. Python Environment Fix (No Upgrade, Only Force Install)
+echo -e "${CYAN}\n[2] Checking Python Libraries...${NC}"
+pip3 install --force-reinstall aiohttp colorama weasyprint urllib3 2>/dev/null
 
-# 5. Set Permissions
-echo -e "${GREEN}[+] Setting executable permissions...${NC}"
-chmod +x khalid-osint.py
+# 3. Fixing Syntax Errors in Python Script (Auto-Remove Backticks)
+echo -e "${CYAN}\n[3] Cleaning Python Script Syntax...${NC}"
+if [ -f "khalid-osint.py" ]; then
+    sed -i '/^```/d' khalid-osint.py
+    chmod +x khalid-osint.py
+    echo -e "${GREEN}[✔] Script cleaned and ready.${NC}"
+fi
 
-echo -e "${RED}══════════════════════════════════════════════════════${NC}"
-echo -e "${CYAN}    KHALID HUSAIN PENTEST PRO v84.0 INSTALLED${NC}"
-echo -e "${GREEN}    Usage: python3 khalid-osint.py <target>${NC}"
-echo -e "${RED}══════════════════════════════════════════════════════${NC}"
+# 4. Service Repair
+echo -e "${CYAN}\n[4] Starting Services...${NC}"
+sudo service tor restart
+
+echo -e "\n${RED}======================================================"
+echo -e "${YELLOW}       KHALID OSINT ENGINE IS READY TO RUN"
+echo -e "${RED}======================================================${NC}"
