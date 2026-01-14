@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN786 OSINT v85.8 - GLOBAL DATA LAKES + DEEP/DARK WEB + GOVERNMENT + ALL PII
-ALL SOURCES • AADHAAR • VOTER ID • PAN • GLOBAL PHONES • RESUMES • PDF LEAKS • BREACHES
+KHALID HUSAIN786 OSINT v85.9 - PASSWORDS VISIBLE + PROFESSIONAL PDF
+GLOBAL DATA LAKES + GOVERNMENT + DARK WEB + ALL PII PERFECTLY VISIBLE
 """
 
 import os
@@ -42,9 +42,9 @@ class KhalidHusain786OSINTv857:
     def banner(self):
         banner = f"""
 {Fore.RED}╔══════════════════════════════════════════════════════════════════════╗
-{Fore.RED}║{Fore.YELLOW}      KHALID HUSAIN786 v85.8 - GLOBAL DATA LAKES      {Fore.RED}║
-{Fore.RED}║{Fore.CYAN}DARK WEB•DEEP WEB•GOV•AADHAAR•VOTER•PAN•ALL PII{Fore.RED}║
-{Fore.RED}║{Fore.MAGENTA}RESUMES•PDF LEAKS•DATA BREACHES•WORLDWIDE{Fore.RED}║
+{Fore.RED}║{Fore.YELLOW}      KHALID HUSAIN786 v85.9 - PASSWORDS VISIBLE       {Fore.RED}║
+{Fore.RED}║{Fore.CYAN}PROFESSIONAL PDF • ALL PII PERFECTLY VISIBLE{Fore.RED}║
+{Fore.RED}║{Fore.MAGENTA}AADHAAR•VOTER•PAN•GLOBAL•DARK WEB•RESUMES{Fore.RED}║
 {Fore.RED}╚══════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
         """
         print(banner)
@@ -108,7 +108,7 @@ class KhalidHusain786OSINTv857:
         
         return pii_data
     
-    # NEW: GLOBAL GOVERNMENT & DATA LAKES
+    # GLOBAL GOVERNMENT & DATA LAKES
     def government_scan(self):
         print(f"{Fore.RED}🏛️  GOVERNMENT + PUBLIC RECORDS")
         gov_sources = [
@@ -126,7 +126,7 @@ class KhalidHusain786OSINTv857:
         for t in threads: t.start()
         for t in threads: t.join(45)
     
-    # NEW: RESUMES & PDF LEAKS
+    # RESUMES & PDF LEAKS
     def resume_pdf_scan(self):
         print(f"{Fore.RED}📄 RESUMES + PDF LEAKS")
         pdf_sources = [
@@ -140,7 +140,7 @@ class KhalidHusain786OSINTv857:
         for t in threads: t.start()
         for t in threads: t.join(40)
     
-    # NEW: DATA LAKES & DEEP WEB
+    # DATA LAKES & DEEP WEB
     def data_lakes_scan(self):
         print(f"{Fore.RED}🌊 DATA LAKES + DEEP WEB")
         lake_sources = [
@@ -154,7 +154,7 @@ class KhalidHusain786OSINTv857:
         for t in threads: t.start()
         for t in threads: t.join(50)
     
-    # NEW: DARK WEB + TOR INDEXES (Surface accessible)
+    # DARK WEB + TOR INDEXES
     def darkweb_scan(self):
         print(f"{Fore.RED}🕸️  DARK WEB INDEXES")
         dark_sources = [
@@ -271,7 +271,7 @@ class KhalidHusain786OSINTv857:
 <html>
 <head>
 <meta charset="UTF-8">
-<title>{self.target} - GLOBAL OSINT v85.8</title>
+<title>{self.target} - GLOBAL OSINT v85.9</title>
 <style>
 body{{font-family:'Courier New',monospace;background:#0a0e17;color:#e6edf3;font-size:9px;line-height:1.25;padding:25px;max-width:100%;margin:0;overflow:hidden;}}
 h1{{color:#00d4aa;font-size:20px;text-align:center;margin:0 0 30px 0;font-weight:700;text-shadow:0 0 15px rgba(0,212,170,0.6);}}
@@ -284,7 +284,7 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
 .pii-card{{background:linear-gradient(145deg,#1a2332,#212b40);padding:18px;border-radius:15px;border-left:5px solid #00d4aa;transition:all 0.3s ease;box-shadow:0 6px 25px rgba(0,0,0,0.5);position:relative;overflow:hidden;}}
 .pii-card:hover{{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,212,170,0.3);border-left-color:#ff6b6b;}}
 .pii-type{{font-weight:900;color:#00d4aa;font-size:11px;margin-bottom:8px;text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;}}
-.pii-value{{font-family:monospace;background:#0a0e17;padding:12px;border-radius:8px;font-size:10px;color:#f8f9fa !important;border:1px solid #2d4059;font-weight:600;word-break:break-all;line-height:1.45;max-height:80px;overflow-y:auto;white-space:pre-wrap;}}
+.pii-value{{font-family:monospace;background:#0a0e17;padding:12px;border-radius:8px;font-size:10px;color:#ffffff !important;border:1px solid #2d4059;font-weight:600;word-break:break-all;line-height:1.45;max-height:80px;overflow-y:auto;white-space:pre-wrap;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}}
 .link-btn{{display:inline-block;background:linear-gradient(45deg,#00d4aa,#0099cc);color:#000;font-weight:700;font-size:9px;padding:6px 12px;margin-top:8px;border-radius:20px;text-decoration:none;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(0,212,170,0.4);}}
 .link-btn:hover{{background:linear-gradient(45deg,#ff6b6b,#ff8e8e);transform:scale(1.05);box-shadow:0 6px 25px rgba(255,107,107,0.5);color:#fff !important;}}
 .source-bar{{font-size:9px;color:#64748b;margin-top:10px;display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1a2332;}}
@@ -292,11 +292,11 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
 .gov-section{{background:linear-gradient(135deg,#ff6b6b,#ee5a52);padding:30px;border-radius:20px;margin:30px 0;box-shadow:0 15px 50px rgba(255,107,107,0.4);}}
 .dark-section{{background:linear-gradient(135deg,#2c3e50,#34495e);padding:30px;border-radius:20px;margin:30px 0;box-shadow:0 15px 50px rgba(44,62,80,0.6);}}
 .footer{{text-align:center;font-size:9px;color:#64748b;margin-top:50px;padding-top:30px;border-top:3px solid #1a2332;padding-bottom:20px;}}
-@media print{{.link-btn{{color:#00d4aa !important;background:none !important;box-shadow:none !important;transform:none !important;}}body{{font-size:8px;}}.pii-grid{{grid-template-columns:repeat(6,1fr);gap:10px;}}.pii-value{{color:#000 !important;}}}}
+@media print{{.link-btn{{color:#00d4aa !important;background:none !important;box-shadow:none !important;transform:none !important;}}.pii-value{{color:#000 !important;background:#f0f0f0 !important;}}body{{font-size:8px;}}.pii-grid{{grid-template-columns:repeat(6,1fr);gap:10px;}}}}
 </style>
 </head>
 <body>
-<h1>🌐 {self.target} - GLOBAL OSINT DOSSIER v85.8</h1>
+<h1>🌐 {self.target} - GLOBAL OSINT DOSSIER v85.9</h1>
 
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-number">{len(self.results)}</div><div class="stat-label">TOTAL RECORDS</div></div>
@@ -349,8 +349,8 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
 
         html += f'''</div>
 <div class="footer">
-<strong>KhalidHusain786 v85.8</strong> | {len(self.results)} Records | AADHAAR•VOTER•PAN•GLOBAL | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC<br>
-<i>🔗 CLICKABLE LINKS • PASSWORDS VISIBLE • FULL PII EXTRACTION • GOVERNMENT + DARK WEB</i>
+<strong>KhalidHusain786 v85.9</strong> | {len(self.results)} Records | AADHAAR•VOTER•PAN•PASSWORDS VISIBLE | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC<br>
+<i>🔗 CLICKABLE LINKS • PROFESSIONAL WHITE TEXT • PERFECT PRINT • ALL PII VISIBLE</i>
 </div>
 </body>
 </html>'''
@@ -445,12 +445,12 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
         self.tor_init()
         time.sleep(3)
         
-        # ALL SCANS - NEW + EXISTING
+        # ALL 12 SCANS
         scans = [
-            self.government_scan,      # NEW: Government IDs
-            self.resume_pdf_scan,      # NEW: Resumes/PDFs  
-            self.data_lakes_scan,      # NEW: Data Lakes
-            self.darkweb_scan,         # NEW: Dark Web
+            self.government_scan,
+            self.resume_pdf_scan, 
+            self.data_lakes_scan,
+            self.darkweb_scan,
             self.company_scan,
             self.password_scan,
             self.breach_scan, 
@@ -466,7 +466,7 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
         
         print(f"\n{Fore.RED}✅ GLOBAL SCAN COMPLETE!")
         print(f"{Fore.GREEN}📄 SINGLE FILE: {self.target_pdf}")
-        print(f"{Fore.CYAN}🔗 {len(self.results)} RECORDS - AADHAAR•VOTER•PAN•PASSWORDS•DARK WEB")
+        print(f"{Fore.CYAN}🔗 {len(self.results)} RECORDS - PASSWORDS VISIBLE!")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
