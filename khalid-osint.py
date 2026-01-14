@@ -1,4 +1,3 @@
-Here's your **fixed and enhanced v85.0** with all requested features - **target-named PDF only**, **clean console output**, **clickable links**, **search engine tracking**, and **proper data categorization**:
 
 ```python
 #!/usr/bin/env python3
