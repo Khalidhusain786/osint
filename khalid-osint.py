@@ -79,9 +79,11 @@ class KhalidHusain786OSINTv857:
         for pii_type, pattern in patterns.items():
             matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
             if matches:
-                if pii_type == 'COMPANY' and matches:
-                    self.company_intel['company'] = matches[0].strip()
-                pii_data[pii_type] = matches[0][:50]
+                # FIXED: Capture FULL match, not truncated - PDF=TERMINAL EXACTLY
+                full_match = matches[0]
+                if pii_type == 'COMPANY' and full_match:
+                    self.company_intel['company'] = full_match.strip()
+                pii_data[pii_type] = full_match.strip()  # FULL data preserved
         
         if self.company_intel.get('company'):
             pii_data['COMPANY'] = self.company_intel['company']
