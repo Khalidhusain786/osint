@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN786 OSINT v85.7 - CLICKABLE LINKS + SINGLE TARGET.PDF
-ALL PII • PASSWORDS • COMPANY • PERFECT LINKS • ONE PDF ONLY
+KHALID HUSAIN786 OSINT v85.8 - GLOBAL DATA LAKES + DEEP/DARK WEB + GOVERNMENT + ALL PII
+ALL SOURCES • AADHAAR • VOTER ID • PAN • GLOBAL PHONES • RESUMES • PDF LEAKS • BREACHES
 """
 
 import os
@@ -42,33 +42,49 @@ class KhalidHusain786OSINTv857:
     def banner(self):
         banner = f"""
 {Fore.RED}╔══════════════════════════════════════════════════════════════════════╗
-{Fore.RED}║{Fore.YELLOW}      KHALID HUSAIN786 v85.7 - CLICKABLE LINKS       {Fore.RED}║
-{Fore.RED}║{Fore.CYAN}SINGLE {self.target}.pdf • PERFECT LINKS • ALL DATA{Fore.RED}║
-{Fore.RED}║{Fore.MAGENTA}     PASSWORDS•COMPANY•USERS•NO LIMITS            {Fore.RED}║
+{Fore.RED}║{Fore.YELLOW}      KHALID HUSAIN786 v85.8 - GLOBAL DATA LAKES      {Fore.RED}║
+{Fore.RED}║{Fore.CYAN}DARK WEB•DEEP WEB•GOV•AADHAAR•VOTER•PAN•ALL PII{Fore.RED}║
+{Fore.RED}║{Fore.MAGENTA}RESUMES•PDF LEAKS•DATA BREACHES•WORLDWIDE{Fore.RED}║
 {Fore.RED}╚══════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
         """
         print(banner)
     
     def pii_patterns(self):
         return {
-            'PAN': r'[A-Z]{5}[0-9]{4}[A-Z]{1}',
+            # INDIA GOVERNMENT ID's
             'AADHAAR': r'\b\d{12}\b',
-            'PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret)[:\s]*["\']?([^\s"\'\n]{4,50})["\']?',
+            'PAN': r'[A-Z]{5}[0-9]{4}[A-Z]{1}',
+            'VOTER_ID': r'(?:[A-Z]{3}[0-9]{7}[A-Z]{1}|[A-Z]{2}[0-9]{9}[A-Z])',
+            'EPIC': r'EPI[C]?\s*[0-9]{10}',
+            
+            # PASSWORDS & TOKENS
+            'PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret|pass|pwd)[:\s]*["\']?([^\s"\'\n]{4,100})["\']?',
             'PASSWORD_HASH': r'\b[A-Fa-f0-9]{32,128}\b',
+            'API_KEY': r'(?:api[_-]?key|token|auth[_-]?key|bearer)[:\s]*["\']?([A-Za-z0-9\-_]{20,})["\']?\b',
+            
+            # GLOBAL PHONES
             'PHONE_IN': r'[\+]?[6-9]\d{9,11}',
             'PHONE_US': r'\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}',
             'PHONE_UK': r'[\+44|0]?[7]\d{9}',
             'PHONE_ALL': r'[\+]?[1-9]\d{7,15}',
+            
+            # VEHICLE & CRYPTO
             'VEHICLE_IN': r'[A-Z]{2}[0-9]{1,2}[A-Z]{2}\d{4}',
             'VEHICLE_ALL': r'[A-Z0-9-]{6,17}',
             'BTC': r'bc1[A-Za-z9]{39,59}|1[0-9A-Za-z]{25,34}|3[0-9A-Za-z]{25,34}',
+            
+            # DIGITAL FOOTPRINT
             'DOMAIN': r'(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}',
             'USERNAME': r'@[A-Za-z0-9_]{3,30}|[A-Za-z0-9_]{3,30}(?:@[A-Za-z0-9_]+)?',
             'EMAIL': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            'COMPANY': r'(?:inc|corp|ltd|llc|plc|co\.?\s?)(?:\.)?[A-Za-z\s\.\-]{2,50}',
-            'LOCATION': r'\b(?:[0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{4}|[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})\b',
-            'REG_DATE': r'(?:registered|created|joined)[\s\-:]+(?:on|at)[\s\-:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})',
-            'API_KEY': r'(?:api[_-]?key|token|auth[_-]?key)[:\s]*["\']?([A-Za-z0-9\-_]{20,})\b'
+            
+            # COMPANY & LOCATION
+            'COMPANY': r'(?:inc|corp|ltd|llc|plc|co\.?\s?|pvt\.?\s?|ltd\.?\s?)(?:\.)?[A-Za-z\s\.\-]{2,50}',
+            'LOCATION': r'\b(?:[0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{4}|[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2}|India|USA|UK|Canada|Australia|Delhi|Mumbai|London|New York)\b',
+            'ADDRESS': r'\d{1,4}\s+[A-Za-z\s]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Blvd|Boulevard|Court|Ct|Place|Pl|Way|Circle|Cir|Square|Sq)\b',
+            
+            # DATES
+            'REG_DATE': r'(?:registered|created|joined|dob|birth)[\s\-:]+(?:on|at)[\s\-:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})',
         }
     
     def extract_pii(self, text):
@@ -79,7 +95,6 @@ class KhalidHusain786OSINTv857:
         for pii_type, pattern in patterns.items():
             matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
             if matches:
-                # FIXED: Capture FULL match, not truncated - PDF=TERMINAL EXACTLY
                 full_match = matches[0]
                 if pii_type == 'COMPANY' and full_match:
                     self.company_intel['company'] = full_match.strip()
@@ -93,6 +108,67 @@ class KhalidHusain786OSINTv857:
         
         return pii_data
     
+    # NEW: GLOBAL GOVERNMENT & DATA LAKES
+    def government_scan(self):
+        print(f"{Fore.RED}🏛️  GOVERNMENT + PUBLIC RECORDS")
+        gov_sources = [
+            ("IndiaGov", f"https://www.india.gov.in/search/site/{urllib.parse.quote(self.target)}"),
+            ("USA.gov", f"https://www.usa.gov/search?q={urllib.parse.quote(self.target)}"),
+            ("UK.gov", f"https://www.gov.uk/search?q={urllib.parse.quote(self.target)}"),
+            ("EUData", f"https://data.europa.eu/data/datasets/search?q={urllib.parse.quote(self.target)}"),
+            ("IndiaUIDAI", f"https://uidai.gov.in/images/commdoc/aadhaar_data_retention_policy.pdf"),
+            ("VoterIndia", f"https://electoralsearch.eci.gov.in/search"),
+            ("PANIndia", f"https://www.incometax.gov.in/iec/foportal/"),
+            ("CanadaGov", f"https://open.canada.ca/en/search/site/{urllib.parse.quote(self.target)}"),
+            ("AusGov", f"https://data.gov.au/dataset?q={urllib.parse.quote(self.target)}")
+        ]
+        threads = [Thread(target=self.scan_url, args=(url, name, "GOVERNMENT"), daemon=True) for name, url in gov_sources]
+        for t in threads: t.start()
+        for t in threads: t.join(45)
+    
+    # NEW: RESUMES & PDF LEAKS
+    def resume_pdf_scan(self):
+        print(f"{Fore.RED}📄 RESUMES + PDF LEAKS")
+        pdf_sources = [
+            ("ResumeDB", f"https://resumedb.sonatype.com/search?q={urllib.parse.quote(self.target)}"),
+            ("PDFSearch", f"https://pdfsearch.io/?q={urllib.parse.quote(self.target)}"),
+            ("GitHubPDF", f"https://github.com/search?q={urllib.parse.quote(self.target)}+filename:resume+OR+cv+OR+filetype:pdf"),
+            ("Scribd", f"https://www.scribd.com/search-documents?query={urllib.parse.quote(self.target)}"),
+            ("SlideShare", f"https://www.slideshare.net/search/slideshow?searchfrom=header&q={urllib.parse.quote(self.target)}")
+        ]
+        threads = [Thread(target=self.scan_url, args=(url, name, "RESUME"), daemon=True) for name, url in pdf_sources]
+        for t in threads: t.start()
+        for t in threads: t.join(40)
+    
+    # NEW: DATA LAKES & DEEP WEB
+    def data_lakes_scan(self):
+        print(f"{Fore.RED}🌊 DATA LAKES + DEEP WEB")
+        lake_sources = [
+            ("LeakIX", f"https://leakix.net/search/?q={urllib.parse.quote(self.target)}"),
+            ("IntelX", f"https://intelx.io/search?term={urllib.parse.quote(self.target)}"),
+            ("DataBreaches", f"https://databreaches.net/?s={urllib.parse.quote(self.target)}"),
+            ("ExploitDB", f"https://www.exploit-db.com/search?q={urllib.parse.quote(self.target)}"),
+            ("VirusTotal", f"https://www.virustotal.com/gui/search/{urllib.parse.quote(self.target)}")
+        ]
+        threads = [Thread(target=self.scan_url, args=(url, name, "DATALAKE"), daemon=True) for name, url in lake_sources]
+        for t in threads: t.start()
+        for t in threads: t.join(50)
+    
+    # NEW: DARK WEB + TOR INDEXES (Surface accessible)
+    def darkweb_scan(self):
+        print(f"{Fore.RED}🕸️  DARK WEB INDEXES")
+        dark_sources = [
+            ("DarkSearch", f"https://darksearch.io/?q={urllib.parse.quote(self.target)}"),
+            ("Ahmia", f"https://ahmia.fi/search/?q={urllib.parse.quote(self.target)}"),
+            ("TorSearch", f"https://torsearch.io/search/?q={urllib.parse.quote(self.target)}"),
+            ("OnionDir", f"https://www.oniondir.biz/search/?q={urllib.parse.quote(self.target)}"),
+            ("FreshOnions", f"https://www.freshonions.torri.ng/search/?q={urllib.parse.quote(self.target)}")
+        ]
+        threads = [Thread(target=self.scan_url, args=(url, name, "DARKWEB"), daemon=True) for name, url in dark_sources]
+        for t in threads: t.start()
+        for t in threads: t.join(55)
+    
+    # EXISTING SCANS (unchanged)
     def company_scan(self):
         print(f"{Fore.RED}🏢 COMPANY INTEL")
         company_sources = [
@@ -188,7 +264,6 @@ class KhalidHusain786OSINTv857:
         if not self.results:
             return
         
-        # FIXED: SINGLE TARGET.PDF ONLY
         clean_target = re.sub(r'[^\w\-_.]', '_', self.target)[:50]
         self.target_pdf = f"{TARGET_FOLDER}/{clean_target}.pdf"
         
@@ -196,7 +271,7 @@ class KhalidHusain786OSINTv857:
 <html>
 <head>
 <meta charset="UTF-8">
-<title>{self.target} - FULL OSINT</title>
+<title>{self.target} - GLOBAL OSINT v85.8</title>
 <style>
 body{{font-family:'Courier New',monospace;background:#0a0e17;color:#e6edf3;font-size:9px;line-height:1.25;padding:25px;max-width:100%;margin:0;overflow:hidden;}}
 h1{{color:#00d4aa;font-size:20px;text-align:center;margin:0 0 30px 0;font-weight:700;text-shadow:0 0 15px rgba(0,212,170,0.6);}}
@@ -209,17 +284,19 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
 .pii-card{{background:linear-gradient(145deg,#1a2332,#212b40);padding:18px;border-radius:15px;border-left:5px solid #00d4aa;transition:all 0.3s ease;box-shadow:0 6px 25px rgba(0,0,0,0.5);position:relative;overflow:hidden;}}
 .pii-card:hover{{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,212,170,0.3);border-left-color:#ff6b6b;}}
 .pii-type{{font-weight:900;color:#00d4aa;font-size:11px;margin-bottom:8px;text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;}}
-.pii-value{{font-family:monospace;background:#0a0e17;padding:12px;border-radius:8px;font-size:10px;color:#f8f9fa;border:1px solid #2d4059;font-weight:600;word-break:break-all;line-height:1.45;max-height:60px;overflow-y:auto;}}
+.pii-value{{font-family:monospace;background:#0a0e17;padding:12px;border-radius:8px;font-size:10px;color:#f8f9fa !important;border:1px solid #2d4059;font-weight:600;word-break:break-all;line-height:1.45;max-height:80px;overflow-y:auto;white-space:pre-wrap;}}
 .link-btn{{display:inline-block;background:linear-gradient(45deg,#00d4aa,#0099cc);color:#000;font-weight:700;font-size:9px;padding:6px 12px;margin-top:8px;border-radius:20px;text-decoration:none;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(0,212,170,0.4);}}
 .link-btn:hover{{background:linear-gradient(45deg,#ff6b6b,#ff8e8e);transform:scale(1.05);box-shadow:0 6px 25px rgba(255,107,107,0.5);color:#fff !important;}}
 .source-bar{{font-size:9px;color:#64748b;margin-top:10px;display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1a2332;}}
 .company-section{{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;border-radius:20px;margin:30px 0;box-shadow:0 15px 50px rgba(102,126,234,0.4);border:1px solid rgba(255,255,255,0.1);}}
+.gov-section{{background:linear-gradient(135deg,#ff6b6b,#ee5a52);padding:30px;border-radius:20px;margin:30px 0;box-shadow:0 15px 50px rgba(255,107,107,0.4);}}
+.dark-section{{background:linear-gradient(135deg,#2c3e50,#34495e);padding:30px;border-radius:20px;margin:30px 0;box-shadow:0 15px 50px rgba(44,62,80,0.6);}}
 .footer{{text-align:center;font-size:9px;color:#64748b;margin-top:50px;padding-top:30px;border-top:3px solid #1a2332;padding-bottom:20px;}}
-@media print{{.link-btn{{color:#00d4aa !important;background:none !important;box-shadow:none !important;transform:none !important;}}body{{font-size:8px;}}.pii-grid{{grid-template-columns:repeat(6,1fr);gap:10px;}}}}
+@media print{{.link-btn{{color:#00d4aa !important;background:none !important;box-shadow:none !important;transform:none !important;}}body{{font-size:8px;}}.pii-grid{{grid-template-columns:repeat(6,1fr);gap:10px;}}.pii-value{{color:#000 !important;}}}}
 </style>
 </head>
 <body>
-<h1>🎯 {self.target} - COMPLETE OSINT DOSSIER</h1>
+<h1>🌐 {self.target} - GLOBAL OSINT DOSSIER v85.8</h1>
 
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-number">{len(self.results)}</div><div class="stat-label">TOTAL RECORDS</div></div>
@@ -245,7 +322,6 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
             if isinstance(result['data'], dict):
                 for pii_type, pii_value in result['data'].items():
                     link = result.get('link', '#')
-                    # FIXED: Make links clickable and correct
                     pii_items.append(f'''
 <div class="pii-card">
 <div class="pii-type">{pii_type}</div>
@@ -273,8 +349,8 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
 
         html += f'''</div>
 <div class="footer">
-<strong>KhalidHusain786 v85.7</strong> | {len(self.results)} Records Captured | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC<br>
-<i>CLICK 🔗 BUTTONS to verify ALL sources - Single {clean_target}.pdf generated</i>
+<strong>KhalidHusain786 v85.8</strong> | {len(self.results)} Records | AADHAAR•VOTER•PAN•GLOBAL | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC<br>
+<i>🔗 CLICKABLE LINKS • PASSWORDS VISIBLE • FULL PII EXTRACTION • GOVERNMENT + DARK WEB</i>
 </div>
 </body>
 </html>'''
@@ -294,13 +370,17 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
     
     def print_result(self, category, data, source, engine, link="", network="🌐"):
         with print_lock:
-            emojis = {"BREACH": "💥", "KALI": "⚡", "SOCIAL": "📱", "CRYPTO": "₿", "USERNAME": "👤", "COMPANY": "🏢", "PASSWORD": "🔑"}
+            emojis = {
+                "BREACH": "💥", "KALI": "⚡", "SOCIAL": "📱", "CRYPTO": "₿", 
+                "USERNAME": "👤", "COMPANY": "🏢", "PASSWORD": "🔑", 
+                "GOVERNMENT": "🏛️", "RESUME": "📄", "DATALAKE": "🌊", "DARKWEB": "🕸️"
+            }
             emoji = emojis.get(category, "🌐")
-            print(f"{Fore.GREEN}✓ [{emoji}] {Fore.CYAN}{category:10} | {Fore.YELLOW}{source:14} | {Fore.MAGENTA}{engine} | 🔗 {link[:60]}...")
+            print(f"{Fore.GREEN}✓ [{emoji}] {Fore.CYAN}{category:12} | {Fore.YELLOW}{source:14} | {Fore.MAGENTA}{engine} | 🔗 {link[:60]}...")
             
             if isinstance(data, dict):
                 for pii_type, pii_value in data.items():
-                    color = Fore.RED if any(x in pii_type for x in ['PASS', 'KEY', 'HASH']) else Fore.WHITE
+                    color = Fore.RED if any(x in pii_type.upper() for x in ['PASS', 'KEY', 'HASH', 'AADHAAR', 'PAN', 'VOTER']) else Fore.WHITE
                     print(f"   {Fore.CYAN}🆔 {pii_type}: {color}{pii_value}")
             else:
                 print(f"   {Fore.RED}→ {data}")
@@ -313,7 +393,6 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
                 'network': network
             })
             
-            # Update PDF every result - SINGLE FILE ONLY
             self.update_pdf()
     
     def tor_init(self):
@@ -348,14 +427,12 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
                 text = resp.text
                 pii_found = self.extract_pii(text)
                 
-                # FIXED: Always pass CORRECT URL as link
                 if pii_found:
                     self.print_result(engine, pii_found, source, engine, url)
                 else:
                     self.print_result(engine, {'TARGET': self.target}, source, engine, url)
                     
         except Exception as e:
-            # Fallback search link
             fallback_url = f"https://google.com/search?q={urllib.parse.quote(self.target)}+{urllib.parse.quote(source)}"
             self.print_result(engine, {'TARGET': self.target}, source, engine, fallback_url)
     
@@ -363,12 +440,17 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
         self.banner()
         print(f"{Fore.WHITE}🎯 TARGET: {Fore.YELLOW}{self.target}")
         print(f"{Fore.GREEN}📁 SINGLE OUTPUT: {TARGET_FOLDER}/{self.target}.pdf")
-        print("="*90)
+        print("="*100)
         
         self.tor_init()
         time.sleep(3)
         
+        # ALL SCANS - NEW + EXISTING
         scans = [
+            self.government_scan,      # NEW: Government IDs
+            self.resume_pdf_scan,      # NEW: Resumes/PDFs  
+            self.data_lakes_scan,      # NEW: Data Lakes
+            self.darkweb_scan,         # NEW: Dark Web
             self.company_scan,
             self.password_scan,
             self.breach_scan, 
@@ -380,11 +462,11 @@ h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:
         
         threads = [Thread(target=scan, daemon=True) for scan in scans]
         for t in threads: t.start()
-        for t in threads: t.join(2000)
+        for t in threads: t.join(3000)
         
-        print(f"\n{Fore.RED}✅ SCAN COMPLETE!")
+        print(f"\n{Fore.RED}✅ GLOBAL SCAN COMPLETE!")
         print(f"{Fore.GREEN}📄 SINGLE FILE: {self.target_pdf}")
-        print(f"{Fore.CYAN}🔗 ALL LINKS ARE CLICKABLE - {len(self.results)} records")
+        print(f"{Fore.CYAN}🔗 {len(self.results)} RECORDS - AADHAAR•VOTER•PAN•PASSWORDS•DARK WEB")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
