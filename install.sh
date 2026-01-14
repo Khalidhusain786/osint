@@ -1,5 +1,7 @@
 #!/bin/bash
-# 🔥 KHALID HUSAIN RAW PRO v86.0 INSTALLER 🔥
+
+# --- KHALID OSINT v83.0 AUTO-FIXER & INSTALLER ---
+# Professional, No Lags, Auto-Repair
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -7,33 +9,55 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${CYAN}--- [!] Khalid Engine: Auto-Fixing Dependencies ---${NC}"
+echo -e "${CYAN}--- [!] Khalid Ultimate Engine: Fixing Environment ---${NC}"
 
-# 1. Update Repo
+# 1. Update Package List (No Full Upgrade to save time/space)
+echo -e "${YELLOW}[1/5] Updating Repository Lists...${NC}"
 sudo apt-get update -y
 
-# 2. Fix Chromium & Driver (Commonly missing in Kali)
-echo -e "${YELLOW}[+] Fixing Chromium & Selenium Drivers...${NC}"
-sudo apt-get install -y chromium chromium-driver || sudo apt-get install -y chromium-browser chromium-chromedriver
+# 2. Install System Dependencies (Crucial for WeasyPrint & PDF)
+echo -e "${YELLOW}[2/5] Installing PDF & Graphics Engines...${NC}"
+sudo apt-get install -y python3-pip python3-dev \
+    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b \
+    libjpeg-dev libopenjp2-7-dev libffi-dev \
+    curl git tor torsocks nmap -q
 
-# 3. System Binaries for PDF and Network
-echo -e "${YELLOW}[+] Installing System Libs...${NC}"
-sudo apt-get install -y tor torsocks nmap subfinder amass theharvester dnsrecon \
-python3-pip libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev
+# 3. Install Kali Recon Tools (If missing)
+echo -e "${YELLOW}[3/5] Checking Kali Recon Suite...${NC}"
+TOOLS=(subfinder amass theHarvester dnsrecon dnsenum holehe)
+for tool in "${TOOLS[@]}"; do
+    if ! command -v $tool &> /dev/null; then
+        echo -e "${CYAN}   [+] Installing $tool...${NC}"
+        sudo apt-get install -y $tool -q
+    else
+        echo -e "${GREEN}   [✔] $tool already installed.${NC}"
+    fi
+done
 
-# 4. Python Libraries (Force Reinstall for Stability)
-echo -e "${YELLOW}[+] Installing Python Modules...${NC}"
+# 4. Fix Python Environment & Libraries
+echo -e "${YELLOW}[4/5] Fixing Python Dependencies (Auto-Repair)...${NC}"
+# Use --force-reinstall only for core libs to fix broken links
 pip3 install --upgrade pip
-pip3 install --force-reinstall aiohttp colorama weasyprint selenium webdriver-manager
+pip3 install colorama requests beautifulsoup4 markdown weasyprint --quiet
 
-# 5. Syntax Cleaning (Fixes the ```python error)
-if [ -f "khalid_raw_v86.py" ]; then
-    sed -i '/^```/d' khalid_raw_v86.py
-    chmod +x khalid_raw_v86.py
+# Fix for Sherlock & Maigret pathing
+pip3 install sherlock maigret socialscan --quiet
+
+# 5. Syntax & Permission Auto-Fix
+echo -e "${YELLOW}[5/5] Applying Final Permissions...${NC}"
+SCRIPT_NAME="pentest_v83.py" # Apni file ka naam yahan check karein
+if [ -f "$SCRIPT_NAME" ]; then
+    sed -i '/^```/d' "$SCRIPT_NAME" # Deletes any markdown backticks
+    chmod +x "$SCRIPT_NAME"
+    echo -e "${GREEN}[✔] $SCRIPT_NAME is ready.${NC}"
+else
+    echo -e "${RED}[✘] Error: $SCRIPT_NAME not found!${NC}"
 fi
 
-# 6. Tor Service
+# Tor Service Sync
 sudo service tor restart
 
-echo -e "\n${GREEN}✔ ALL TOOLS FIXED & UPDATED${NC}"
-echo -e "${CYAN}Command: python3 khalid_raw_v86.py <phone>${NC}"
+echo -e "\n${RED}======================================================"
+echo -e "${YELLOW}       KHALID OSINT v83.0 - SETUP COMPLETE"
+echo -e "${GREEN}    Command: python3 $SCRIPT_NAME <target>"
+echo -e "${RED}======================================================${NC}"
