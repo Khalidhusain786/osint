@@ -98,7 +98,7 @@ def anish_exploits_scan(phone_number, findings):
 def telegram_bot_scan(target, findings):
     print(f"{Fore.BLUE}[🤖] TELEGRAM BOTS ACTIVE...")
     bot_urls = [
-        f"https://t.me/{bot[1:]}",
+        
         f"https://www.google.com/search?q={urllib.parse.quote(target)}+site:t.me/{bot[1:]}"
         for bot in TELEGRAM_BOTS
     ]
