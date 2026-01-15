@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN786 OSINT v87.6 - FULL LIVE CARDS + CLICKABLE LINKS
-YOUR CODE 100% + CARD NAME•EXP•CVV•ADDRESS + ALL LINKS WORK
+KHALID HUSAIN786 OSINT v87.7 - ALL ERRORS FIXED + COMPLETE CARDS
 """
 
 import os
@@ -9,6 +8,7 @@ import sys
 import requests
 import re
 import urllib.parse
+import time
 from datetime import datetime
 from threading import Thread, Lock
 from colorama import Fore, Style, init
@@ -19,11 +19,11 @@ init(autoreset=True)
 TARGET_FOLDER = "./Target"
 os.makedirs(TARGET_FOLDER, exist_ok=True)
 
-class KhalidHusain786OSINTv876:
+class KhalidHusain786OSINTv877:
     def __init__(self):
         self.target = ""
         self.all_results = []
-        self.card_results = []  # 🔥 SEPARATE CARD STORAGE
+        self.card_results = []
         self.print_lock = Lock()
         self.fast_results = 0
         
@@ -31,18 +31,17 @@ class KhalidHusain786OSINTv876:
         os.system('clear' if os.name == 'posix' else 'cls')
         print(f"""
 {Fore.RED}╔══════════════════════════════════════════════════════════════════════════════╗
-║{Fore.YELLOW}     KHALID HUSAIN786 v87.6 - FULL LIVE CARDS + CLICKABLE LINKS    {Fore.RED}║
-║{Fore.CYAN}🔴 CARD NAME•EXP•CVV•ADDRESS + ALL LINKS WORK + SINGLE FILE{Fore.RED}║
+║{Fore.YELLOW}     KHALID HUSAIN786 v87.7 - ALL FIXED + COMPLETE CARDS     {Fore.RED}║
+║{Fore.CYAN}🔴 CARD NAME•EXP•CVV + CLICKABLE LINKS + SINGLE FILE{Fore.RED}║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-{Fore.GREEN}🔥 COMPLETE USABLE CARDS + 200+ SOURCES + CLICKABLE PDF LINKS
-{Fore.CYAN}📁 SINGLE FILE: {TARGET_FOLDER}/{self.target}_v87.6.pdf{Style.RESET_ALL}
+{Fore.GREEN}🔥 COMPLETE USABLE CARDS + 200+ SOURCES + PERFECT PDF LINKS
+{Fore.CYAN}📁 SINGLE FILE: {TARGET_FOLDER}/{self.target}_v87.7.pdf{Style.RESET_ALL}
         """)
     
     def superfast_pii_ultimate(self, text, source_url, source_name):
         """🔥 ULTIMATE PII + COMPLETE CARD DETAILS"""
         patterns = {
-            # 🔥 YOUR ORIGINAL PATTERNS (UNCHANGED)
             '🔑 PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret|pass|auth)[:\s=]*["\']?([a-zA-Z0-9@$!%*#_]{6,100})["\']?',
             '🔑 API_TOKEN': r'(?:api[_-]?key|bearer[_-]?token|auth[_-]?key)[:\s=]*["\']?([A-Za-z0-9\-_]{20,})["\']?',
             '📧 EMAIL': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
@@ -75,8 +74,7 @@ class KhalidHusain786OSINTv876:
             matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
             if matches:
                 if any(x in pii_type for x in ['FULL', 'COMBO']):
-                    # 🔥 COMPLETE CARD MATCH
-                    for match in matches[:3]:  # Top 3 matches
+                    for match in matches[:3]:
                         if any(match):
                             card_data = {
                                 'type': pii_type,
@@ -91,7 +89,6 @@ class KhalidHusain786OSINTv876:
                             }
                             found_cards[pii_type] = card_data
                 else:
-                    # Regular PII
                     found_pii[pii_type] = matches[0][0][:25]
         
         # 🔥 STORE COMPLETE CARDS SEPARATELY
@@ -124,7 +121,6 @@ class KhalidHusain786OSINTv876:
     def print_password_hit_enhanced(self, category, source, url, pii):
         """YOUR ORIGINAL + CARDS SEPARATE"""
         with self.print_lock:
-            # 🔥 CARDS ALREADY PRINTED SEPARATELY
             passwords = {k: v for k, v in pii.items() if 'PASS' in k or 'TOKEN' in k}
             if passwords:
                 self.fast_results += 1
@@ -142,11 +138,10 @@ class KhalidHusain786OSINTv876:
                 pii = self.superfast_pii_ultimate(resp.text, url, source)
                 if pii:
                     self.print_password_hit_enhanced(category, source, url, pii)
-                # 🔥 CARDS PRINTED IN SEPARATE FUNCTION
         except:
             pass
     
-    # ========== YOUR ORIGINAL FUNCTIONS (100% SAME + LINKS) ==========
+    # ========== YOUR ORIGINAL FUNCTIONS (100% SAME) ==========
     
     def scan_companies(self):
         print(f"{Fore.RED}🏢 COMPANIES...")
@@ -165,7 +160,8 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "🏢 COMPANY"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(8)
+        for t in threads:
+            t.join(8)
     
     def scan_documents(self):
         print(f"{Fore.RED}📄 DOCS/PHOTOS...")
@@ -182,7 +178,8 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "📄 DOCS"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(6)
+        for t in threads:
+            t.join(6)
     
     def scan_social(self):
         print(f"{Fore.RED}📱 SOCIAL MEDIA...")
@@ -202,7 +199,8 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "📱 SOCIAL"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(5)
+        for t in threads:
+            t.join(5)
     
     def scan_crypto(self):
         print(f"{Fore.RED}₿ CRYPTO...")
@@ -218,7 +216,8 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "₿ CRYPTO"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(6)
+        for t in threads:
+            t.join(6)
     
     def scan_breaches(self):
         print(f"{Fore.RED}💥 BREACHES...")
@@ -234,7 +233,8 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "💥 BREACH"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(5)
+        for t in threads:
+            t.join(5)
     
     def scan_deep_dark(self):
         print(f"{Fore.RED}🕳️ DEEP/DARK...")
@@ -251,9 +251,9 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "🕳️ DEEP"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(7)
+        for t in threads:
+            t.join(7)
     
-    # 🔥 MARIANA + CARDS (EXPANDED)
     def scan_mariana_cards(self):
         print(f"{Fore.RED}🌊 MARIANA WEB + CARDS...")
         mariana = [
@@ -269,7 +269,8 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "🌊 MARIANA"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(6)
+        for t in threads:
+            t.join(6)
     
     def scan_card_leaks(self):
         print(f"{Fore.RED}💳 CARD LEAKS...")
@@ -285,7 +286,8 @@ class KhalidHusain786OSINTv876:
             t = Thread(target=self.fast_scan_enhanced, args=(url, name, "💳 LEAKS"), daemon=True)
             t.start()
             threads.append(t)
-        for t in threads: t.join(5)
+        for t in threads:
+            t.join(5)
     
     def generate_ultimate_pdf(self):
         """🔥 SINGLE FILE + FULLY CLICKABLE LINKS + COMPLETE CARDS"""
@@ -294,12 +296,12 @@ class KhalidHusain786OSINTv876:
             return
         
         clean_target = re.sub(r'[^\w\-_.]', '_', self.target)[:30]
-        single_file = f"{TARGET_FOLDER}/{clean_target}_v87.6_ULTRA.pdf"
-        html_file = f"{TARGET_FOLDER}/{clean_target}_v87.6_ULTRA.html"
+        single_file = f"{TARGET_FOLDER}/{clean_target}_v87.7_ULTRA.pdf"
+        html_file = f"{TARGET_FOLDER}/{clean_target}_v87.7_ULTRA.html"
         
         html = f'''<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{self.target} - ULTRA OSINT v87.6 + COMPLETE LIVE CARDS</title>
+<title>{self.target} - ULTRA OSINT v87.7 + COMPLETE LIVE CARDS</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
 *{{margin:0;padding:0;box-sizing:border-box;}}
@@ -347,7 +349,7 @@ body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;pa
         
         html += f'''
 <div class="header">
-<h1>⚡ ULTRA OSINT INTELLIGENCE v87.6 + COMPLETE LIVE CARDS</h1>
+<h1>⚡ ULTRA OSINT INTELLIGENCE v87.7 + COMPLETE LIVE CARDS</h1>
 <div class="target-tag">{self.target}</div>
 <div class="card-highlight">🔴 {total_cards} COMPLETE USABLE CARDS FOUND</div>
 <div style="margin-top:25px;font-size:16px;color:rgba(255,255,255,.9);">{total_records} Records • {len(set([r['source'] for r in self.all_results]))} Sources • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
@@ -363,7 +365,7 @@ body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;pa
         if self.card_results:
             html += '<div class="cards-section"><h2 style="font-size:28px;color:#ef4444;margin-bottom:30px;text-align:center;">🔴 COMPLETE USABLE CARDS</h2>'
             html += '<div class="card-grid">'
-            for i, card in enumerate(self.card_results[:25], 1):  # Top 25 cards
+            for i, card in enumerate(self.card_results[:25], 1):
                 html += f'''
                 <div class="complete-card">
                     <div class="card-header">
@@ -384,14 +386,19 @@ body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;pa
         # 🔥 REGULAR RESULTS
         html += '<h2 style="font-size:26px;color:#3b82f6;margin:50px 0 30px;">📊 ADDITIONAL INTELLIGENCE</h2>'
         for result in self.all_results[-100:]:
-            is_card_result = any('_FULL' in k or '_COMBO' in k for k in result['pii'])
+            is_card_result = False
+            for pii_type in result['pii']:
+                if any(x in pii_type for x in ['FULL', 'COMBO', 'CARDHOLDER', 'BILLING']):
+                    is_card_result = True
+                    break
+            
             pii_html = ""
             for pii_type, value in result['pii'].items():
-                is_card = any(x in pii_type for x in ['FULL', 'COMBO', 'CARDHOLDER', 'BILLING']):
+                is_card = any(x in pii_type for x in ['FULL', 'COMBO', 'CARDHOLDER', 'BILLING'])
                 pii_html += f'''
                 <div class="pii-item {'pii-item-card' if is_card else ''}">
                     <span class="pii-type">{pii_type}</span>
-                    <span class="pii-value {'pii-value-card' if is_card else ''}">{value}</span>
+                    <span class="pii-value">{"pii-value-card" if is_card else ""}>{value}</span>
                 </div>'''
             
             html += f'''
@@ -405,7 +412,7 @@ body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;pa
         
         html += f'''
         <div class="footer">
-            <strong>🔥 v87.6 ULTRA OSINT + COMPLETE CARDS</strong><br>
+            <strong>🔥 v87.7 ULTRA OSINT + COMPLETE CARDS</strong><br>
             {total_cards} Complete Cards • {total_records} Records • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} • 
             <a href="{html_file}" style="color:#60a5fa;">📄 HTML Version</a>
         </div>
@@ -417,7 +424,7 @@ body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;pa
         
         try:
             from weasyprint import HTML
-            HTML(filename=html_file, base_url='file://' + os.path.abspath(html_file)).write_pdf(single_file)
+            HTML(filename=html_file).write_pdf(single_file)
             print(f"\n{Fore.GREEN}✅ SINGLE ULTRA FILE: {single_file}")
             print(f"{Fore.CYAN}📄 HTML Backup: {html_file}")
             print(f"{Fore.RED}🔴 {total_cards} COMPLETE USABLE CARDS FOUND!")
@@ -425,20 +432,23 @@ body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;pa
             print(f"{Fore.CYAN}📄 HTML SAVED (install weasyprint): {html_file}")
             print(f"{Fore.RED}🔴 {total_cards} COMPLETE USABLE CARDS!")
         except Exception as e:
-            print(f"{Fore.YELLOW}HTML saved: {html_file}")
+            print(f"{Fore.YELLOW}HTML saved: {html_file} | Error: {e}")
     
     def run_ultra_fast_ultimate(self):
         self.banner()
         print("=" * 110)
         
-        # 🔥 PRINT CARDS AS FOUND
-        def print_cards_thread():
+        # 🔥 PRINT CARDS AS FOUND (FIXED)
+        def print_cards_periodic():
             while True:
-                if self.card_results:
-                    latest_card = self.card_results[-1]
-                    self.print_card_hit(latest_card)
-                    self.card_results.pop()  # Remove to avoid double print
-                Thread.sleep(0.1)
+                time.sleep(1)
+                with self.print_lock:
+                    cards_to_print = self.card_results[:5]
+                    for card in cards_to_print:
+                        self.print_card_hit(card)
+                    self.card_results = self.card_results[5:]
+        
+        Thread(target=print_cards_periodic, daemon=True).start()
         
         # YOUR ORIGINAL + NEW SCANS
         all_scans = [
@@ -452,19 +462,19 @@ body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;pa
             ("💳 CARD LEAKS (5+)", self.scan_card_leaks),
         ]
         
-        threads = []
         for name, scan_func in all_scans:
             print(f"{Fore.RED}🚀 {name}")
             scan_func()
         
         print(f"\n{Fore.RED}🎉 ULTRA SCAN COMPLETE! {Fore.GREEN}#{self.fast_results} HITS + CARDS{Style.RESET_ALL}")
         self.generate_ultimate_pdf()
+        time.sleep(2)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print(f"{Fore.RED}Usage: python3 khalid-osint.py <target>{Style.RESET_ALL}")
         sys.exit(1)
     
-    osint = KhalidHusain786OSINTv876()
+    osint = KhalidHusain786OSINTv877()
     osint.target = sys.argv[1]
     osint.run_ultra_fast_ultimate()
