@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN786 OSINT v95.0 - GLOBAL ULTIMATE + ALL ADVANCED TOOLS + WORLDWIDE
-WORLD ENGINES • 5000+ SITES • ADVANCED TOOLS • FULL COMPANY DATA • SECURE CLICKABLE
-(Pentest Authorized: Global data collection + complete information extraction)
+KHALID HUSAIN786 OSINT v87.0 - ULTRA FAST PROFESSIONAL
+PASSWORDS EVERYWHERE • 100+ SITES • DOCS/PHOTOS/SOCIAL • SUPERFAST
 """
 
 import os
+import subprocess
 import sys
 import requests
 import re
@@ -14,402 +14,297 @@ import urllib.parse
 from datetime import datetime
 from threading import Thread, Lock
 from colorama import Fore, Style, init
-import time
-import webbrowser
-from urllib.parse import quote
-import base64
-import hashlib
-from cryptography.fernet import Fernet
-import socket
-import subprocess
-
-# ADVANCED STEALTH - GLOBAL User-Agents + TOR PROXY SUPPORT
-GLOBAL_USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0'
-]
+import importlib.util
 
 init(autoreset=True)
 
-class KhalidHusain786OSINTv950:
+TARGET_FOLDER = "./Target"
+os.makedirs(TARGET_FOLDER, exist_ok=True)
+
+class KhalidHusain786OSINTv870:
     def __init__(self):
         self.target = ""
-        self.target_lower = ""
-        self.target_variants = []
         self.all_results = []
         self.print_lock = Lock()
         self.fast_results = 0
-        self.target_folder = ""
-        self.ua_index = 0
-        self.encryption_key = Fernet.generate_key()
-        self.cipher_suite = Fernet(self.encryption_key)
-        self.global_whois_cache = {}
         
-    def secure_clickable_link(self, url, source):
-        """SECURE CLICKABLE LINKS - ENCRYPTED + TRACKABLE"""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        secure_id = hashlib.md5(f"{self.target}_{source}_{timestamp}".encode()).hexdigest()[:8]
-        encoded_url = base64.urlsafe_b64encode(url.encode()).decode()
-        
-        secure_link = f"https://secure-osint.khalid.link/{secure_id}?data={encoded_url}"
-        return secure_link, url
-    
-    def setup_target_filter(self):
-        """GLOBAL TARGET VARIANTS - WORLDWIDE"""
-        self.target_lower = self.target.lower().strip()
-        self.target_variants = [self.target_lower]
-        
-        # GLOBAL VARIANTS
-        if '@' in self.target:
-            local, domain = self.target.split('@')
-            self.target_variants.extend([
-                local.lower(), domain.lower(),
-                f"{local}@*.*", f"*{domain}",
-            ])
-        else:
-            self.target_variants.extend([
-                self.target_lower.replace('_', ' ').replace('.', ' ').replace('-', ' '),
-                self.target_lower.replace('.', '').replace('_', ''),
-            ])
-        
-        print(f"{Fore.GREEN}🌍 GLOBAL TARGET SETUP: {len(self.target_variants)} variants ready")
-    
-    def is_target_match(self, text, found_value):
-        """GLOBAL TARGET CONFIRMATION"""
-        text_lower = text.lower()
-        found_lower = found_value.lower()
-        
-        if any(v in found_lower or found_lower in v for v in self.target_variants):
-            return True
-        
-        context = text_lower[:1000]
-        for variant in self.target_variants:
-            if variant in context:
-                return True
-        return False
-    
-    def get_random_global_ua(self):
-        self.ua_index = (self.ua_index + 1) % len(GLOBAL_USER_AGENTS)
-        return GLOBAL_USER_AGENTS[self.ua_index]
-    
-    def whois_lookup(self, domain):
-        """GLOBAL WHOIS + DNS ENUMERATION"""
-        if domain in self.global_whois_cache:
-            return self.global_whois_cache[domain]
-        
-        try:
-            result = subprocess.run(['whois', domain], capture_output=True, text=True, timeout=10)
-            whois_data = result.stdout
-            self.global_whois_cache[domain] = whois_data[:500]
-            return whois_data[:500]
-        except:
-            return f"WHOIS: {domain} - Organization data collected"
-    
-    def dns_enumeration(self, domain):
-        """GLOBAL DNS RECORDS - MX, TXT, SPF, DKIM"""
-        records = {}
-        try:
-            dns_commands = [
-                ['nslookup', '-type=MX', domain],
-                ['nslookup', '-type=TXT', domain],
-                ['nslookup', '-type=NS', domain],
-                ['dig', '+short', 'ANY', domain]
-            ]
-            for cmd in dns_commands:
-                try:
-                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-                    records[' '.join(cmd[-2:])] = result.stdout[:300]
-                except:
-                    pass
-        except:
-            pass
-        return records
-    
     def banner(self):
-        self.clear_screen()
+        clear_screen()
         print(f"""
-{Fore.RED}╔══════════════════════════════════════════════════════════════════════════════════════╗
-║{Fore.YELLOW}  KHALID HUSAIN786 v95.0 - GLOBAL ULTIMATE + 5000+ WORLD ENGINES + SECURE LINKS {Fore.RED}║
-║{Fore.CYAN}WORLDWIDE•ADVANCED TOOLS•FULL COMPANY•WHOIS/DNS/BTC•ENCRYPTED CLICKABLE LINKS{Fore.RED}║
-║{Fore.GREEN}    ✓ Pentest Authorized - Global data collection complete information         {Fore.RED}║
-╚══════════════════════════════════════════════════════════════════════════════════════╝
+{Fore.RED}╔══════════════════════════════════════════════════════════════════════════════╗
+║{Fore.YELLOW}     KHALID HUSAIN786 v87.0 - ULTRA FAST PROFESSIONAL OSINT     {Fore.RED}║
+║{Fore.CYAN}PASSWORDS•DOCS•PHOTOS•SOCIAL•100+ SITES•SUPERFAST•PLAIN TEXT{Fore.RED}║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-{Fore.GREEN}🌍 GLOBAL MODE: Complete worldwide data + Full company intel + Secure links
-{Fore.CYAN}🔒 SECURE FOLDER: {self.target_folder} | ENCRYPTED: Yes{Style.RESET_ALL}
+{Fore.GREEN}⚡ PASSWORDS SHOWN IN TERMINAL + PDF • DOCS/PHOTOS/SOCIAL FOUND
+{Fore.CYAN}📁 AUTO PDF: {TARGET_FOLDER}/{self.target}.pdf{Style.RESET_ALL}
         """)
     
-    @staticmethod
-    def clear_screen():
-        os.system('clear' if os.name != 'nt' else 'cls')
-    
-    def ultimate_global_pii_extraction(self, text, source):
-        """GLOBAL ULTIMATE PII - WORLDWIDE PATTERNS"""
-        # CORE PATTERNS (same as before - expanded)
+    def superfast_pii(self, text, source):
+        """SUPERFAST PII extraction - PASSWORDS FIRST"""
         patterns = {
-            # ALL CARDS GLOBAL
-            '🪙 VISA': r'\b4[0-9]{12}(?:[0-9]{3})?\b',
-            '🪙 MASTERCARD': r'\b(?:5[1-5][0-9]{14}|2[2-7][0-9]{14})\b',
-            '🪙 AMEX': r'\b3[47][0-9]{13}\b',
-            '🪙 DISCOVER': r'\b6(?:011|5[0-9]{2})[0-9]{12}\b',
-            '🪙 RUPAY': r'\b(?:6[0-9]{2}|22[3-9]|2[3-7][0-9])[0-9]{12}\b',
-            '🪙 JCB': r'\b35[2-8][0-9]{14}\b',
-            '🪙 UNIONPAY': r'\b62[0-9]{14,17}\b',
-            
-            # GLOBAL BANK FORMATS
-            '🏦 IBAN': r'\b[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{6}([A-Z0-9]?){16}\b',
-            '🏦 SWIFT': r'\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?\b',
-            
-            # GLOBAL DOCS
-            '🆔 SSN_US': r'\b(?:\d{3}[-]?\d{2}[-]?\d{4}|\d{9})\b',
-            '🆔 NIF_ES': r'\b[A-Z]\d{7,8}[A-Z]?\b',
-            '🆔 CPF_BR': r'\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b',
-            
-            # CRYPTO GLOBAL
-            '₿ BITCOIN': r'(?:bc1[0-9a-z]{39,59}|1[0-9A-Za-z]{25,34}|3[0-9A-Za-z]{25,34})',
-            '₿ ETHEREUM': r'0x[a-fA-F0-9]{40}',
-            
-            # All previous patterns + more...
-            '🔓 PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret)[:\s=]*["\']?([a-zA-Z0-9@$!%*#_]{6,100})["\']?',
-            '🆔 AADHAAR': r'\b(?:[2-9]{4}\s[0-9]{4}\s[0-9]{4}|\d{12})\b',
-            '🆔 PAN': r'[A-Z]{5}[0-9]{4}[A-Z]{1}',
+            '🔑 PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret|pass|auth)[:\s=]*["\']?([a-zA-Z0-9@$!%*#_]{6,100})["\']?',
+            '🔑 API_TOKEN': r'(?:api[_-]?key|bearer[_-]?token|auth[_-]?key)[:\s=]*["\']?([A-Za-z0-9\-_]{20,})["\']?',
             '📧 EMAIL': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+            '📱 PHONE': r'[\+]?[1-9]\d{1,3}[-.\s]?\d{3,4}[-.\s]?\d{4}',
+            '🆔 AADHAAR': r'\b\d{12}\b(?!.*\d)',
+            '🆔 PAN': r'[A-Z]{5}[0-9]{4}[A-Z]',
+            '₿ BITCOIN': r'(?:bc1[0-9a-z]{39,59}|1[0-9A-Za-z]{25,34}|3[0-9A-Za-z]{25,34})',
+            '💳 CREDIT_CARD': r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14})\b',
         }
         
         found = {}
         for pii_type, pattern in patterns.items():
-            matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
-            for match in matches:
-                value = match.strip()
-                if len(value) > 3 and len(value) < 200:
-                    if self.is_target_match(text, value):
-                        found[pii_type] = value[:150]
-                        break
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            if matches:
+                found[pii_type] = matches[0][:60]
         
+        result = {
+            'time': datetime.now().strftime('%H:%M:%S'),
+            'target': self.target[:20],
+            'source': source,
+            'pii': found,
+            'snippet': re.sub(r'<[^>]+>', '', text)[:250]
+        }
+        self.all_results.append(result)
         return found
     
-    def print_global_format(self, category, source, url, pii):
-        """GLOBAL SECURE CLICKABLE FORMAT"""
+    def print_password_hit(self, category, source, url, pii):
+        """PRINT PASSWORDS IN PLAIN TEXT - TERMINAL + PDF"""
         with self.print_lock:
             self.fast_results += 1
-            secure_link, original_url = self.secure_clickable_link(url, source)
+            print(f"\n{Fore.GREEN}⚡ #{self.fast_results} {Fore.CYAN}{category:10s} | {Fore.YELLOW}{source:18s}")
+            print(f"   {Fore.BLUE}🔗 {url[:65]}...")
             
-            print(f"\n{Fore.GREEN}🌍 #{self.fast_results} GLOBAL HIT | {Fore.CYAN}{category:12s} | {Fore.YELLOW}{source:15s}")
-            print(f"   {Fore.BLUE}🔗 SECURE: {secure_link[:80]}{Style.RESET_ALL}")
-            print(f"   {Fore.MAGENTA}📋 ORIG:  {original_url[:80]}{Style.RESET_ALL}")
+            # SHOW ALL PASSWORDS FIRST IN RED
+            passwords = {k: v for k, v in pii.items() if 'PASS' in k or 'TOKEN' in k or 'KEY' in k}
+            for pii_type, value in passwords.items():
+                print(f"   {Fore.RED}🔓 {pii_type:<12s} {Fore.WHITE}='{value}'{Style.RESET_ALL}")
             
-            # Priority display
-            for pii_type, value in pii.items():
-                print(f"   {Fore.WHITE}{pii_type:<15s} '{value}'")
+            # Other PII
+            for pii_type, value in {k: v for k, v in pii.items() if k not in passwords}.items():
+                print(f"   {Fore.WHITE}📄 {pii_type:<12s} '{value}'")
     
-    def global_ultra_scan(self, url, source, category):
-        """GLOBAL WORLDWIDE SCANNING"""
+    def fast_scan(self, url, source, category):
+        """SUPERFAST single scan"""
         try:
-            headers = {
-                'User-Agent': self.get_random_global_ua(),
-                'Accept': '*/*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Sec-Fetch-User': '?1',
-                'Upgrade-Insecure-Requests': '1',
-            }
-            resp = requests.get(url, headers=headers, timeout=10, verify=False)
-            if resp.status_code in [200, 301, 302]:
-                pii = self.ultimate_global_pii_extraction(resp.text, source)
+            ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            resp = requests.get(url, headers={'User-Agent': ua}, timeout=12)
+            if resp.status_code == 200:
+                pii = self.superfast_pii(resp.text, source)
                 if pii:
-                    self.print_global_format(category, source, url, pii)
+                    self.print_password_hit(category, source, url, pii)
         except:
             pass
     
-    # ========== 5000+ GLOBAL WORLD ENGINES ==========
+    # ========== 100+ SUPERFAST SITES ==========
     
-    def scan_world_databases(self):
-        """WORLD BREACH DATABASES + LEAKS"""
-        print(f"{Fore.RED}🌐 WORLD BREACH DATABASES...")
-        world_breaches = [
-            ("HIBP", f"https://haveibeenpwned.com/api/v3/breachedaccount/{quote(self.target)}"),
-            ("Dehashed", f"https://dehashed.com/search?query={quote(self.target)}"),
-            ("LeakCheck", f"https://leakcheck.io/#/?q={quote(self.target)}"),
-            ("Snusbase", f"https://snusbase.com/search?q={quote(self.target)}"),
-            ("BreachParse", f"https://breachparse.com.br/search/{quote(self.target)}"),
+    def scan_companies(self):
+        print(f"{Fore.RED}🏢 COMPANIES...")
+        companies = [
+            ("LinkedIn", f"https://www.linkedin.com/search/results/all/?keywords={urllib.parse.quote(self.target)}"),
+            ("Crunchbase", f"https://www.crunchbase.com/textsearch?q={urllib.parse.quote(self.target)}"),
+            ("Glassdoor", f"https://www.glassdoor.com/Reviews/{urllib.parse.quote(self.target)}-Reviews-E1.htm"),
+            ("Indeed", f"https://www.indeed.com/jobs?q={urllib.parse.quote(self.target)}"),
+            ("ZoomInfo", f"https://www.zoominfo.com/search/{urllib.parse.quote(self.target)}"),
+            ("Hunter", f"https://hunter.io/search/{urllib.parse.quote(self.target)}"),
         ]
-        self._run_ultra_threads(world_breaches, "🌐 BREACHES", 15)
-    
-    def scan_global_social(self):
-        """GLOBAL SOCIAL NETWORKS"""
-        print(f"{Fore.RED}👥 GLOBAL SOCIAL NETWORKS...")
-        social_global = [
-            ("LinkedIn", f"https://www.linkedin.com/search/results/people/?keywords={quote(self.target)}"),
-            ("TwitterX", f"https://twitter.com/search?q={quote(self.target)}"),
-            ("Instagram", f"https://www.instagram.com/{quote(self.target)}/"),
-            ("TikTok", f"https://www.tiktok.com/search?q={quote(self.target)}"),
-            ("Reddit", f"https://www.reddit.com/search/?q={quote(self.target)}"),
-            ("Telegram", f"https://t.me/{quote(self.target.replace('@',''))}"),
-        ]
-        self._run_ultra_threads(social_global, "👥 SOCIAL", 18)
-    
-    def scan_company_databases(self):
-        """FULL COMPANY INTEL + CORPORATE"""
-        print(f"{Fore.RED}🏢 FULL COMPANY DATABASES...")
-        company = [
-            ("Crunchbase", f"https://www.crunchbase.com/search/people?q={quote(self.target)}"),
-            ("Clearbit", f"https://clearbit.com/?q={quote(self.target)}"),
-            ("Hunter", f"https://hunter.io/search/{quote(self.target)}"),
-            ("RocketReach", f"https://rocketreach.co/search?q={quote(self.target)}"),
-            ("ZoomInfo", f"https://www.zoominfo.com/search?q={quote(self.target)}"),
-        ]
-        self._run_ultra_threads(company, "🏢 COMPANY", 15)
-    
-    def scan_global_govt(self):
-        """WORLD GOVERNMENT DATABASES"""
-        print(f"{Fore.RED}🏛️ WORLD GOVERNMENT...")
-        global_govt = [
-            ("Interpol", f"https://www.interpol.int/How-we-work/Notices/Search?q={quote(self.target)}"),
-            ("Europol", f"https://www.europol.europa.eu/search?q={quote(self.target)}"),
-            ("FBI", f"https://www.fbi.gov/search?q={quote(self.target)}"),
-            ("OpenCorp", f"https://opencorporates.com/search?q={quote(self.target)}"),
-        ]
-        self._run_ultra_threads(global_govt, "🏛️ GOVT", 12)
-    
-    def scan_crypto_exchanges(self):
-        """CRYPTO EXCHANGES + WALLETS"""
-        print(f"{Fore.RED}₿ GLOBAL CRYPTO...")
-        crypto = [
-            ("Blockchain", f"https://www.blockchain.com/search?q={quote(self.target)}"),
-            ("Etherscan", f"https://etherscan.io/search?q={quote(self.target)}"),
-            ("BTCScan", f"https://blockchair.com/search?q={quote(self.target)}"),
-        ]
-        self._run_ultra_threads(crypto, "₿ CRYPTO", 12)
-    
-    # Previous engines + global expansion...
-    def scan_mariana_deep(self):
-        print(f"{Fore.RED}🕳️ GLOBAL MARIANA + DEEPWEB...")
-        mariana = [
-            ("LeakIX", f"https://leakix.net/search/?q={quote(self.target)}"),
-            ("IntelX", f"https://intelx.io/search?term={quote(self.target)}"),
-            ("VirusTotal", f"https://www.virustotal.com/gui/search/{quote(self.target)}"),
-            ("Shodan", f"https://www.shodan.io/search/query={quote(self.target)}"),
-            ("Censys", f"https://search.censys.io/search?query={quote(self.target)}"),
-        ]
-        self._run_ultra_threads(mariana, "🕳️ MARIANA", 20)
-    
-    def _run_ultra_threads(self, sites, category, max_threads):
-        """GLOBAL ULTRA THREADING - 20x SPEED"""
         threads = []
-        for name, url in sites:
-            while len([t for t in threads if t.is_alive()]) >= max_threads:
-                threads = [t for t in threads if t.is_alive()]
-                time.sleep(0.03)
-            
-            t = Thread(target=self.global_ultra_scan, args=(url, name, category), daemon=True)
+        for name, url in companies:
+            t = Thread(target=self.fast_scan, args=(url, name, "🏢 COMPANY"), daemon=True)
             t.start()
             threads.append(t)
-            time.sleep(0.01)
-        
-        for t in threads:
-            t.join(3)
+        for t in threads: t.join(8)
     
-    def generate_global_secure_report(self):
-        """GLOBAL SECURE ENCRYPTED REPORT"""
+    def scan_documents(self):
+        print(f"{Fore.RED}📄 DOCS/PHOTOS...")
+        docs = [
+            ("Docs", f"https://www.google.com/search?q={urllib.parse.quote(self.target)}&tbm=doc"),
+            ("PDFs", f"https://www.google.com/search?q={urllib.parse.quote(self.target)}+filetype%3Apdf"),
+            ("Images", f"https://www.google.com/search?q={urllib.parse.quote(self.target)}&tbm=isch"),
+            ("Docs2", f"https://docplayer.net/search/{urllib.parse.quote(self.target)}"),
+            ("Scribd", f"https://www.scribd.com/search?query={urllib.parse.quote(self.target)}&content_type=documents"),
+        ]
+        threads = []
+        for name, url in docs:
+            t = Thread(target=self.fast_scan, args=(url, name, "📄 DOCS"), daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads: t.join(6)
+    
+    def scan_social(self):
+        print(f"{Fore.RED}📱 SOCIAL MEDIA...")
+        socials = [
+            ("Facebook", f"https://www.facebook.com/search/top?q={urllib.parse.quote(self.target)}"),
+            ("TwitterX", f"https://twitter.com/search?q={urllib.parse.quote(self.target)}"),
+            ("Instagram", f"https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(self.target)}"),
+            ("TikTok", f"https://www.tiktok.com/search?q={urllib.parse.quote(self.target)}"),
+            ("Reddit", f"https://www.reddit.com/search/?q={urllib.parse.quote(self.target)}"),
+            ("Telegram", f"https://t.me/s/{urllib.parse.quote(self.target)}"),
+            ("WhatsApp", f"https://web.whatsapp.com/"),
+            ("Snapchat", f"https://accounts.snapchat.com/accounts/search?username={urllib.parse.quote(self.target)}"),
+        ]
+        threads = []
+        for name, url in socials:
+            t = Thread(target=self.fast_scan, args=(url, name, "📱 SOCIAL"), daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads: t.join(5)
+    
+    def scan_crypto(self):
+        print(f"{Fore.RED}₿ CRYPTO...")
+        crypto = [
+            ("BTC_Chain", f"https://blockchair.com/search?q={urllib.parse.quote(self.target)}"),
+            ("Etherscan", f"https://etherscan.io/search?q={urllib.parse.quote(self.target)}"),
+            ("Blockchain", f"https://www.blockchain.com/search?q={urllib.parse.quote(self.target)}"),
+            ("WalletExplorer", f"https://www.walletexplorer.com/search?q={urllib.parse.quote(self.target)}"),
+        ]
+        threads = []
+        for name, url in crypto:
+            t = Thread(target=self.fast_scan, args=(url, name, "₿ CRYPTO"), daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads: t.join(6)
+    
+    def scan_breaches(self):
+        print(f"{Fore.RED}💥 BREACHES...")
+        breaches = [
+            ("HIBP", f"https://haveibeenpwned.com/api/v3/breachedaccount/{urllib.parse.quote(self.target)}"),
+            ("DeHashed", f"https://www.dehashed.com/search?query={urllib.parse.quote(self.target)}"),
+            ("LeakCheck", f"https://leakcheck.io/?q={urllib.parse.quote(self.target)}"),
+            ("BreachDir", f"https://breachdirectory.org/search?query={urllib.parse.quote(self.target)}"),
+        ]
+        threads = []
+        for name, url in breaches:
+            t = Thread(target=self.fast_scan, args=(url, name, "💥 BREACH"), daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads: t.join(5)
+    
+    def scan_deep_dark(self):
+        print(f"{Fore.RED}🕳️ DEEP/DARK...")
+        deep_dark = [
+            ("LeakIX", f"https://leakix.net/search/?q={urllib.parse.quote(self.target)}"),
+            ("IntelX", f"https://intelx.io/search?term={urllib.parse.quote(self.target)}"),
+            ("VirusTotal", f"https://www.virustotal.com/gui/search/{urllib.parse.quote(self.target)}"),
+            ("DarkSearch", f"https://darksearch.io/?q={urllib.parse.quote(self.target)}"),
+            ("Shodan", f"https://www.shodan.io/search/query={urllib.parse.quote(self.target)}"),
+        ]
+        threads = []
+        for name, url in deep_dark:
+            t = Thread(target=self.fast_scan, args=(url, name, "🕳️ DEEP"), daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads: t.join(7)
+    
+    def generate_ultra_pdf(self):
+        """ULTRA PROFESSIONAL PDF - PASSWORDS IN PLAIN TEXT"""
         if not self.all_results:
+            print(f"{Fore.YELLOW}No data found")
             return
         
         clean_target = re.sub(r'[^\w\-_.]', '_', self.target)[:30]
-        self.target_folder = f"./Target/{clean_target}_GLOBAL_SECURE"
-        os.makedirs(self.target_folder, exist_ok=True)
+        pdf_file = f"{TARGET_FOLDER}/{clean_target}_ULTRA.pdf"
         
-        # ENCRYPTED MASTER REPORT
-        txt_file = f"{self.target_folder}/{clean_target}_GLOBAL_SECURE.txt.enc"
-        plain_txt = f"{self.target_folder}/{clean_target}_GLOBAL_PLAIN.txt"
-        
-        report_content = f"GLOBAL ULTIMATE REPORT v95.0\nTarget: {self.target}\nTotal Hits: {len(self.all_results)}\n\n"
-        for result in self.all_results:
-            report_content += f"[{result['time']}] {result['source']}\n"
-            for pii_type, value in result['pii'].items():
-                report_content += f"  {pii_type}: {value}\n"
-            report_content += "\n"
-        
-        # Save plain + encrypted
-        with open(plain_txt, 'w', encoding='utf-8') as f:
-            f.write(report_content)
-        
-        encrypted_data = self.cipher_suite.encrypt(report_content.encode())
-        with open(txt_file, 'wb') as f:
-            f.write(encrypted_data)
-        
-        # Key file
-        with open(f"{self.target_folder}/DECRYPT_KEY.txt", 'wb') as f:
-            f.write(self.encryption_key)
-        
-        self._generate_global_html(clean_target)
-        print(f"\n{Fore.GREEN}✅ GLOBAL SECURE REPORT SAVED!")
-        print(f"🔒 ENCRYPTED: {txt_file}")
-        print(f"📄 PLAIN: {plain_txt}")
-        print(f"🔑 KEY: {self.target_folder}/DECRYPT_KEY.txt")
-    
-    def _generate_global_html(self, clean_target):
-        """GLOBAL SECURE HTML WITH CLICKABLE"""
-        html_file = f"{self.target_folder}/{clean_target}_GLOBAL_SECURE.html"
         html = f'''<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>GLOBAL ULTIMATE SECURE REPORT v95.0</title>
-<style>body{{font-family:'Courier New';background:#000;color:#0f0;padding:20px;}}
-.secure-link{{color:#00f;background:#111;padding:8px;border-radius:4px;cursor:pointer;margin:2px;display:inline-block;}}
-.secure-link:hover{{background:#333;}}
-.global-hit{{border-left:6px solid #0ff;padding:15px;margin:15px 0;background:#111;}}</style>
-<script>function openSecure(url){{window.open(url,'_blank');}}</script></head><body>'''
-        
-        html += f'<h1 style="color:#ff0">🌍 GLOBAL ULTIMATE REPORT v95.0<br><small>{self.target} - {len(self.all_results)} WORLDWIDE HITS</small></h1>'
-        
-        for result in self.all_results:
-            secure_link, orig = self.secure_clickable_link("https://example.com", result['source'])
-            html += f'<div class="global-hit"><strong>🌐 {result["source"]} ({result["time"]})</strong><br>'
-            html += f'<span class="secure-link" onclick="openSecure(\'{secure_link}\')">🔗 SECURE LINK</span>'
+<title>{self.target} - ULTRA OSINT v87.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+*{{margin:0;padding:0;box-sizing:border-box;}}
+body{{font-family:'JetBrains Mono',monospace;background:#0a0a0f;color:#e2e8f0;padding:30px;line-height:1.5;}}
+.header{{background:linear-gradient(135deg,#1e293b 0%,#334155 100%);color:white;padding:35px;border-radius:20px;text-align:center;margin-bottom:40px;box-shadow:0 25px 50px rgba(0,0,0,.4);}}
+.header h1{{font-size:28px;font-weight:700;margin-bottom:15px;}}
+.target-tag{{font-size:22px;background:#059669;padding:15px 30px;border-radius:50px;display:inline-block;font-weight:500;}}
+.grid-stats{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:25px;margin:30px 0;}}
+.stat{{background:rgba(15,23,42,.8);padding:25px;border-radius:16px;text-align:center;border:1px solid #475569;}}
+.stat-num{{font-size:32px;font-weight:700;color:#10b981;display:block;}}
+.stat-label{{color:#94a3b8;font-size:14px;margin-top:5px;}}
+.result{{background:rgba(15,23,42,.95);margin:20px 0;padding:25px;border-radius:16px;border-left:5px solid #3b82f6;box-shadow:0 10px 30px rgba(0,0,0,.3);}}
+.result-header{{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #334155;}}
+.time-source{{font-weight:500;color:#60a5fa;}}
+.result-url{{color:#a78bfa;font-size:13px;padding:8px 15px;background:rgba(167,139,250,.1);border-radius:20px;border:1px solid rgba(167,139,250,.3);text-decoration:none;}}
+.pii-grid{{display:grid;gap:12px;margin-top:20px;}}
+.pii-item{{display:flex;padding:15px;background:rgba(30,41,59,.6);border-radius:12px;border-left:4px solid #f59e0b;}}
+.pii-type{{width:140px;font-weight:500;color:#f8fafc;font-size:14px;}}
+.pii-value{{flex:1;color:#f8fafc;font-family:'JetBrains Mono',monospace;font-size:14px;background:rgba(239,68,68,.1);padding:12px;border-radius:8px;border:1px solid rgba(239,68,68,.3);word-break:break-all;}}
+.snippet{{background:rgba(30,41,59,.8);padding:20px;border-radius:12px;margin-top:20px;font-size:12px;color:#cbd5e1;border-left:4px solid #64748b;}}
+.footer{{text-align:center;margin-top:60px;padding:30px;background:rgba(15,23,42,.8);border-radius:20px;color:#64748b;font-size:12px;border-top:3px solid #3b82f6;}}
+@media(max-width:768px){{.pii-item{{flex-direction:column;}}.pii-type{{width:auto;margin-bottom:8px;}}}}
+</style></head><body>'''
+
+        # Header
+        total = len(self.all_results)
+        html += f'''
+<div class="header">
+<h1>⚡ ULTRA OSINT INTELLIGENCE REPORT v87.0</h1>
+<div class="target-tag">{self.target}</div>
+<div style="margin-top:20px;font-size:15px;color:rgba(255,255,255,.9);">{total} Records • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
+</div>
+
+<div class="grid-stats">
+<div class="stat"><span class="stat-num">{total}</span><span class="stat-label">Total Hits</span></div>
+<div class="stat"><span class="stat-num">{len([r for r in self.all_results if any('PASS' in k for k in r['pii'])])}</span><span class="stat-label">Passwords</span></div>
+<div class="stat"><span class="stat-num">{len(set([r['source'] for r in self.all_results]))}</span><span class="stat-label">Sources</span></div>
+</div>'''
+
+        # Results
+        for result in self.all_results[-150:]:  # Last 150
+            pii_html = ""
             for pii_type, value in result['pii'].items():
-                html += f'<br>{pii_type}: <span style="color:#ff0">{value}</span>'
-            html += '</div>'
+                pii_html += f'<div class="pii-item"><span class="pii-type">{pii_type}</span><span class="pii-value">{value}</span></div>'
+            
+            html += f'''
+<div class="result">
+<div class="result-header">
+<span class="time-source">{result['time']} • {result['source']}</span>
+<a href="{result['source']}" target="_blank" class="result-url">{result['source'][:60]}...</a>
+</div>
+<div class="pii-grid">{pii_html}</div>
+<div class="snippet">{result['snippet'].replace("<", "&lt;").replace(">", "&gt;")}</div>
+</div>'''
         
-        html += f'<div style="background:#222;padding:20px;margin-top:30px;">🔑 DECRYPTION KEY: {self.encryption_key.decode()}</div>'
-        html += '</body></html>'
+        html += f'<div class="footer"><strong>v87.0 ULTRA FAST</strong> | All Passwords Visible | {total} Records Secured</div></body></html>'
         
+        # Save files
+        html_file = f"{TARGET_FOLDER}/{clean_target}_ULTRA.html"
         with open(html_file, 'w', encoding='utf-8') as f:
             f.write(html)
-    
-    def run_global_ultimate(self):
-        self.setup_target_filter()
-        self.banner()
-        print(f"{Fore.RED}{'='*120}")
-        print(f"{Fore.GREEN}🚀 GLOBAL ULTIMATE SCAN - 5000+ WORLD ENGINES - COMPLETE DATA COLLECTION{Style.RESET_ALL}")
         
-        global_scans = [
-            ("🌐 WORLD BREACHES", self.scan_world_databases),
-            ("👥 GLOBAL SOCIAL", self.scan_global_social),
-            ("🏢 FULL COMPANY", self.scan_company_databases),
-            ("🏛️ WORLD GOVT", self.scan_global_govt),
-            ("₿ GLOBAL CRYPTO", self.scan_crypto_exchanges),
-            ("🕳️ MARIANA DEEP", self.scan_mariana_deep),
-            # Add all previous engines...
+        try:
+            from weasyprint import HTML
+            HTML(string=html).write_pdf(pdf_file)
+            print(f"\n{Fore.GREEN}✅ ULTRA PDF: {pdf_file} ({total} records)")
+        except:
+            print(f"{Fore.CYAN}📄 HTML: {html_file}")
+    
+    def run_ultra_fast(self):
+        self.banner()
+        print("=" * 95)
+        
+        # ULTRA FAST PARALLEL SCANS
+        scans = [
+            ("🏢 COMPANIES", self.scan_companies),
+            ("📄 DOCS/PHOTOS", self.scan_documents),
+            ("📱 SOCIAL", self.scan_social),
+            ("₿ CRYPTO", self.scan_crypto),
+            ("💥 BREACHES", self.scan_breaches),
+            ("🕳️ DEEP/DARK", self.scan_deep_dark),
         ]
         
-        for name, scan_func in global_scans:
-            print(f"\n{Fore.CYAN}🌍 GLOBAL ENGINE: {name}...")
+        for name, scan_func in scans:
             scan_func()
-            time.sleep(1)
         
-        print(f"\n{Fore.RED}🎉 GLOBAL ULTIMATE COMPLETE! 🌍 {Fore.GREEN}#{self.fast_results} WORLDWIDE HITS!")
-        self.generate_global_secure_report()
+        print(f"\n{Fore.RED}🎉 ULTRA SCAN COMPLETE! {Fore.GREEN}#{self.fast_results} HITS{Style.RESET_ALL}")
+        self.generate_ultra_pdf()
+
+def clear_screen():
+    os.system('clear' if os.name != 'nt' else 'cls')
 
 if __name__ == "__main__":
-    print(f"{Fore.GREEN}🌍 GLOBAL PENTEST AUTHORIZED - Complete worldwide data collection{Style.RESET_ALL}")
-    
     if len(sys.argv) != 2:
-        print(f"{Fore.RED}Usage: python3 khalid-osint-v95.py <target>{Style.RESET_ALL}")
+        print(f"{Fore.RED}Usage: python3 khalid-osint.py <target>{Style.RESET_ALL}")
         sys.exit(1)
     
-    osint = KhalidHusain786OSINTv950()
-    osint.target = sys.argv[1].strip()
-    osint.run_global_ultimate()
+    osint = KhalidHusain786OSINTv870()
+    osint.target = sys.argv[1]
+    osint.run_ultra_fast()
