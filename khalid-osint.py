@@ -1,320 +1,218 @@
-#!/usr/bin/env python3
-"""
-🔥 KHALID ENTERPRISE OSINT v9.0 - KALI LINUX PRODUCTION READY
-✅ ALL IMPORTS FIXED ✅ TOR OPTIMIZED ✅ 100+ PUBLIC SOURCES
-✅ RICH TERMINAL UI ✅ PDF REPORTS ✅ REAL-TIME DISPLAY
-✅ LEGAL PENTEST ONLY - PUBLIC OSINT SOURCES
-"""
+import os, subprocess, sys, requests, re, time, random
+from colorama import Fore, init
+from threading import Thread, Lock
+from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
-# =============================================================================
-# ✅ COMPLETE FIXED IMPORTS - NO ERRORS
-# =============================================================================
-import os
-import sys
-import re
-import json
-import time
-import random
-import requests
-import subprocess
-import signal
-import threading
-import hashlib
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
-from pathlib import Path
-from collections import defaultdict, Counter
-from urllib.parse import quote, urlparse
-from typing import List, Dict, Any, Optional  # ✅ FIXED Optional import
-import base64
+init(autoreset=True)
+print_lock = Lock()
 
-# Optional dependencies (Kali friendly)
-try:
-    from rich.console import Console
-    from rich.table import Table
-    from rich.live import Live
-    from rich.progress import Progress, SpinnerColumn, TextColumn
-    from rich import box
-    console = Console()
-    RICH_AVAILABLE = True
-except ImportError:
-    RICH_AVAILABLE = False
-    print("⚠️ Install rich: pip3 install rich")
+# --- EXTENDED TARGET IDENTITY FILTERS ---
+SURE_HITS = {
+    "PAN": r"[A-Z]{5}[0-9]{4}[A-Z]{1}",
+    "Aadhaar": r"\b\d{4}\s\d{4}\s\d{4}\b|\b\d{12}\b",
+    "Passport": r"[A-Z][0-9]{7}",
+    "Bank_Acc": r"\b[0-9]{9,18}\b",
+    "VoterID": r"[A-Z]{3}[0-9]{7}",
+    "Phone": r"(?:\+91|0)?[6-9]\d{9}",
+    "Pincode": r"\b\d{6}\b",
+    "Vehicle": r"[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}",
+    "IP_Address": r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
+    "BTC_Address": r"\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b",
+    "Address": r"(?i)(Gali\s?No|H\.No|Plot|Sector|Ward|Tehsil|District|PIN:)",
+    "Relations": r"(?i)(Father|Mother|W/O|S/O|D/O|Relative|Alternative|Nominee)",
+    "Location": r"(?i)(Village|City|State|Country|Map|Lat|Long)"
+}
 
-try:
-    import pyperclip
-    CLIPBOARD_AVAILABLE = True
-except ImportError:
-    CLIPBOARD_AVAILABLE = False
+# --- DYNAMIC HEADERS TO AVOID BLOCKS ---
+def get_headers():
+    agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1"
+    ]
+    return {"User-Agent": random.choice(agents)}
 
-# TOR/Stem
-try:
-    import stem.control
-    STEM_AVAILABLE = True
-except ImportError:
-    STEM_AVAILABLE = False
+def get_onion_session():
+    session = requests.Session()
+    proxies = {
+        'http': 'socks5h://127.0.0.1:9050',
+        'https': 'socks5h://127.0.0.1:9050'
+    }
+    session.proxies.update(proxies)
+    retry_strategy = Retry(total=3, backoff_factor=1,
+                           status_forcelist=[500, 502, 503, 504])
+    session.mount("http://", HTTPAdapter(max_retries=retry_strategy))
+    session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
+    return session
 
-# Global state
-shutdown_flag = threading.Event()
-KALI_MODE = os.path.exists('/etc/debian_version') or 'kali' in os.uname().release.lower()
+def start_tor():
+    if os.system("systemctl is-active --quiet tor") != 0:
+        os.system("sudo service tor start > /dev/null 2>&1")
+    print(f"{Fore.GREEN}[OK] Ghost Tunnel: HTTP/HTTPS/ONION PROTOCOLS ACTIVE")
 
-class KhalidEnterpriseV9:
-    def __init__(self, target: str):
-        self.target = re.sub(r'[^\w.@\-+=]', '_', str(target))[:64]
-        self.root_dir = Path(f"KHALID_V9_{self.target}")
-        self.root_dir.mkdir(exist_ok=True)
-        
-        self.results = []
-        self.stats = defaultdict(int)
-        self.total_scanned = 0
-        self.session = None
-        self.tor_session = None
-        
-        print(f"🚀 KHALID ENTERPRISE v9.0 - Target: {self.target}")
-        self.init_tor()
-    
-    def init_tor(self):
-        """Auto-configure Kali TOR with high security"""
-        print("🧅 Initializing TOR...")
-        
-        # Start Kali TOR service
+def clean_and_verify(raw_html, target, report_file, source_label):
+    try:
+        # Fallback if lxml is missing
         try:
-            subprocess.run(['sudo', 'systemctl', 'restart', 'tor'], 
-                         capture_output=True, timeout=15)
-            time.sleep(5)
-            
-            # Test TOR connection
-            self.tor_session = requests.Session()
-            self.tor_session.proxies = {
-                'http': 'socks5h://127.0.0.1:9050',
-                'https': 'socks5h://127.0.0.1:9050'
-            }
-            
-            test_resp = self.tor_session.get('http://httpbin.org/ip', timeout=15)
-            if test_resp.status_code == 200:
-                tor_ip = test_resp.json().get('origin', 'Unknown')
-                print(f"✅ TOR Active - IP: {tor_ip}")
-                self.session = self.tor_session
-                return True
-        except Exception as e:
-            print(f"⚠️ TOR Error: {e}")
-        
-        # Fallback to clearnet
-        print("🔗 Clearnet mode")
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0'
-        })
-        return False
-    
-    def rich_print(self, msg: str, style: str = "green"):
-        """Rich terminal output"""
-        if RICH_AVAILABLE:
-            console.print(f"[bold {style}]{msg}[/bold {style}]")
-        else:
-            print(f"✅ {msg}")
-    
-    def scan_source(self, name: str, url: str, category: str):
-        """Scan single source"""
-        try:
-            resp = self.session.get(url, timeout=12, allow_redirects=True)
-            self.total_scanned += 1
-            
-            result = {
-                'id': len(self.results),
-                'source': name,
-                'category': category,
-                'url': url,
-                'status': resp.status_code,
-                'size': len(resp.content),
-                'time': datetime.now().strftime('%H:%M:%S'),
-                'snippet': resp.text[:200].strip()
-            }
-            
-            self.results.append(result)
-            self.stats[category] += 1
-            
-            status_emoji = "✅" if resp.status_code == 200 else "⚠️"
-            self.rich_print(
-                f"{status_emoji} [{self.total_scanned}] {name:<20} | "
-                f"{category:<10} | {resp.status_code}",
-                "cyan" if resp.status_code == 200 else "yellow"
+            soup = BeautifulSoup(raw_html, 'lxml')
+        except:
+            soup = BeautifulSoup(raw_html, 'html.parser')
+
+        for junk in soup(["script", "style", "nav", "header", "footer", "aside"]):
+            junk.decompose()
+
+        text = soup.get_text(separator=' ')
+        lines = text.split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if len(line) < 15:
+                continue
+            if any(x in line.lower() for x in ["search about", "open links", "javascript"]):
+                continue
+
+            id_found = any(re.search(pattern, line) for pattern in SURE_HITS.values())
+            if (target.lower() in line.lower()) or id_found:
+                clean_line = " ".join(line.split())[:300]
+                with print_lock:
+                    print(f"{Fore.RED}[{source_label}-HIT] {Fore.WHITE}{clean_line}")
+                with open(report_file, "a") as f:
+                    f.write(f"[{source_label}] {clean_line}\n")
+    except:
+        pass
+
+def check_breach_databases(target, report_file):
+    try:
+        if "@" in target:
+            res = requests.get(
+                f"https://www.google.com/search?q=%22{target}%22+site:leak-lookup.com+OR+site:intelx.io",
+                headers=get_headers()
             )
-            
-        except Exception as e:
-            self.total_scanned += 1
-    
-    def enterprise_sources(self) -> List[tuple]:
-        """100+ LEGAL PUBLIC OSINT SOURCES"""
-        base_query = quote(self.target)
-        
-        return [
-            # 🔍 GOVERNMENT & PUBLIC RECORDS
-            ("Google GOV", f"https://www.google.com/search?q={base_query}+site:gov.in", "GOVERNMENT"),
-            ("Google NIC", f"https://www.google.com/search?q={base_query}+site:nic.in", "GOVERNMENT"),
-            ("Google EDU", f"https://www.google.com/search?q={base_query}+site:ac.in", "EDUCATION"),
-            
-            # 🌐 DOMAIN & INFRASTRUCTURE
-            ("Shodan", f"https://www.shodan.io/search?query={base_query}", "INFRASTRUCTURE"),
-            ("Censys", f"https://search.censys.io/search?query={base_query}", "INFRASTRUCTURE"),
-            ("VirusTotal", f"https://www.virustotal.com/gui/search/{base_query}", "SECURITY"),
-            
-            # 💻 CODE & REPOSITORIES
-            ("GitHub", f"https://github.com/search?q={base_query}", "CODE"),
-            ("GitLab", f"https://gitlab.com/search?search={base_query}", "CODE"),
-            
-            # 📄 DOCUMENTS & PASTES
-            ("PDFs", f"https://www.google.com/search?q={base_query}+filetype:pdf", "DOCUMENTS"),
-            ("Pastebin", f"https://pastebin.com/search?q={base_query}", "PASTES"),
-            
-            # 📰 NEWS & MEDIA
-            ("News", f"https://news.google.com/search?q={base_query}", "NEWS"),
-            ("Twitter", f"https://twitter.com/search?q={base_query}", "SOCIAL"),
-            
-            # 🔗 WEB ARCHIVES
-            ("Wayback", f"https://web.archive.org/web/*/{base_query}", "ARCHIVE"),
-        ]
-    
-    def run_full_scan(self):
-        """Execute full enterprise scan"""
-        sources = self.enterprise_sources()
-        
-        self.rich_print("🚀 Starting Enterprise Scan - 50+ Sources", "bold magenta")
-        
-        with ThreadPoolExecutor(max_workers=25) as executor:
-            futures = [
-                executor.submit(self.scan_source, name, url, cat)
-                for name, url, cat in sources * 2  # Double scan for coverage
-            ]
-            
-            for future in as_completed(futures, timeout=300):
-                if shutdown_flag.is_set():
-                    break
-                future.result()
-        
-        self.rich_print(f"✅ Scan Complete: {self.total_scanned} sources | {len(self.results)} hits", "bold green")
-    
-    def generate_pdf_report(self):
-        """Generate comprehensive report"""
-        report_path = self.root_dir / f"KHALID_V9_REPORT_{self.target}.txt"
-        
-        report = f"""
-🔥 KHALID ENTERPRISE OSINT v9.0 - PENTEST REPORT
-{'='*80}
-Target: {self.target}
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Total Sources Scanned: {self.total_scanned}
-Total Hits Found: {len(self.results)}
+            clean_and_verify(res.text, target, report_file, "BREACH-INFO")
+    except:
+        pass
 
-📊 STATISTICS BY CATEGORY:
-"""
-        
-        for category, count in sorted(self.stats.items(), key=lambda x: x[1], reverse=True):
-            report += f"  {category:<15}: {count}\n"
-        
-        report += f"\n{'='*80}\nDETAILED RESULTS (Top 50):\n{'='*80}\n"
-        
-        for result in self.results[-50:]:
-            report += f"""
-[{result['id']:03d}] {result['source']:<20} | {result['category']:<12} | {result['status']}
-URL: {result['url']}
-Snippet: {result['snippet'][:300]}...
----
-"""
-        
-        report += f"\n📁 Full results saved in: {self.root_dir}"
-        
-        with open(report_path, 'w', encoding='utf-8') as f:
-            f.write(report)
-        
-        self.rich_print(f"📄 Report saved: {report_path}", "bold blue")
-        
-        # Copy to clipboard if available
-        if CLIPBOARD_AVAILABLE and len(report) < 10000:
-            try:
-                pyperclip.copy(report[:8000])
-                self.rich_print("📋 Summary copied to clipboard", "yellow")
-            except:
-                pass
-    
-    def display_results_table(self):
-        """Rich results table"""
-        if not RICH_AVAILABLE or not self.results:
+def http_protocol_finder(target, report_file):
+    dorks = [
+        f"https://www.google.com/search?q=inurl:http:// -inurl:https:// %22{target}%22",
+        f"https://www.bing.com/search?q=%22{target}%22 + \"index of\" + http",
+        f"https://yandex.com/search/?text=site:*.in %22{target}%22"
+    ]
+    for url in dorks:
+        try:
+            res = requests.get(url, timeout=15, headers=get_headers())
+            links = re.findall(r'(https?://[^\s<>"]+|[a-z2-7]{56}\.onion)', res.text)
+            for link in links:
+                if target in link:
+                    with print_lock:
+                        print(f"{Fore.YELLOW}[LINK-FOUND] {Fore.WHITE}{link}")
+            clean_and_verify(res.text, target, report_file, "HTTP-WEB")
+        except:
+            pass
+
+def advanced_onion_scanner(target, report_file):
+    onion_gateways = [
+        f"http://jnv3gv3yuvpwhv7y.onion/search/?q={target}",
+        f"https://ahmia.fi/search/?q={target}",
+        f"http://phishsetvsnm4v5n.onion/search.php?q={target}"
+    ]
+    session = get_onion_session()
+    for url in onion_gateways:
+        try:
+            res = session.get(url, timeout=25, headers=get_headers())
+            clean_and_verify(res.text, target, report_file, "DARK-DEEP")
+        except:
+            pass
+
+def telegram_dork_engine(target, report_file):
+    tg_links = [
+        f"https://www.google.com/search?q=site:t.me OR site:telegram.me %22{target}%22",
+        f"https://yandex.com/search/?text=%22{target}%22 site:t.me"
+    ]
+    for url in tg_links:
+        try:
+            res = requests.get(url, timeout=15, headers=get_headers())
+            clean_and_verify(res.text, target, report_file, "TG-DATA")
+        except:
+            pass
+
+def shadow_crawler_ai(target, report_file):
+    gateways = [
+        f"https://psbdmp.ws/api/search/{target}",
+        f"https://www.google.com/search?q=site:pastebin.com OR site:ghostbin.co OR site:controlc.com %22{target}%22"
+    ]
+    for url in gateways:
+        try:
+            res = requests.get(url, timeout=15, headers=get_headers())
+            clean_and_verify(res.text, target, report_file, "LEAK-DB")
+        except:
+            pass
+
+def silent_tool_runner(cmd, name, report_file):
+    try:
+        # Verify if tool is installed before execution
+        tool_check = cmd.split()[0]
+        if subprocess.run(f"command -v {tool_check}", shell=True, capture_output=True).returncode != 0:
+            with print_lock:
+                print(f"{Fore.YELLOW}[!] {name} not found in system. Skipping...")
             return
-        
-        table = Table(title=f"KHALID V9 Results - {self.target}", box=box.ROUNDED)
-        table.add_column("ID", style="cyan", no_wrap=True)
-        table.add_column("Source", style="magenta")
-        table.add_column("Category", style="green")
-        table.add_column("Status", style="white")
-        table.add_column("Time", style="yellow")
-        
-        for result in self.results[-15:]:
-            table.add_row(
-                str(result['id']),
-                result['source'][:25],
-                result['category'],
-                str(result['status']),
-                result['time']
-            )
-        
-        console.print(table)
-    
-    def interactive_menu(self):
-        """Post-scan interactive menu"""
-        print("\n🎯 INTERACTIVE RESULTS MENU")
-        print("1. Open all links in browser")
-        print("2. Copy report to clipboard")
-        print("3. Show detailed stats")
-        print("4. Export JSON")
-        print("0. Exit")
-        
-        choice = input("\nEnter choice: ").strip()
-        
-        if choice == "1":
-            for result in self.results:
-                if result['status'] == 200:
-                    print(f"Opening: {result['source']}")
-                    subprocess.run(['xdg-open', result['url']], check=False)
-        elif choice == "4":
-            json_path = self.root_dir / f"KHALID_V9_{self.target}.json"
-            with open(json_path, 'w') as f:
-                json.dump(self.results, f, indent=2)
-            print(f"JSON exported: {json_path}")
 
-def signal_handler(signum, frame):
-    """Graceful shutdown"""
-    print("\n\n⏹️ Shutting down gracefully...")
-    shutdown_flag.set()
+        process = subprocess.Popen(
+            f"torsocks {cmd}", shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        )
+        for line in process.stdout:
+            clean = line.strip()
+            if any(x in clean.lower() for x in ["http", "found", "match:", "onion"]):
+                with print_lock:
+                    print(f"{Fore.GREEN}[{name.upper()}-HIT] {Fore.WHITE}{clean}")
+                with open(report_file, "a") as f:
+                    f.write(f"[{name}] {clean}\n")
+    except:
+        pass
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: sudo python3 khalid-v9.py <target>")
-        print("Example: sudo python3 khalid-v9.py example.com")
-        sys.exit(1)
-    
-    target = sys.argv[1]
-    
-    # Signal handlers
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
-    # Initialize scanner
-    scanner = KhalidEnterpriseV9(target)
-    
-    # Run scan
-    scanner.run_full_scan()
-    
-    # Display results
-    scanner.display_results_table()
-    
-    # Generate report
-    scanner.generate_pdf_report()
-    
-    # Interactive menu
-    scanner.interactive_menu()
-    
-    print(f"\n🎉 KHALID V9 COMPLETE - Results in: {scanner.root_dir}")
+    if not os.path.exists('reports'):
+        os.makedirs('reports')
+
+    start_tor()
+    os.system('clear')
+
+    print(f"{Fore.CYAN}╔══════════════════════════════════════════════════════════════╗")
+    print(f"{Fore.RED}║ KHALID HUSAIN INVESTIGATOR - UNIVERSAL PROTOCOL v76.0 ║")
+    print(f"{Fore.CYAN}╚══════════════════════════════════════════════════════════════╝")
+
+    target = input(f"\n{Fore.WHITE}❯❯ Enter Target (Name/Email/Phone/PAN/ID): ")
+    if not target:
+        return
+
+    report_path = os.path.abspath(f"reports/{target}.txt")
+    if os.path.exists(report_path):
+        os.remove(report_path)
+
+    print(f"{Fore.BLUE}[*] Full-Spectrum Scan: Breach DBs, HTTP, Onion, Deep & Dark Web...\n")
+
+    threads = [
+        Thread(target=http_protocol_finder, args=(target, report_path)),
+        Thread(target=advanced_onion_scanner, args=(target, report_path)),
+        Thread(target=telegram_dork_engine, args=(target, report_path)),
+        Thread(target=shadow_crawler_ai, args=(target, report_path)),
+        Thread(target=check_breach_databases, args=(target, report_path)),
+        Thread(target=silent_tool_runner, args=(f"sherlock {target} --timeout 10", "Sherlock", report_path)),
+        Thread(target=silent_tool_runner, args=(f"maigret {target} --timeout 10", "Maigret", report_path))
+    ]
+
+    for t in threads:
+        t.start()
+        time.sleep(1) # Chhota gap rate limiting se bachne ke liye
+        
+    for t in threads:
+        t.join()
+
+    print(f"\n{Fore.GREEN}[➔] Investigation Complete. Comprehensive Report: {report_path}")
 
 if __name__ == "__main__":
     main()
