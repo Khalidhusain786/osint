@@ -102,7 +102,6 @@ osint/
 ## ⚡🚀 INSTALLATION (SINGLE-LINE • YAML FORMAT)
 
 ```yaml
-install: >
   cd /home/kali &&
   rm -rf osint &&
   git clone https://github.com/Khalidhusain786/osint.git &&
