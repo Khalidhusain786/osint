@@ -1,93 +1,92 @@
 ```markdown
-# 🛰️ Khalid OSINT Framework (Professional Edition)
-
-A **Python-based OSINT (Open-Source Intelligence) automation framework** designed for **cybersecurity learning, research, and defensive investigations**.  
-This tool demonstrates **Tor integration, social media enumeration, async workflows, and IOC-style data collection** in a structured and automated manner.
-
-> ⚠️ **DISCLAIMER (IMPORTANT)**  
-> This project is strictly for **educational, research, and defensive security purposes only**.  
-> Do **NOT** use this tool for harassment, stalking, unauthorized surveillance, or any illegal activity.  
-> The author and contributors are **not responsible for misuse**.
+# 🛰️🔥🧠 **Khalid OSINT Framework** 🧠🔥🛰️  
+### 🚀 Professional • Automated • Research-Focused OSINT Suite 🚀
 
 ---
 
-## 📌 Overview
+## ⚠️🚨 DISCLAIMER (READ FIRST) 🚨⚠️
 
-**Khalid OSINT** automates common OSINT workflows such as:
+❗ This project is created **ONLY for**:  
+- 🎓 **Educational purposes**  
+- 🧪 **Cybersecurity research**  
+- 🛡️ **Defensive OSINT learning**  
 
-- Username & phone number enumeration  
-- Public data correlation  
-- Tor-based anonymized requests  
-- Integration with well-known OSINT utilities (e.g. Maigret)  
-- Centralized execution via a single Python entry point  
-
-The goal is to **learn OSINT architecture and automation**, not to bypass protections.
-
----
-
-## ✨ Key Features
-
-- 🔍 **Automated OSINT Collection**
-- 🧅 **Tor Network Integration**
-- 🧠 **Username Enumeration (Maigret)**
-- ⚙️ **One-command Setup & Run**
-- 📊 **Structured Console Output**
-- 🐧 **Optimized for Kali Linux**
+❌ **NOT for** hacking, stalking, harassment, illegal surveillance, or misuse of personal data.  
+👤 The **author is NOT responsible** for any misuse.  
+📜 Always follow **local & international cyber laws**.
 
 ---
 
-## 🧠 What This Tool Is / Is Not
+## 🌍📌 Overview
 
-### ✅ This Tool IS
-- An **OSINT learning framework**
-- A **cybersecurity research project**
-- A **practice environment for automation**
-- Useful for **blue team & academic labs**
+**Khalid OSINT Framework** is a 🐍 **Python-based OSINT automation tool** built for **Kali Linux** 🐧 that demonstrates:
 
-### ❌ This Tool IS NOT
-- A hacking tool  
-- A data breach tool  
-- A private data extraction system  
-- A guarantee of real or verified intelligence  
+- 🔍 Open-Source Intelligence workflows  
+- 🧅 Tor-based anonymized requests  
+- 🤖 Automated enumeration tools  
+- ⚙️ One-command install & execution  
+- 🧠 OSINT architecture & scripting practices  
+
+🎯 Goal: **Learn OSINT professionally & ethically**.
 
 ---
 
-## 🏗️ Architecture (High Level)
+## ✨🔥 Key Features 🔥✨
+
+✅ 🔍 **Automated OSINT Collection**  
+✅ 🧅 **Tor Network Integration**  
+✅ 🧠 **Username / Phone Enumeration (Maigret)**  
+✅ ⚙️ **One-Command Install & Run**  
+✅ 📊 **Clean Console Output**  
+✅ 🐧 **Kali Linux Optimized**  
+✅ 🚀 **Beginner → Intermediate Friendly**  
+
+---
+
+## 🧠⚖️ What This Tool IS / IS NOT ⚖️🧠
+
+### ✅ This Tool **IS**
+✔️ 🎓 An **OSINT learning framework**  
+✔️ 🧪 A **cybersecurity research project**  
+✔️ 🛡️ Useful for **Blue Team / SOC training**  
+✔️ 🤖 Automation practice for Python users  
+
+### ❌ This Tool **IS NOT**
+❌ A hacking tool  
+❌ A data breach tool  
+❌ A private data stealing system  
+❌ A guarantee of real-world intelligence  
+
+---
+
+## 🏗️📂 Project Architecture 📂🏗️
 
 ```
 
-Khalid-OSINT
+📁 Khalid-OSINT
 │
-├── Installer
-│   └── install.sh
-│
-├── Core Engine
-│   └── khalid-osint.py
-│
-├── External Tools
-│   └── Maigret
-│
-├── Network Layer
-│   └── Tor (SOCKS5)
-│
-└── Output
-└── Console / Logs
+├── 🛠️ install.sh          → Dependency installer
+├── 🧠 khalid-osint.py     → Main OSINT engine
+├── 🔍 Maigret             → Username enumeration
+├── 🧅 Tor                 → Anonymized routing
+└── 📊 Output              → Console results
 
 ````
 
 ---
 
-## 🛠️ Requirements
+## 🛠️⚙️ System Requirements ⚙️🛠️
 
-- **Kali Linux**
-- Python **3.9+**
-- Root privileges (for installation)
-- Internet connection
-- Tor service
+🖥️ **Operating System**: Kali Linux 🐧  
+🐍 **Python**: 3.9+  
+🔐 **Privileges**: sudo / root  
+🌐 **Internet**: Required  
+🧅 **Tor Service**: Required  
 
 ---
 
-## 🚀 One-Command Install & Run (Copy-Paste)
+## 🚀🔥 ONE-COMMAND INSTALL & RUN 🔥🚀  
+### 📋 (Just Copy & Paste 👇)
 
 ```bash
 cd /home/kali && \
@@ -102,57 +101,72 @@ clear && \
 python3 khalid-osint.py 7033635044
 ````
 
-🔹 **Replace `7033635044` with your target phone number or identifier (for research/demo use).**
+📌 🔁 Replace **`7033635044`** with your **test target / demo identifier**.
 
 ---
 
-## 📂 Usage
+## ▶️📌 Usage
 
 ```bash
 python3 khalid-osint.py <target>
 ```
 
-Example:
+🧪 Example:
 
 ```bash
 python3 khalid-osint.py 7033635044
 ```
 
-The target is used **only as an input label** for OSINT correlation.
+📎 Target is used **only for OSINT correlation & demo purposes**.
 
 ---
 
-## 🔐 Ethics & Legal Notice
+## 🔐🧅 Ethics, Privacy & Law 🧅🔐
 
-* Use only on **data you own or are authorized to analyze**
-* Respect **local and international cyber laws**
-* Tor does **not** make illegal activity legal
-* Always follow **ethical OSINT principles**
+🔒 Use only on:
 
----
+* ✔️ Data you own
+* ✔️ Data you have permission to analyze
 
-## 📈 Future Enhancements (Planned)
+⚖️ Respect:
 
-* Modular plugin system
-* Export reports (JSON / HTML / PDF)
-* Improved data validation
-* Visualization dashboards
-* Blue-team focused threat-intel modules
+* 📜 IT Act & Cyber Laws
+* 🌍 International privacy rules
+
+🧅 **Tor ≠ Immunity**
+Ethics always come first 🧠✅
 
 ---
 
-## 📜 License
+## 📈🚧 Future Enhancements 🚧📈
 
-**Educational / Research Use Only**
+🔮 Planned improvements:
 
-No warranty provided.
-Use responsibly.
+* 🧩 Plugin-based modules
+* 📄 Export reports (JSON / HTML / PDF)
+* 📊 Visualization dashboards
+* 🛡️ Blue-team threat intelligence modules
+* 🧠 Smarter data validation
+
+---
+
+## 📜📄 License
+
+🔖 **Educational / Research Use Only License**
+❌ No warranty
+⚠️ Use responsibly
 
 ---
 
-## 👤 Author
+## 👤👨‍💻 Author
 
-**Khalid Husain (Khalidhusain786)**
-Cybersecurity • OSINT • Automation
+**Khalid Husain**
+🐙 GitHub: **Khalidhusain786**
+🛡️ Cybersecurity • OSINT • Automation
 
 ---
+
+⭐🌟 **Learn OSINT Responsibly** 🌟⭐
+🧠 Ethics First • 💻 Skills Second • 🛡️ Defense Always
+
+```
