@@ -2,55 +2,56 @@
 
 # --- CONFIGURATION ---
 REPO_URL="https://github.com/Khalidhusain786/osint.git"
-INSTALL_DIR="$HOME/osint"
+INSTALL_DIR="/home/kali/osint"
 
-# Colors for better visibility
+# Colors for status
 GREEN='\033[0-32m'
+BLUE='\033[0-34m'
 RED='\033[0-31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo -e "${GREEN}[+] OSINT Setup starting...${NC}"
+echo -e "${BLUE}[*] Full Automation Started...${NC}"
 
-# 1. Clean old directory if exists
-if [ -d "$INSTALL_DIR" ]; then
-    echo -e "${GREEN}[+] Cleaning old osint directory...${NC}"
-    rm -rf "$INSTALL_DIR"
-fi
+# 1. Update and Install Auto-Fixer Tool
+echo -e "${GREEN}[+] Installing Python auto-formatter (autopep8)...${NC}"
+sudo apt update -y && sudo apt install -y python3-pip
+pip3 install autopep8 --break-system-packages 2>/dev/null
 
-# 2. Clone Repository
-echo -e "${GREEN}[+] Cloning repository...${NC}"
-git clone "$REPO_URL" "$INSTALL_DIR" || { echo -e "${RED}Clone failed!${NC}"; exit 1; }
-
-# 3. Enter Directory and Install
+# 2. Cleanup and Clone
+echo -e "${GREEN}[+] Cleaning and Cloning Repository...${NC}"
+sudo rm -rf "$INSTALL_DIR"
+cd /home/kali
+git clone "$REPO_URL" "$INSTALL_DIR"
 cd "$INSTALL_DIR" || exit
-chmod +x install.sh
 
-echo -e "${GREEN}[+] Running install.sh...${NC}"
+# 3. Permissions and Installation
+echo -e "${GREEN}[+] Running Installation Script...${NC}"
+chmod +x install.sh
 sudo ./install.sh
 
-# 4. Maigret Path Fix (The Smart Way)
-echo -e "${GREEN}[+] Configuring Maigret symlink...${NC}"
-MAIGRET_PATH=$(which maigret || echo "$HOME/.local/bin/maigret")
-
-if [ -f "$MAIGRET_PATH" ]; then
-    sudo ln -sf "$MAIGRET_PATH" /usr/bin/maigret
-    echo -e "${GREEN}[+] Maigret linked successfully.${NC}"
+# 4. AUTO-FIX PYTHON ERRORS (Indentation Fix)
+echo -e "${GREEN}[+] Automatically fixing Python Indentation Errors...${NC}"
+if [ -f "khalid-osint.py" ]; then
+    # Sabse pehle tabs ko spaces mein convert karega
+    sed -i 's/\t/    /g' khalid-osint.py
+    # Phir autopep8 poori coding style aur spacing theek kar dega
+    python3 -m autopep8 --in-place --aggressive --aggressive khalid-osint.py
+    echo -e "${GREEN}[✔] Python file fixed!${NC}"
 else
-    echo -e "${RED}[!] Warning: Maigret binary not found in common paths.${NC}"
+    echo -e "${RED}[!] khalid-osint.py not found!${NC}"
 fi
 
-# 5. Services Restart
-echo -e "${GREEN}[+] Restarting TOR service...${NC}"
+# 5. Maigret Symlink Fix
+echo -e "${GREEN}[+] Setting up Maigret path...${NC}"
+MA_PATH=$(which maigret || echo "$HOME/.local/bin/maigret")
+sudo ln -sf "$MA_PATH" /usr/bin/maigret
+
+# 6. Service Refresh
+echo -e "${GREEN}[+] Restarting TOR...${NC}"
 sudo service tor restart
 
-# 6. Final Clean and Run
+# 7. Final Step: Run
 clear
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}   KHALID OSINT SETUP COMPLETED       ${NC}"
-echo -e "${GREEN}========================================${NC}"
-
-if [ -f "khalid-osint.py" ]; then
-    python3 khalid-osint.py
-else
-    echo -e "${RED}[!] Error: khalid-osint.py not found in $INSTALL_DIR${NC}"
-fi
+echo -e "${GREEN}======================================"
+echo -e "   SETUP DONE - STARTING KHALID OSINT"
+echo -e
