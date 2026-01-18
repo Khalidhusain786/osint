@@ -1,42 +1,56 @@
 #!/bin/bash
-# 🔥 KHALID HUSAIN BULLETPROOF AUTO-FIXER v86.2 🔥
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# --- CONFIGURATION ---
+REPO_URL="https://github.com/Khalidhusain786/osint.git"
+INSTALL_DIR="$HOME/osint"
 
-echo -e "${CYAN}[!] Starting Zero-Error Repair Engine...${NC}"
+# Colors for better visibility
+GREEN='\033[0-32m'
+RED='\033[0-31m'
+NC='\033[0m' # No Color
 
-# 1. Repo aur System Update
-sudo apt-get update -y
+echo -e "${GREEN}[+] OSINT Setup starting...${NC}"
 
-# 2. Syntax Repair (Fixes line 306 & Emojis)
-if [ -f "khalid-osint.py" ]; then
-    echo -e "${GREEN}[+] Auto-Fixing Syntax Errors & Emojis...${NC}"
-    # Sabhi emojis aur prose text lines ke aage '#' lagana taaki Python error na de
-    sed -i '/🔍/s/^/# /' khalid-osint.py
-    sed -i '/⚔️/s/^/# /' khalid-osint.py
-    sed -i '/🔥/s/^/# /' khalid-osint.py
-    sed -i '/^```/d' khalid-osint.py # Triple backticks hatao
-    chmod +x khalid-osint.py
+# 1. Clean old directory if exists
+if [ -d "$INSTALL_DIR" ]; then
+    echo -e "${GREEN}[+] Cleaning old osint directory...${NC}"
+    rm -rf "$INSTALL_DIR"
 fi
 
-# 3. Essential Tools Installation
-echo -e "${GREEN}[+] Installing All OSINT Tools...${NC}"
-tools=(nmap subfinder amass theharvester dnsrecon dnsenum tor torsocks python3-pip chromium-driver)
-for tool in "${tools[@]}"; do
-    sudo apt-get install -y $tool -q
-done
+# 2. Clone Repository
+echo -e "${GREEN}[+] Cloning repository...${NC}"
+git clone "$REPO_URL" "$INSTALL_DIR" || { echo -e "${RED}Clone failed!${NC}"; exit 1; }
 
-# 4. Python Library Force-Sync
-echo -e "${GREEN}[+] Syncing Python Libraries...${NC}"
-pip3 install --upgrade pip --quiet
-pip3 install colorama requests beautifulsoup4 markdown weasyprint selenium webdriver-manager aiohttp --quiet
+# 3. Enter Directory and Install
+cd "$INSTALL_DIR" || exit
+chmod +x install.sh
 
-# 5. Service Refresh
+echo -e "${GREEN}[+] Running install.sh...${NC}"
+sudo ./install.sh
+
+# 4. Maigret Path Fix (The Smart Way)
+echo -e "${GREEN}[+] Configuring Maigret symlink...${NC}"
+MAIGRET_PATH=$(which maigret || echo "$HOME/.local/bin/maigret")
+
+if [ -f "$MAIGRET_PATH" ]; then
+    sudo ln -sf "$MAIGRET_PATH" /usr/bin/maigret
+    echo -e "${GREEN}[+] Maigret linked successfully.${NC}"
+else
+    echo -e "${RED}[!] Warning: Maigret binary not found in common paths.${NC}"
+fi
+
+# 5. Services Restart
+echo -e "${GREEN}[+] Restarting TOR service...${NC}"
 sudo service tor restart
 
-echo -e "\n${RED}=========================================="
-echo -e "${GREEN}      SAB KUCH FIX HO GAYA HAI! RUN NOW."
-echo -e "${RED}==========================================${NC}"
+# 6. Final Clean and Run
+clear
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}   KHALID OSINT SETUP COMPLETED       ${NC}"
+echo -e "${GREEN}========================================${NC}"
+
+if [ -f "khalid-osint.py" ]; then
+    python3 khalid-osint.py
+else
+    echo -e "${RED}[!] Error: khalid-osint.py not found in $INSTALL_DIR${NC}"
+fi
