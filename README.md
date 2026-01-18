@@ -1,18 +1,8 @@
-Perfect 😎
-Neeche **FINAL, FULLY READY, PROFESSIONAL README.md** hai — **sab kuch styled, banners + emojis + YAML install + run section alag**.
-👉 **Bas copy → paste → GitHub me use karo**
-
----
-
-```markdown
-<div align="center">
-
-🚀🛰️🔥  
 # **KHALID OSINT FRAMEWORK**
-## 🔍 Professional Open-Source Intelligence Automation Suite  
-🧠🛡️ Ethical • Defensive • Research-Focused  
+## 🔍 Professional Open‑Source Intelligence Automation Suite  
+🧠🛡️ Ethical • Defensive • Research‑Focused  
 🐧 Kali Linux Optimized  
-🧅 Tor-Enabled Intelligence Collection  
+🧅 Tor‑Enabled Intelligence Collection  
 🔥🛰️🚀
 
 </div>
@@ -21,33 +11,33 @@ Neeche **FINAL, FULLY READY, PROFESSIONAL README.md** hai — **sab kuch styled,
 
 ## ✨📌 PROJECT OVERVIEW
 
-**Khalid OSINT Framework** is a **professional-grade OSINT automation toolkit**  
-designed for **education, blue-team analysis, SOC labs, and cybersecurity research**.
+**Khalid OSINT Framework** is a **professional‑grade OSINT automation toolkit**  
+built for **education, blue‑team analysis, SOC labs, and cybersecurity research**.
 
-🎯 Purpose:
-- Ethical OSINT learning  
-- Automation & scripting practice  
-- Structured intelligence workflows  
+🎯 Designed to demonstrate:
+- Ethical OSINT workflows  
+- Automation & scripting practices  
+- Structured intelligence collection  
 - Professional PDF / HTML reporting  
 
 ---
 
 ## ⚠️🚨 LEGAL & ETHICAL DISCLAIMER 🚨⚠️
 
-🔴 This framework is intended **ONLY FOR**:
+🔴 This project is intended **ONLY FOR**:
 
-✅ Educational & academic use  
+✅ Educational & academic learning  
 ✅ Authorized OSINT research  
-✅ Blue-team & defensive labs  
-✅ Self-owned / test data  
+✅ Blue‑team & defensive environments  
+✅ Self‑owned or test data  
 
-❌ **STRICTLY NOT FOR**:
+❌ **STRICTLY PROHIBITED**:
 - Stalking or harassment  
 - Privacy invasion  
 - Unauthorized surveillance  
 - Illegal intelligence gathering  
 
-⚖️ **You are fully responsible** for legal compliance.  
+⚖️ The user is fully responsible for legal compliance.  
 🧅 Tor provides privacy, **not immunity**.
 
 ---
@@ -56,21 +46,21 @@ designed for **education, blue-team analysis, SOC labs, and cybersecurity resear
 
 ### ✅ THIS PROJECT **IS**
 ✔️ Ethical OSINT automation framework  
-✔️ Lab-safe & learning-oriented  
-✔️ Blue-team & SOC friendly  
-✔️ Clean, extendable codebase  
+✔️ Lab‑safe & learning‑oriented  
+✔️ Blue‑team / SOC friendly  
+✔️ Clean & extendable codebase  
 
 ### ❌ THIS PROJECT **IS NOT**
 ❌ Hacking tool  
-❌ Breach or dump platform  
-❌ Private-data extractor  
+❌ Data breach platform  
+❌ Private‑data extractor  
 ❌ Guaranteed intelligence engine  
 
 ---
 
 ## 🛰️✨ CORE FEATURES
 
-🔍 Username / phone-based OSINT  
+🔍 Username / phone‑based OSINT  
 🧅 Tor network integration  
 ⚙️ Automated dependency installer  
 📄 PDF intelligence reports  
@@ -100,7 +90,7 @@ osint/
 ## 🛠️⚙️ SYSTEM REQUIREMENTS
 
 | Component | Requirement |
-|--------|-------------|
+|---------|-------------|
 | 🖥️ OS | Kali Linux |
 | 🐍 Python | 3.9+ |
 | 🔐 Privileges | sudo |
@@ -109,29 +99,21 @@ osint/
 
 ---
 
-## ⚡🚀 INSTALLATION
+## ⚡🚀 INSTALLATION (SINGLE LINE • SAME ORDER)
 
-```yaml
-
-  cd /home/kali &&
-  rm -rf osint &&
-  git clone https://github.com/Khalidhusain786/osint.git &&
-  cd osint &&
-  chmod +x install.sh &&
-  sudo ./install.sh &&
-  sudo ln -sf "$(which maigret || echo $HOME/.local/bin/maigret)" /usr/bin/maigret &&
-  sudo service tor restart
+```bash
+cd /home/kali && rm -rf osint && git clone https://github.com/Khalidhusain786/osint.git && cd osint && chmod +x install.sh && sudo ./install.sh && sudo ln -sf "$(which maigret || echo $HOME/.local/bin/maigret)" /usr/bin/maigret && sudo service tor restart
 ````
 
-✅ One-command setup
-✅ Clean reinstall
-✅ Tor auto-ready
+✅ One‑line installation
+✅ Clean reinstall every time
+✅ Tor automatically restarted
 
 ---
 
 ## ▶️🚀 RUN THE TOOL
 
-### 🔹 Basic Execution
+### 🔹 Basic Usage
 
 ```bash
 python3 khalid-osint.py <target>
@@ -171,7 +153,7 @@ python3 khalid-osint.py 7033635044 --report html
 python3 khalid-osint.py 7033635044 --report all
 ```
 
-📁 Output directory:
+📁 Reports saved in:
 
 ```
 reports/
@@ -181,7 +163,7 @@ reports/
 
 ## 🧅🔐 OPERATIONAL NOTES
 
-* Check Tor status:
+* Verify Tor status:
 
 ```bash
 sudo service tor status
@@ -195,13 +177,13 @@ sudo service tor status
 
 ## 🚧📈 ROADMAP
 
-🔮 Planned upgrades:
+🔮 Planned enhancements:
 
-* Modular plugin system
+* Modular plugin architecture
 * Confidence & reliability scoring
-* Case-based report folders
+* Case‑based report folders
 * Interactive dashboards
-* Advanced blue-team modules
+* Advanced blue‑team modules
 
 ---
 
@@ -209,7 +191,7 @@ sudo service tor status
 
 📘 Educational & research use only
 ❌ No warranty
-⚠️ Use responsibly
+⚠️ Use responsibly and ethically
 
 ---
 
@@ -221,18 +203,3 @@ sudo service tor status
 
 ---
 
-## 🔥 FINAL RESULT
-
-✅ Enterprise-grade README
-✅ GitHub-ready
-✅ Premium design & structure
-✅ Emoji balanced (professional look)
-✅ 100% copy-paste ready
-
-⭐ **Ethics First • Automation Always • Professional OSINT Only**
-
-```
-
-
-Chaho main abhi **wo bhi full ready bana du ekdum GitHub demo-style**?
-```
