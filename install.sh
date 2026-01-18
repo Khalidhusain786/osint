@@ -1,41 +1,78 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# --- CONFIG ---
-TARGET="7696408248"
-INSTALL_DIR="/home/kali/osint"
+set -euo pipefail
 
-echo -e "\e[1;34m[*] Starting Khalid OSINT Automation...\e[0m"
+echo ""
+echo "================================================================"
+echo "     KHALID HUSAIN ELITE MARIANA COLLECTOR - INSTALLER v1.0    "
+echo "================================================================"
+echo ""
 
-# 1. Environment Cleanup & Repo Clone
-cd /home/kali
-sudo rm -rf osint
-git clone https://github.com/Khalidhusain786/osint.git
-cd osint || { echo "Failed to enter directory"; exit 1; }
+echo "[+] Updating Kali packages ..."
+sudo apt update -y && sudo apt upgrade -y
 
-# 2. Permissions & Installation
-chmod +x install.sh
-sudo ./install.sh
+echo ""
+echo "[+] Installing base dependencies ..."
+sudo apt install -y \
+    python3 python3-pip python3-venv git curl wget unzip tor \
+    libnss3 libatk-bridge2.0-0 libxkbcommon0 libgbm1 libasound2 \
+    libxshmfence1 libdrm2 libxcomposite1 libxdamage1 libxrandr2 \
+    libgbm1 libpango-1.0-0 libcairo2 libatk1.0-0 libatk-bridge2.0-0 \
+    libgtk-3-0 libgdk-pixbuf-2.0-0
 
-# 3. Dependencies Fix (Breaking System Packages Fix for Kali)
-echo -e "\e[1;32m[+] Installing required Python modules...\e[0m"
-pip3 install playwright stem aiohttp --break-system-packages 2>/dev/null
-python3 -m playwright install chromium --with-deps 2>/dev/null
+echo ""
+echo "[+] Installing Tor Browser dependencies & stem ..."
+sudo apt install -y torbrowser-launcher python3-stem
 
-# 4. Maigret Symlink Fix
-echo -e "\e[1;32m[+] Setting up Maigret path...\e[0m"
-sudo ln -sf $(which maigret || echo "$HOME/.local/bin/maigret") /usr/bin/maigret
+echo ""
+echo "[+] Starting & enabling Tor service ..."
+sudo systemctl enable tor
+sudo systemctl restart tor
 
-# 5. Tor Service Configuration
-echo -e "\e[1;32m[+] Restarting Tor Service...\e[0m"
-sudo service tor restart
-sleep 2
+echo ""
+echo "[+] Installing Python packages (requirements) ..."
+pip3 install --upgrade pip wheel setuptools
+pip3 install --user --break-system-packages \
+    aiohttp playwright stem requests pandas folium streamlit pyvis \
+    beautifulsoup4 lxml fake-useragent
 
-# 6. AUTO-FIX: Indentation Error in khalid-osint.py
-# Yeh command line 3 ke indentation ko theek karega
-echo -e "\e[1;32m[+] Fixing Python Indentation...\e[0m"
-sed -i 's/^[ \t]*self.drops.extend/        self.drops.extend/' khalid-osint.py
+echo ""
+echo "[+] Installing Playwright browsers (chromium + firefox) ..."
+playwright install chromium firefox --with-deps --no-shell
 
-# 7. Final Execution
-clear
-echo -e "\e[1;32m[!] Launching Khalid OSINT for target: $TARGET\e[0m"
-python3 khalid-osint.py $TARGET
+echo ""
+echo "[+] Creating Tor control authentication (if needed) ..."
+# Minimal torrc configuration for stem control (port 9051)
+if ! grep -q "ControlPort 9051" /etc/tor/torrc; then
+    echo "" | sudo tee -a /etc/tor/torrc
+    echo "ControlPort 9051" | sudo tee -a /etc/tor/torrc
+    echo "CookieAuthentication 1" | sudo tee -a /etc/tor/torrc
+    sudo systemctl restart tor
+fi
+
+echo ""
+echo "[+] Creating iocs folder (if not exists) ..."
+mkdir -p ~/iocs
+
+echo ""
+echo "[+] Installation finished."
+echo ""
+echo "Run commands:"
+echo ""
+echo "    cd ~/Desktop   # or wherever you want"
+echo "    git clone https://github.com/Khalidhusain786/osint.git   # if repo exists"
+echo "    cd osint"
+echo "    python3 khalid-osint.py 7696408248"
+echo ""
+echo "Or one-liner (after git clone):"
+echo "    cd osint && python3 khalid-osint.py 7696408248"
+echo ""
+echo "Note:"
+echo "  • If you see 'stem' authentication error → check /etc/tor/torrc"
+echo "  • If Playwright fails → run:   playwright install --with-deps"
+echo "  • Tor must be running:   sudo service tor status"
+echo ""
+echo "================================================================"
+echo ""
+
+exit 0
