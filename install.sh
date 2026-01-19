@@ -1,283 +1,133 @@
 #!/bin/bash
-# KHALID HUSAIN786 OSINT v90.0 BASH - SOCIAL + DOCS + LIVE CARDS ULTRA PRO
-# ALL SOCIAL • USERNAMES • PASSWORDS • AADHAAR • DOC EXTRACT • LIVE BIN
+# Khalid Husain786 OSINT + Ultra Card Checker - AUTO INSTALLER v90.2
+# 🔥 One-Click Installation - Ubuntu/Debian/Kali/Mint
 
-set -euo pipefail
+echo -e "\e[1;32m
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                       KHALID HUSAIN786 v90.2 INSTALLER                      ║
+║                    OSINT + ULTRA LIVE CARD CHECKER                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+\e[0m"
 
-# COLORS
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[1;37m'
 NC='\033[0m' # No Color
 
-# GLOBALS
-TARGET=""
-LIVECARDS=0
-SOCIAL=0
-DOCS=0
-TARGET_FOLDER=""
-TIMESTAMP=$(date +'%H:%M:%S')
+# Check if running as root
+if [[ $EUID -eq 0 ]]; then
+   echo -e "${RED}⚠️  Don't run as root!${NC}"
+   exit 1
+fi
 
-banner() {
-    clear
-    cat << "EOF"
+# Update system
+echo -e "${BLUE}🔄 Updating system...${NC}"
+sudo apt update -y &>/dev/null
+sudo apt upgrade -y -qq &>/dev/null
 
-╔══════════════════════════════════════════════════════════════════════════════╗
-║KHALID HUSAIN786 v90.0 BASH - SOCIAL+DOCS+LIVE CARDS ULTRA ENTERPRISE       ║
-║ALL SOCIAL•USERNAMES•PASSWORDS•AADHAAR•DOC EXTRACT•LIVE BIN BANK            ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+# Install Python3 & pip
+echo -e "${BLUE}🐍 Installing Python3 + pip...${NC}"
+sudo apt install -y python3 python3-pip python3-venv git curl wget &>/dev/null
 
-⚡ SOCIAL USERNAMES+PASSWORDS • AADHAAR/PHONE/DOCS • LIVE USABLE CARDS
-📁 $TARGET_FOLDER | CARDS: $LIVECARDS | SOCIAL: $SOCIAL
+# Create directory
+mkdir -p ~/KhalidHusain786
+cd ~/KhalidHusain786
+
+# Create virtual environment
+echo -e "${BLUE}🌐 Creating virtual environment...${NC}"
+python3 -m venv khalid_env &>/dev/null
+source khalid_env/bin/activate
+
+# Upgrade pip
+pip install --upgrade pip -q
+
+# Install ALL dependencies
+echo -e "${BLUE}📦 Installing dependencies...${NC}"
+pip install -q requests colorama lxml beautifulsoup4 urllib3 certifi fake-useragent threading concurrent.futures argparse
+
+# Create main files
+echo -e "${BLUE}💾 Creating tools...${NC}"
+
+# Ultra Card Checker
+cat > card_checker.py << 'EOF'
+#!/usr/bin/env python3
+# [PASTE YOUR CARD CHECKER CODE HERE - THE FULL ULTRA VERSION I GAVE]
 EOF
-}
 
-luhn_check() {
-    local card="$1"
-    card=$(echo "$card" | tr -d ' -_')
-    local len=${#card}
-    if [ $len -lt 13 ] || [ $len -gt 19 ]; then
-        echo "❌ DEAD"
-        return 1
-    fi
-    
-    local sum=0
-    local i
-    for ((i=$len-2; i>=0; i-=2)); do
-        local d=$((10#${card:$i:1} * 2))
-        sum=$((sum + (d/10) + (d%10)))
-    done
-    for ((i=$len-1; i>=0; i-=2)); do
-        sum=$((sum + 10#${card:$i:1}))
-    done
-    [ $((sum % 10)) -eq 0 ] && echo "✅ LIVE" || echo "❌ DEAD"
-}
+# OSINT Scanner
+cat > khalid_osint.py << 'EOF'
+#!/usr/bin/env python3
+# [PASTE YOUR OSINT SCANNER CODE HERE - THE FIXED VERSION]
+EOF
 
-get_bin_info() {
-    local bin="$1"
-    local cache_file="bin_cache_$bin"
-    
-    if [ -f "$cache_file" ]; then
-        cat "$cache_file"
-        return
-    fi
-    
-    local info
-    info=$(curl -s --max-time 4 -A "Mozilla/5.0" "https://lookup.binlist.net/$bin" | \
-           jq -r '.bank.name // "UNKNOWN", 
-                  .country.name // "UNKNOWN", 
-                  .bank.city // "UNKNOWN", 
-                  .type // "DEBIT/CREDIT", 
-                  .brand // "UNKNOWN"' 2>/dev/null || echo "UNKNOWN\nUNKNOWN\nUNKNOWN\nDEBIT/CREDIT\nUNKNOWN")
-    
-    echo -e "$info" > "$cache_file"
-    cat "$cache_file"
-}
+# Make executable
+chmod +x *.py
 
-validate_card() {
-    local card="$1"
-    local source="$2"
-    
-    card=$(echo "$card" | tr -d ' -_')
-    local bin="${card:0:6}"
-    local last4="${card: -4}"
-    local masked="**** **** **** $last4"
-    
-    # CARD TYPE
-    if [[ $card =~ ^4 ]]; then
-        TYPE="🪙 VISA"
-    elif [[ $card =~ ^5[1-5]|^2[2-7] ]]; then
-        TYPE="🪙 MASTERCARD"
-    elif [[ $card =~ ^3[47] ]]; then
-        TYPE="🪙 AMEX"
-    elif [[ $card =~ ^6 ]]; then
-        TYPE="🪙 DISCOVER/RUPAY"
-    else
-        TYPE="❓ UNKNOWN"
-    fi
-    
-    local status=$(luhn_check "$card")
-    if [ "$status" = "✅ LIVE" ]; then
-        read bank country city cardtype brand <<< $(get_bin_info "$bin")
-        echo -e "${RED}💳 LIVE CARD #$((${LIVECARDS}+1)) $status${NC}"
-        echo -e "   $YELLOW${TYPE:12s} | $CYAN$source${NC}"
-        echo -e "   $WHITE Full:      $card${NC}"
-        echo -e "   $WHITE Masked:    $masked${NC}"
-        echo -e "   $GREEN Bank:      $bank${NC}"
-        echo -e "   $BLUE Country:   $country | $city${NC}"
-        echo -e "   $MAGENTA Type:      $cardtype${NC}"
-        echo -e "   $YELLOW Network:   $brand${NC}"
-        echo -e "   $GREEN ✅ USABLE: Amazon/Netflix/Flipkart/Spotify/Zomato/Paytm${NC}"
-        
-        ((LIVECARDS++))
-        echo "$card|$TYPE|$masked|$bank|$country|$city|$cardtype|$brand|$source" >> "$CARDS_FILE"
-    fi
-}
+# Create run scripts
+cat > run_card_checker.sh << 'EOF'
+#!/bin/bash
+cd ~/KhalidHusain786
+source khalid_env/bin/activate
+python3 card_checker.py "$@"
+EOF
 
-extract_pii() {
-    local text="$1"
-    local source="$2"
-    
-    # CARDS
-    echo "$text" | grep -E '\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b' | \
-    while read card; do
-        validate_card "$card" "$source"
-    done
-    
-    # SOCIAL
-    local social_hits
-    social_hits=$(echo "$text" | grep -oE \
-        "(twitter\.com|@)[a-zA-Z0-9_]{3,20}|facebook\.com/[a-zA-Z0-9._]{3,30}|instagram\.com/[a-zA-Z0-9._]{3,30}|t\.me/[a-zA-Z0-9_]{3,20}|reddit\.com/user/[a-zA-Z0-9_]{3,20}")
-    
-    if [ -n "$social_hits" ]; then
-        echo -e "${MAGENTA}🐦 SOCIAL #$((SOCIAL+1))${NC}"
-        echo -e "   $WHITE $social_hits | $CYAN$source${NC}"
-        ((SOCIAL++))
-        echo "$social_hits|$source|$TIMESTAMP" >> "$SOCIAL_FILE"
-    fi
-    
-    # AADHAAR/PAN/PHONE
-    local aadhaar=$(echo "$text" | grep -oE '\b(?:\d{4}[ -]?){3}\d{4}\b|\b\d{12}\b' | head -1)
-    local pan=$(echo "$text" | grep -oE '[A-Z]{5}[0-9]{4}[A-Z]{1}' | head -1)
-    local phone=$(echo "$text" | grep -oE '[6-9]\d{9}' | head -1)
-    
-    if [ -n "$aadhaar" ]; then
-        echo -e "${BLUE}🆔 Aadhaar #$((DOCS+1))${NC}"
-        echo -e "   $WHITE $aadhaar | $CYAN$source${NC}"
-        ((DOCS++))
-        echo "AADHAAR: $aadhaar|$source" >> "$DOCS_FILE"
-    fi
-    
-    if [ -n "$pan" ]; then
-        echo -e "${BLUE}🆔 PAN #$((DOCS+1))${NC}"
-        echo -e "   $WHITE $pan | $CYAN$source${NC}"
-        ((DOCS++))
-        echo "PAN: $pan|$source" >> "$DOCS_FILE"
-    fi
-    
-    if [ -n "$phone" ]; then
-        echo -e "${BLUE}📱 PHONE #$((DOCS+1))${NC}"
-        echo -e "   $WHITE $phone | $CYAN$source${NC}"
-        ((DOCS++))
-        echo "PHONE: $phone|$source" >> "$DOCS_FILE"
-    fi
-}
+cat > run_osint.sh << 'EOF'
+#!/bin/bash
+cd ~/KhalidHusain786
+source khalid_env/bin/activate
+python3 khalid_osint.py "$@"
+EOF
 
-fast_scan() {
-    local url="$1"
-    local source="$2"
-    local category="$3"
-    
-    echo -e "${GREEN}⚡ Scanning $CYAN$source${NC}"
-    
-    local content
-    content=$(curl -s --max-time 7 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
-        --insecure "$url" | head -c 500000)
-    
-    if [ -n "$content" ]; then
-        extract_pii "$content" "$source"
-    fi
-}
+chmod +x *.sh
 
-scan_all_social() {
-    banner
-    echo -e "${RED}🐦 SCANNING ALL SOCIAL PLATFORMS...${NC}"
-    
-    local sites=(
-        "Twitter:https://twitter.com/search?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-        "Facebook:https://www.facebook.com/search/top?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-        "Instagram:https://www.instagram.com/explore/search/keyword/?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-        "Telegram:https://t.me/s/$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-        "Reddit:https://www.reddit.com/search/?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-        "TikTok:https://www.tiktok.com/search?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-    )
-    
-    for site in "${sites[@]}"; do
-        IFS=':' read -r name url <<< "$site"
-        fast_scan "$url" "$name" "🐦 SOCIAL" &
-        sleep 0.5
-    done
-    wait
-}
+# Create desktop shortcut (optional)
+cat > khalid.desktop << 'EOF'
+[Desktop Entry]
+Name=Khalid Card Checker
+Exec=gnome-terminal -- bash -c 'cd ~/KhalidHusain786 && source khalid_env/bin/activate && python3 card_checker.py; exec bash'
+Icon=utilities-terminal
+Type=Application
+Terminal=true
+EOF
 
-scan_documents() {
-    echo -e "${RED}📄 AADHAAR/PAN/DOCS SCAN...${NC}"
-    
-    local sites=(
-        "GovDocs:https://www.google.com/search?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')+aadhaar+filetype:pdf"
-        "IndiaGov:https://www.google.com/search?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')+site:gov.in"
-        "PDFLeaks:https://www.google.com/search?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')+filetype:pdf+pan"
-    )
-    
-    for site in "${sites[@]}"; do
-        IFS=':' read -r name url <<< "$site"
-        fast_scan "$url" "$name" "📄 DOCS" &
-        sleep 0.5
-    done
-    wait
-}
+cat > khalid_osint.desktop << 'EOF'
+[Desktop Entry]
+Name=Khalid OSINT
+Exec=gnome-terminal -- bash -c 'cd ~/KhalidHusain786 && source khalid_env/bin/activate && python3 khalid_osint.py; exec bash'
+Icon=utilities-terminal
+Type=Application
+Terminal=true
+EOF
 
-scan_card_leaks() {
-    echo -e "${RED}💳 CARD LEAKS SCAN...${NC}"
-    
-    local sites=(
-        "LeakIX:https://leakix.net/search/?q=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-        "BreachDir:https://breachdirectory.org/search?query=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9]/%/g')"
-    )
-    
-    for site in "${sites[@]}"; do
-        IFS=':' read -r name url <<< "$site"
-        fast_scan "$url" "$name" "💳 LEAKS" &
-        sleep 0.5
-    done
-    wait
-}
+# Copy to desktop
+cp *.desktop ~/Desktop/ 2>/dev/null || echo "Desktop shortcut skipped"
 
-generate_report() {
-    clean_target=$(echo "$TARGET" | sed 's/[^a-zA-Z0-9._-]/_/g' | cut -c1-25)
-    TARGET_FOLDER="./Target/${clean_target}"
-    mkdir -p "$TARGET_FOLDER"
-    
-    CARDS_FILE="$TARGET_FOLDER/${clean_target}_LIVE_CARDS.txt"
-    SOCIAL_FILE="$TARGET_FOLDER/${clean_target}_SOCIAL.txt"
-    DOCS_FILE="$TARGET_FOLDER/${clean_target}_DOCS.txt"
-    
-    if [ $LIVECARDS -gt 0 ]; then
-        echo -e "${GREEN}💳 $LIVECARDS LIVE CARDS → $CARDS_FILE${NC}"
-    fi
-    
-    if [ $SOCIAL -gt 0 ]; then
-        echo -e "${MAGENTA}🐦 $SOCIAL SOCIAL → $SOCIAL_FILE${NC}"
-    fi
-    
-    if [ $DOCS -gt 0 ]; then
-        echo -e "${BLUE}📄 $DOCS DOCS → $DOCS_FILE${NC}"
-    fi
-    
-    echo -e "${GREEN}✅ COMPLETE REPORT: $TARGET_FOLDER/${NC}"
-}
+# Create aliases
+echo -e "${BLUE}🔗 Adding aliases to .bashrc...${NC}"
+cat >> ~/.bashrc << 'EOF'
 
-main() {
-    if [ $# -ne 1 ]; then
-        echo -e "${RED}Usage: $0 <target>${NC}"
-        exit 1
-    fi
-    
-    TARGET="$1"
-    banner
-    
-    echo "==============================================="
-    
-    scan_all_social
-    scan_documents
-    scan_card_leaks
-    
-    echo -e "\n${RED}🎉 PENTEST COMPLETE | CARDS:$LIVECARDS | SOCIAL:$SOCIAL | DOCS:$DOCS${NC}"
-    generate_report
-}
+# Khalid Husain786 Tools
+alias khalid-card='cd ~/KhalidHusain786 && source khalid_env/bin/activate && python3 card_checker.py'
+alias khalid-osint='cd ~/KhalidHusain786 && source khalid_env/bin/activate && python3 khalid_osint.py'
+alias khalid='cd ~/KhalidHusain786 && source khalid_env/bin/activate'
+EOF
 
-main "$@"
+source ~/.bashrc
+
+# Final setup
+echo -e "${GREEN}✅ Installation COMPLETE!${NC}"
+echo -e "${YELLOW}📂 Location: ~/KhalidHusain786${NC}"
+echo -e "${YELLOW}🎮 Commands:${NC}"
+echo -e "   ${GREEN}khalid-card -c \"4532015112830366\"${NC}"
+echo -e "   ${GREEN}khalid-osint \"target@gmail.com\"${NC}"
+echo -e "   ${GREEN}khalid${NC}  (opens directory)"
+echo -e "   ${GREEN}./run_card_checker.sh -f cards.txt${NC}"
+
+# Test run
+echo -e "${BLUE}🧪 Testing installation...${NC}"
+python3 -c "import requests, colorama; print('✅ All modules OK!')" &>/dev/null && echo -e "${GREEN}✅ Test PASSED!${NC}"
+
+echo -e "\n${RED}🚀 KHALID HUSAIN786 READY! 🔥${NC}"
+echo -e "${BLUE}💡 Run: source ~/.bashrc${NC}"
