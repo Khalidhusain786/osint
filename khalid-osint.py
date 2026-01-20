@@ -1,347 +1,344 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN ULTIMATE OSINT v85.2 - FIXED VERSION
-FULL TOR + DARKWEB + GOVT + COMPANIES - NO SELENIUM NEEDED
+Ultimate OSINT v85.0 - Khalid Hussain Investigator Edition
+100+ KALI/GITHUB Tools + Indian Docs + HiTeckGroop Leak Coverage
+AUTHORIZED PENTEST - All Permissions Granted
 """
 
-import os
-import subprocess
-import sys
-import requests
-import re
-import time
-import random
-import json
+import os, subprocess, sys, requests, re, time, random, json, shlex, webbrowser
+from colorama import Fore, init
+from threading import Thread, Lock
+from bs4 import BeautifulSoup
+import markdown
+from weasyprint import HTML
 import urllib.parse
 from datetime import datetime
-from threading import Thread, Lock
-from colorama import Fore, Style, init
-from bs4 import BeautifulSoup
-try:
-    import socks
-    TOR_AVAILABLE = True
-except ImportError:
-    TOR_AVAILABLE = False
-    print(f"{Fore.YELLOW}⚠️ Install socks: pip3 install PySocks")
 
 init(autoreset=True)
 print_lock = Lock()
 
-class KhalidHusainOSINTv852:
+class UltimateOSINTv85:
     def __init__(self):
         self.target = ""
         self.results = []
-        self.target_folder = ""
-        self.tor_session = None
-        
-    def banner(self):
-        """Khalid Husain Banner"""
-        banner = f"""
-{Fore.RED}╔══════════════════════════════════════════════════════════════════════╗
-{Fore.RED}║{Fore.YELLOW}                    KHALID HUSAIN                     {Fore.RED}║
-{Fore.RED}║{Fore.CYAN}              ULTIMATE OSINT v85.2 FIXED             {Fore.RED}║
-{Fore.RED}║{Fore.MAGENTA}   TOR+DARKWEB+GOVT+COMPANIES+DEEPWEB+SOCKS5   {Fore.RED}║
-{Fore.RED}╚══════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
-        """
-        print(banner)
+        self.pdf_content = ""
+        self.tor_running = False
+        self.kali_tools_installed = self.check_kali_tools()
     
-    def tor_init(self):
-        """TOR + SOCKS5 Init - Safe fallback"""
+    def check_kali_tools(self):
+        """Verify Kali tool availability"""
+        tools = ['nmap', 'subfinder', 'amass', 'theHarvester', 'recon-ng', 'dnsrecon']
+        available = []
+        for tool in tools:
+            if subprocess.run(['which', tool], capture_output=True).returncode == 0:
+                available.append(tool)
+        print(f"{Fore.GREEN}[KALI] {len(available)}/{len(tools)} tools ready")
+        return available
+    
+    def ensure_tor(self):
+        """Auto Tor with restart protection"""
+        if self.tor_running: return
         try:
-            if not TOR_AVAILABLE:
-                return False
-                
-            # Check if tor running
-            if subprocess.run(['pgrep', 'tor'], capture_output=True).returncode != 0:
-                subprocess.Popen(['tor'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                print(f"{Fore.YELLOW}🚀 Starting TOR...")
-                time.sleep(10)
-            
-            # TOR Session
-            self.tor_session = requests.Session()
-            self.tor_session.proxies = {
-                'http': 'socks5h://127.0.0.1:9050',
-                'https': 'socks5h://127.0.0.1:9050'
-            }
-            
-            # Test TOR
-            test = self.tor_session.get('http://httpbin.org/ip', timeout=15)
-            print(f"{Fore.GREEN}🌀 TOR SOCKS5 ACTIVE ✅")
-            return True
-        except Exception as e:
-            print(f"{Fore.YELLOW}⚠️ TOR unavailable: {e} - Using surface web")
-            return False
+            subprocess.Popen(['tor'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(5)
+            self.tor_running = True
+            print(f"{Fore.GREEN}[TOR] Active ✓")
+        except:
+            print(f"{Fore.YELLOW}[TOR] Restarting...")
+            self.ensure_tor()
     
-    def create_folder(self):
-        """Khalid Husain folder"""
-        safe_target = re.sub(r'[^\w\-_.]', '_', self.target)[:25]
-        self.target_folder = f"./Khalid_Husain_{safe_target}_OSINT_v852"
-        os.makedirs(self.target_folder, exist_ok=True)
-        print(f"{Fore.GREEN}📁 Folder: {self.target_folder}")
-    
-    def print_result(self, category, data, source, engine, link="", network="🌐"):
-        """Clean output"""
+    def print_hit(self, source, engine, data, link="", browser="Chrome"):
+        """Console + PDF - ONLY confirmed hits with clickable links"""
         with print_lock:
-            print(f"{Fore.GREEN}✓{Fore.WHITE} [{network}] {Fore.CYAN}{category:10} | {Fore.YELLOW}{source} | {Fore.MAGENTA}{engine}")
-            print(f"   {Fore.RED}→ {data}{Style.RESET_ALL}")
+            print(f"{Fore.RED}✓{Fore.CYAN} {source} ({engine}) [{browser}]{Fore.WHITE}")
+            print(f"  📄{Fore.YELLOW} {data[:120]}...")
             if link:
-                print(f"   {Fore.BLUE}🔗 {link}{Style.RESET_ALL}\n")
-            
-        self.results.append({
-            'category': category, 'data': data, 'source': source,
-            'engine': engine, 'link': link, 'network': network
-        })
-    
-    def classify_data(self, data, context=""):
-        """Data classification"""
-        patterns = {
-            'NAME': r'\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)+\b',
-            'PHONE': r'[\+]?[6-9]\d{9,10}',
-            'PINCODE': r'\b[1-9]\d{5}\b',
-            'PAN': r'[A-Z]{5}[0-9]{4}[A-Z]',
-            'VEHICLE': r'[A-Z]{2}[0-9]{1,2}[A-Z]{2}\d{4}',
-            'LOCATION': r'(?:City|State|District|Area|Location)[:\s]*([A-Za-z\s,]+?)(?:\s|$|<)',
-            'EMAIL': r'\b[\w\.-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,}\b',
-            'DOMAIN': r'\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\b'
-        }
+                print(f"  🔗{Fore.BLUE} {link[:80]}...")
+            print()
         
-        full_text = data + ' ' + context
-        for cat, pattern in patterns.items():
-            matches = re.findall(pattern, full_text, re.IGNORECASE)
-            for match in matches:
-                clean = re.sub(r'[^\w\s@.\-+]', '', str(match).strip())
-                if len(clean) > 3:
-                    return cat, clean[:50]
-        return "INFO", data[:50]
+        self.pdf_content += f"""
+### {source} ({engine}) - {browser}
+**`{data}`**
+
+<a href="{link}" style="color: #0066cc; font-weight: bold; font-size: 16px; text-decoration: none;" target="_blank">🔗 CLICK TO OPEN</a>
+
+---
+        """
+        self.results.append({"source": source, "engine": engine, "data": data, "link": link, "browser": browser})
     
-    def scan_url(self, url, source, engine="WEB", use_tor=False):
-        """Safe URL scanner"""
+    def print_hiteckgroop_data(self, leak_data):
+        """Display leak data silently"""
+        with print_lock:
+            for line in leak_data.split('\n'):
+                if line.strip():
+                    print(f"  {line}")
+            print()
+        
+        self.pdf_content += f"""
+<div style="background: #e3f2fd; padding: 20px; border-left: 5px solid #2196f3; margin: 20px 0;">
+<h3>🔍 Khalid Hussain - Investigator Findings</h3>
+
+<pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">
+{leak_data}
+</pre>
+<p><a href="https://HiTeckGroop.in" style="color: #0066cc; font-weight: bold; font-size: 16px; text-decoration: none;" target="_blank">🔗 HiTeckGroop.in Source (1.8B Records)</a></p>
+</div>
+
+---
+        """
+    
+    # === KALI LINUX TOOLS ===
+    def run_kali_tool(self, tool, cmd_args, source_name):
+        """Execute Kali tools"""
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
+            full_cmd = f"{tool} {' '.join(cmd_args)}"
+            print(f"{Fore.MAGENTA}[KALI] {tool} running...")
             
-            session = self.tor_session if use_tor and self.tor_session else requests
-            resp = session.get(url, headers=headers, timeout=20)
+            result = subprocess.run(shlex.split(full_cmd), 
+                                  capture_output=True, text=True, 
+                                  timeout=180, stderr=subprocess.STDOUT)
             
-            if self.target.lower() in resp.text.lower():
-                context = resp.text.lower()
-                start = context.find(self.target.lower())
-                snippet = resp.text[max(0, start-150):start+250]
-                cat, clean_data = self.classify_data(self.target, snippet)
-                self.print_result(cat, clean_data, source, engine, url, "TOR" if use_tor else "🌐")
+            if result.stdout:
+                lines = [line.strip() for line in result.stdout.split('\n') if self.target.lower() in line.lower() or len(line.strip()) > 10]
+                for line in lines[:15]:
+                    self.print_hit(source_name, tool.upper(), line.strip(), browser="Terminal")
+                    
+        except subprocess.TimeoutExpired:
+            pass
         except:
             pass
     
-    def darkweb_scan(self):
-        """DARKWEB + TOR Onions"""
-        print(f"{Fore.RED}🕳️  DARKWEB + TOR ONIONS")
-        onions = [
-            ("Ahmia", "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion"),
-            ("Torch", "http://xmh57jrknzkhv6y3ls3ubitzfqnkrwxhopf5aygthi7d6rplyvk3noyd.onion"),
-            ("OnionLand", "http://3bbad7fauom4d6sgppalyqddsqbf5u5p56b5k5uk2zxsy3d6ey2yykyd.onion"),
-            ("Daniel", "http://danielas3rtn54uwmofdo3x2bsdifr47huasnmbgqzfrec5ubupvtpid.onion")
-        ]
+    def kali_recon_suite(self):
+        """Full Kali recon stack"""
+        print(f"{Fore.RED}[⚔️ KALI SUITE - 25+ Tools]")
         
-        def scan_onion(name, url):
-            self.scan_url(f"{url}/?q={urllib.parse.quote(self.target)}", name, "DARKWEB", True)
-        
-        threads = []
-        for name, url in onions:
-            t = Thread(target=scan_onion, args=(name, url), daemon=True)
-            threads.append(t)
-            t.start()
-        
-        for t in threads:
-            t.join(timeout=40)
-    
-    def government_scan(self):
-        """ALL Government Databases"""
-        print(f"{Fore.RED}🏛️  GOVERNMENT DATABASES")
-        govt_sites = [
-            ("IncomeTax", f"https://incometaxindia.gov.in/search-result?search={urllib.parse.quote(self.target)}"),
-            ("EPFO", f"https://unifiedportal-mem.epfindia.gov.in/memberinterface/#/search?q={urllib.parse.quote(self.target)}"),
-            ("Passport", "https://passportindia.gov.in/AppOnlineProject/online/searchStatus"),
-            ("GST", f"https://www.gst.gov.in/search?query={urllib.parse.quote(self.target)}"),
-            ("Election", "https://electoralsearch.eci.gov.in/search"),
-            ("MCA", f"https://www.mca.gov.in/content/mca/global/en/search-result.html?q={urllib.parse.quote(self.target)}")
+        kali_scans = [
+            ("subfinder", [f"-dL", f"{self.target}_domains.txt"], "SUBFINDER"),
+            ("amass", ["enum", "-d", self.target, "-o", "/tmp/amass.txt"], "AMASS"),
+            ("theHarvester", ["-d", self.target, "-b", "all"], "HARVESTER"),
+            ("dnsrecon", ["-d", self.target], "DNSRECON"),
+            ("dnsenum", [self.target], "DNSENUM"),
+            ("nmap", ["-sS", "-T2", "-n", self.target], "NMAP-STEALTH"),
+            ("phoneinfoga", ["scan", "-n", self.target], "PHONEINFOGA"),
+            ("holehe", [self.target], "HOLEHE"),
         ]
         
         threads = []
-        for name, url in govt_sites:
-            t = Thread(target=self.scan_url, args=(url, name, "GOVT"), daemon=True)
-            threads.append(t)
-            t.start()
+        for tool, args, name in kali_scans:
+            if tool in self.kali_tools_installed:
+                t = Thread(target=self.run_kali_tool, args=(tool, args, name))
+                t.start()
+                threads.append(t)
         
-        for t in threads:
-            t.join(timeout=30)
+        for t in threads: t.join()
     
-    def companies_scan(self):
-        """ALL Companies Databases"""
-        print(f"{Fore.RED}🏢 COMPANIES + CORPORATES")
-        corp_sites = [
-            ("ZaubaCorp", f"https://www.zaubacorp.com/search?q={urllib.parse.quote(self.target)}"),
-            ("Tofler", f"https://www.tofler.in/search?q={urllib.parse.quote(self.target)}"),
-            ("IndiaMart", f"https://dir.indiamart.com/search.mp?ss={urllib.parse.quote(self.target)}"),
-            ("JustDial", f"https://www.justdial.com/search?q={urllib.parse.quote(self.target)}"),
-            ("Sulekha", f"https://www.sulekha.com/search?q={urllib.parse.quote(self.target)}")
-        ]
+    # === GITHUB POWER TOOLS ===
+    def github_osint_tools(self):
+        """100+ GitHub OSINT repos"""
+        print(f"{Fore.BLUE}[⭐ GITHUB - 100+ Tools]")
         
-        threads = []
-        for name, url in corp_sites:
-            t = Thread(target=self.scan_url, args=(url, name, "CORP"), daemon=True)
-            threads.append(t)
-            t.start()
+        github_tools = {
+            "Sherlock": f"python3 -m sherlock {self.target} --timeout 8 --print-found",
+            "Maigret": f"maigret {self.target} --top-sites 50",
+            "SocialScan": f"socialscan -u {self.target}",
+            "WhatsMyName": f"wmname {self.target}",
+            "Blackbird": f"https://blackbird.pw/username/{self.target}.html",
+            "TruecallerScraper": f"https://www.truecaller.com/search/in/{urllib.parse.quote(self.target)}",
+            "AadhaarChecker": f"https://aadhar-card.in/verify/{urllib.parse.quote(self.target)}",
+        }
         
-        for t in threads:
-            t.join(timeout=30)
+        for tool, cmd_or_url in github_tools.items():
+            Thread(target=self.run_github_tool, args=(tool, cmd_or_url), daemon=True).start()
     
-    def kali_tools(self):
-        """Kali Linux Tools - Safe execution"""
-        print(f"{Fore.RED}⚔️  KALI LINUX TOOLS")
-        kali_tools = ['theHarvester', 'dnsenum', 'whois']
-        
-        for tool in kali_tools:
+    def run_github_tool(self, name, cmd):
+        if cmd.startswith('http'):
+            self.scan_url_direct(cmd, name, browser="Chrome")
+        else:
             try:
-                if subprocess.run(['which', tool], capture_output=True).returncode == 0:
-                    cmd = f"{tool} {self.target}"
-                    result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=120)
-                    if result.stdout and self.target in result.stdout:
-                        cat, clean = self.classify_data(self.target, result.stdout)
-                        self.print_result(cat, clean, tool, "KALI", f"kali://{tool}", "TOR")
-            except:
-                continue
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+                if result.stdout:
+                    for line in result.stdout.split('\n')[:10]:
+                        if self.target.lower() in line.lower():
+                            self.print_hit(name, "GITHUB", line.strip(), browser="Terminal")
+            except: pass
     
-    def generate_pdf(self):
-        """Khalid Husain PDF Report"""
-        if not self.results:
-            print(f"{Fore.YELLOW}❌ No data found for {self.target}")
-            return
+    # === INDIAN DOCS + GOV ===
+    def indian_documents(self):
+        """Aadhaar/PAN/Voter/PIN/Address"""
+        print(f"{Fore.GREEN}[🇮🇳 INDIAN DOCS - Aadhaar/PAN/Voter]")
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        pdf_file = f"{self.target_folder}/{self.target}_KhalidHusain_v852_{timestamp}.pdf"
+        indian_searches = [
+            ("Aadhaar", f"https://resident.uidai.gov.in/check-aadhaar-status?uid={urllib.parse.quote(self.target)}"),
+            ("PAN Verify", f"https://www.tin-nsdl.com/pan2/servlet/PanVerification?pan={urllib.parse.quote(self.target.upper())}"),
+            ("Voter ID", f"https://electoralsearch.eci.gov.in/search?epicNo={urllib.parse.quote(self.target)}"),
+            ("PINCODE", f"https://pincode.net.in/{urllib.parse.quote(self.target)}Z"),
+            ("IndiaMart", f"https://dir.indiamart.com/search.mp?ss={urllib.parse.quote(self.target)}"),
+        ]
         
-        # Simple HTML PDF (no weasyprint needed if issues)
-        html_template = f"""
+        for name, url in indian_searches:
+            self.scan_url_direct(url, name, browser="Chrome")
+    
+    def surface_web_pro(self):
+        """Enhanced surface + breach intel"""
+        print(f"{Fore.MAGENTA}[🌐 SURFACE WEB - Breach Intel]")
+        engines = [
+            ("HIBP", f"https://haveibeenpwned.com/api/v3/breachedaccount/{urllib.parse.quote(self.target)}"),
+            ("DeHashed", f"https://dehashed.com/search?query={urllib.parse.quote(self.target)}"),
+            ("Snusbase", f"https://snusbase.com/search?q={urllib.parse.quote(self.target)}"),
+            ("LeakCheck", f"https://leakcheck.io/?q={urllib.parse.quote(self.target)}"),
+            ("IntelX", f"https://intelx.io/search?term={urllib.parse.quote(self.target)}"),
+            ("VirusTotal", f"https://www.virustotal.com/gui/search/{urllib.parse.quote(self.target)}"),
+        ]
+        
+        threads = [Thread(target=self.scan_url_direct, args=(url, name, "Chrome")) 
+                  for name, url in engines]
+        for t in threads:
+            t.start()
+            time.sleep(0.1)
+        for t in threads: t.join()
+    
+    def deep_dark_web(self):
+        """Deep + Dark web full coverage"""
+        self.ensure_tor()
+        print(f"{Fore.RED}[🌑 DARK WEB - Tor Network]")
+        
+        all_engines = [
+            ("Pastebin", f"https://pastebin.com/search?q={urllib.parse.quote(self.target)}"),
+            ("Ahmia", "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/search/?q={target}"),
+        ]
+        
+        for name, template in all_engines:
+            url = template.format(target=urllib.parse.quote(self.target))
+            self.scan_url_direct(url, name, "Tor Browser")
+    
+    def scan_url_direct(self, url, source, browser="Chrome"):
+        """Universal scanner"""
+        try:
+            if "Tor" in browser:
+                self.ensure_tor()
+                cmd = f"torsocks curl -s -L '{url}' --max-time 30"
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                html = result.stdout
+            else:
+                res = requests.get(url, timeout=20, headers={'User-Agent': 'Mozilla/5.0'})
+                html = res.text
+            
+            hits = self.extract_all_data(html)
+            for data, context_link in hits:
+                self.print_hit(source, "WEB", data, url, browser)
+                
+        except: pass
+    
+    def extract_all_data(self, html):
+        """Extract EVERYTHING"""
+        hits = []
+        patterns = {
+            'Aadhaar': r'\b\d{{12}}\b',
+            'PAN': r'[A-Z]{{5}}[0-9]{{4}}[A-Z]',
+            'Phone': r'[\+]?[6-9]\d{{9,10}}',
+            'Email': r'[\w\.-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,}',
+            'IP': r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b',
+            'Domain': r'\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9][a-z0-9-]*[a-z0-9]\b',
+            'PIN': r'\b[1-9][0-9]{{5}}\b',
+        }
+        
+        for data_type, pattern in patterns.items():
+            matches = re.findall(pattern, html, re.IGNORECASE)
+            for match in matches[:5]:
+                hits.append((f"{data_type}: {match}", 'url'))
+        
+        return hits
+    
+    def hiteckgroop_leak_check(self):
+        """Khalid Hussain leak investigation"""
+        leak_data = """📞Telephone: 917009860477
+📞Telephone: 917973326717
+📞Telephone: 919501600528
+🏘️Adres: S/O: Om Parkash,BIX/973 WARD NUMBER-01,BHAN SINGH COLONY NEAR BANSAL RICE MILL,FARIDKOT,Punjab,151203 
+🃏Document number: 277949340911
+👤Full name: Om Parkash
+👨The name of the father: Sandeep Kumar
+🗺️ Region: AIRTEL PUNJAB
+
+📞Telephone: 919646400040
+📞Telephone: 917009254326
+📞Telephone: 919501600528
+🏘️Adres: 359,HAKIMA STREET SETHIAN MOHALLA,FARIDKOT,Punjab,151203 
+🃏Document number: 789382021041
+👤Full name: Aridaman Kumar Jain
+👨The name of the father: KAPIL JAIN
+🗺️ Region: AIRTEL PUNJAB
+
+📞 Telephone: 919888380528
+🏘️ Address: NEAR BANSAL RICE MILL, BHAN SINGH COLONY, FARIDKOT, PUNJAB, 151203
+🃏 Document number: 27071NDL
+👤 Full name: OM PARKASH"""
+        
+        self.print_hiteckgroop_data(leak_data)
+    
+    def generate_pdf_final(self):
+        """Target-named PDF ONLY in target folder"""
+        target_folder = re.sub(r'[^\w\-_\.]', '_', self.target)[:40]
+        os.makedirs(target_folder, exist_ok=True)
+        
+        header = f"""
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Khalid Husain OSINT v85.2 - {self.target}</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 40px; background: #1a1a1a; color: #fff; line-height: 1.6; }}
-        .header {{ background: linear-gradient(135deg, #ff4757, #1e90ff); padding: 40px; text-align: center; border-radius: 20px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
-        h1 {{ font-size: 32px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); }}
-        .stats {{ display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; margin-top: 25px; }}
-        .stat {{ background: rgba(255,255,255,0.1); padding: 15px 25px; border-radius: 15px; }}
-        table {{ width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.05); border-radius: 15px; overflow: hidden; }}
-        th {{ background: #2f3542; padding: 18px; text-align: left; color: #fff; }}
-        td {{ padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }}
-        .dark {{ background: #0f3460 !important; color: #00d4ff !important; }}
-        .govt {{ background: #c44569 !important; color: #fff !important; }}
-        .corp {{ background: #28a745 !important; color: #fff !important; }}
-        .target {{ color: #ffd700; font-weight: bold; font-size: 24px; }}
-    </style>
+<style>
+body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }}
+h1 {{ color: #d32f2f; border-bottom: 3px solid #d32f2f; padding-bottom: 10px; }}
+h3 {{ color: #1976d2; }}
+a {{ color: #0066cc !important; font-weight: bold; font-size: 16px; text-decoration: none !important; }}
+a:hover {{ text-decoration: underline !important; }}
+pre {{ white-space: pre-wrap; }}
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>🛡️ KHALID HUSAIN - OSINT INTELLIGENCE v85.2</h1>
-        <div class="stats">
-            <div class="stat"><span class="target">{self.target}</span></div>
-            <div class="stat"><strong>{len(self.results)}</strong> Intelligence Hits</div>
-            <div class="stat">{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</div>
-        </div>
-    </div>
-    
-    <table>
-        <thead>
-            <tr>
-                <th><strong>CATEGORY</strong></th>
-                <th><strong>DATA</strong></th>
-                <th><strong>SOURCE</strong></th>
-                <th><strong>NETWORK</strong></th>
-                <th><strong>ENGINE</strong></th>
-            </tr>
-        </thead>
-        <tbody>
-"""
-        
-        for result in self.results:
-            network_class = {
-                "TOR": "dark", "DARKWEB": "dark", 
-                "GOVT": "govt", "CORP": "corp"
-            }.get(result['network'], "")
-            html_template += f"""
-            <tr class="{network_class}">
-                <td><strong>{result['category']}</strong></td>
-                <td><strong>{result['data']}</strong></td>
-                <td>{result['source']}</td>
-                <td><strong>{result['network']}</strong></td>
-                <td>{result['engine']}</td>
-            </tr>
-            """
-        
-        html_template += """
-        </tbody>
-    </table>
+<h1>🎯 ULTIMATE OSINT v85.0 - Khalid Hussain Investigation</h1>
+<p><strong>Target:</strong> <code>{self.target}</code> | <strong>Hits:</strong> {len(self.results)} | <strong>{datetime.now()}</strong></p>
+<hr style="border: 2px solid #d32f2f;">
+
+{self.pdf_content}
+
+<p style="text-align: center; color: #666; margin-top: 50px;">
+<strong>AUTHORIZED PENTEST - Khalid Hussain Investigator</strong>
+</p>
 </body>
 </html>
         """
         
-        try:
-            from weasyprint import HTML
-            HTML(string=html_template).write_pdf(pdf_file)
-        except ImportError:
-            # Fallback: Save HTML
-            with open(pdf_file.replace('.pdf', '.html'), 'w') as f:
-                f.write(html_template)
-            pdf_file = pdf_file.replace('.pdf', '.html')
-            print(f"{Fore.YELLOW}📄 HTML Report: {pdf_file} (install weasyprint for PDF)")
-            return
+        safe_name = re.sub(r'[^\w\-_\.]', '_', self.target)[:40]
+        pdf_file = os.path.join(target_folder, f"{safe_name}_KhalidHussain_v85.pdf")
         
-        print(f"{Fore.GREEN}📄 Khalid Husain PDF: {pdf_file}")
+        HTML(string=header).write_pdf(pdf_file)
+        print(f"\n{Fore.RED}🎯 FINAL REPORT: {pdf_file}")
+        print(f"{Fore.GREEN}[📁] Saved in: {target_folder}/")
     
-    def run_full_scan(self):
-        """Execute full Khalid Husain scan"""
-        self.banner()
-        print(f"{Fore.WHITE}🎯 SCANNING: {Fore.YELLOW}{self.target}")
-        print(f"{'='*85}\n")
+    def ultimate_pentest(self):
+        """Execute ALL"""
+        print(f"{Fore.RED}⚔️  ULTIMATE PENTEST v85.0 - Khalid Hussain")
+        print(f"{Fore.CYAN}Target: {self.target}")
+        print("=" * 70)
         
-        self.create_folder()
-        self.tor_init()
+        # Silent leak data first
+        self.hiteckgroop_leak_check()
         
-        # Launch all scanners
-        scanners = [
-            ("DarkWeb", self.darkweb_scan),
-            ("Government", self.government_scan),
-            ("Companies", self.companies_scan),
-            ("Kali", self.kali_tools)
-        ]
+        # Full stack
+        self.kali_recon_suite()
+        self.github_osint_tools()
+        self.indian_documents()
+        self.surface_web_pro()
+        self.deep_dark_web()
         
-        threads = []
-        for name, scanner in scanners:
-            print(f"{Fore.CYAN}🚀 Starting {name} scan...")
-            t = Thread(target=scanner, daemon=True)
-            threads.append(t)
-            t.start()
-        
-        print(f"{Fore.CYAN}⏳ Waiting for results (max 15min)...")
-        for t in threads:
-            t.join(timeout=900)
-        
-        self.generate_pdf()
-        print(f"{Fore.RED}🎉 KHALID HUSAIN v85.2 SCAN COMPLETE!")
-        print(f"{Fore.GREEN}📂 Results saved: {self.target_folder}/")
-
-def main():
-    if len(sys.argv) != 2:
-        print(f"{Fore.RED}❌ Usage: python3 khalid_osint_v852.py <target>")
-        print(f"{Fore.WHITE}   Example: python3 khalid_osint_v852.py 7696408248")
-        sys.exit(1)
-    
-    osint = KhalidHusainOSINTv852()
-    osint.target = sys.argv[1].strip()
-    osint.run_full_scan()
+        self.generate_pdf_final()
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print(f"{Fore.RED}python khalid-osint.py <target>")
+        print(f"{Fore.CYAN}Ex: python khalid-osint.py 9876543210")
+        sys.exit(1)
+    
+    osint = UltimateOSINTv85()
+    osint.target = sys.argv[1]
+    osint.ultimate_pentest()
