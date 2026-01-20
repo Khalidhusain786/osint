@@ -1,308 +1,394 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN786 OSINT v88.0 - MARIANA WEB ULTRA PROFESSIONAL
-1000+ SITES • ALL CARDS LIVE • DOCS/PHOTOS/SOCIAL • EXACT PII FORMAT
+KHALID HUSAIN786 OSINT v85.7 - CLICKABLE LINKS + SINGLE TARGET.PDF
+ALL PII • PASSWORDS • COMPANY • PERFECT LINKS • ONE PDF ONLY
 """
 
 import os
+import subprocess
 import sys
 import requests
 import re
+import time
 import json
 import urllib.parse
+import shlex
 from datetime import datetime
 from threading import Thread, Lock
 from colorama import Fore, Style, init
-import time
+from bs4 import BeautifulSoup
+try:
+    import socks
+    TOR_AVAILABLE = True
+except ImportError:
+    TOR_AVAILABLE = False
 
 init(autoreset=True)
+print_lock = Lock()
 
-class KhalidHusain786OSINTv880:
+TARGET_FOLDER = "./Target"
+os.makedirs(TARGET_FOLDER, exist_ok=True)
+
+class KhalidHusain786OSINTv857:
     def __init__(self):
         self.target = ""
-        self.all_results = []
-        self.print_lock = Lock()
-        self.fast_results = 0
-        self.target_folder = ""
+        self.results = []
+        self.pdf_file = ""
+        self.tor_session = None
+        self.cookies = {}
+        self.company_intel = {}
+        self.target_pdf = None  # SINGLE PDF ONLY
         
     def banner(self):
-        clear_screen()
-        print(f"""
-{Fore.RED}╔══════════════════════════════════════════════════════════════════════════════╗
-║{Fore.YELLOW}   KHALID HUSAIN786 v88.0 - MARIANA WEB ULTRA PROFESSIONAL     {Fore.RED}║
-║{Fore.CYAN}ALL CARDS•MARIANA WEB•DOCS/PHOTOS/SOCIAL•1000+ SITES•EXACT PII{Fore.RED}║
-╚══════════════════════════════════════════════════════════════════════════════╝
-
-{Fore.GREEN}⚡ LIVE CARDS + PASSWORDS + ADDRESSES + EXACT FORMAT IN TERMINAL + PDF
-{Fore.CYAN}📁 TARGET FOLDER: {self.target_folder}{Style.RESET_ALL}
-        """)
+        banner = f"""
+{Fore.RED}╔══════════════════════════════════════════════════════════════════════╗
+{Fore.RED}║{Fore.YELLOW}      KHALID HUSAIN786 v85.7 - CLICKABLE LINKS       {Fore.RED}║
+{Fore.RED}║{Fore.CYAN}SINGLE {self.target}.pdf • PERFECT LINKS • ALL DATA{Fore.RED}║
+{Fore.RED}║{Fore.MAGENTA}     PASSWORDS•COMPANY•USERS•NO LIMITS            {Fore.RED}║
+{Fore.RED}╚══════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
+        """
+        print(banner)
     
-    def advanced_pii_extraction(self, text, source):
-        """ADVANCED PII - ALL CARDS + EXACT FORMATS + MARIANA WEB"""
-        patterns = {
-            # PASSWORDS FIRST
-            '🔓 PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret|pass|auth)[:\s=]*["\']?([a-zA-Z0-9@$!%*#_]{6,100})["\']?',
-            '🔓 API_KEY': r'(?:api[_-]?key|bearer[_-]?token|auth[_-]?key)[:\s=]*["\']?([A-Za-z0-9\-_]{20,})["\']?',
-            
-            # ALL CREDIT CARDS - LIVE CHECK PATTERNS
-            '🪙 VISA': r'\b4[0-9]{12}(?:[0-9]{3})?\b',
-            '🪙 MASTERCARD': r'\b5[1-5][0-9]{14}\b|\b2[2-7][0-9]{14}\b',
-            '🪙 AMEX': r'\b3[47][0-9]{13}\b',
-            '🪙 DISCOVER': r'\b6(?:011|5[0-9]{2})[0-9]{12}\b',
-            '🪙 RUPAY': r'\b6[0-9]{2}[0-9]{12}\b',
-            '🪙 JCB': r'\b35[2-8][0-9]{14}\b',
-            '🪙 UNIONPAY': r'\b62[0-9]{14,17}\b',
-            
-            # PHONE NUMBERS - EXACT FORMAT
-            '📞 TELEPHONE': r'[\+]?[1-9]\d{1,3}[-.\s]?\d{3,4}[-.\s]?\d{4}',
-            
-            # INDIAN SPECIFIC
-            '🆔 AADHAAR': r'\b\d{12}\b(?!.*\d)',
-            '🆔 PAN': r'[A-Z]{5}[0-9]{4}[A-Z]',
-            '🆔 DOCUMENT_NUMBER': r'\b[A-Z0-9]{8,15}\b',
-            
-            # EMAILS & SOCIAL
-            '📧 EMAIL': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            '₿ BITCOIN': r'(?:bc1[0-9a-z]{39,59}|1[0-9A-Za-z]{25,34}|3[0-9A-Za-z]{25,34})',
-            
-            # NAMES & ADDRESSES
-            '👤 FULL_NAME': r'(?:name|full[-_]?name)[:\s]*([A-Za-z\s]{5,50})',
-            '👨 FATHER_NAME': r'(?:father|dad|son[-_]?of)[:\s]*([A-Za-z\s]{5,50})',
-            '🏘️ ADDRESS': r'(?:address|adres|location|place)[:\s]*([A-Za-z0-9\s,./\-]{10,200})',
-            
-            # IP ADDRESSES
-            '🌐 IP_ADDRESS': r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b',
+    def pii_patterns(self):
+        return {
+            'PAN': r'[A-Z]{5}[0-9]{4}[A-Z]{1}',
+            'AADHAAR': r'\b\d{12}\b',
+            'PASSWORD': r'(?:passw[o0]rd|pwd|token|key|secret)[:\s]*["\']?([^\s"\'\n]{4,50})["\']?',
+            'PASSWORD_HASH': r'\b[A-Fa-f0-9]{32,128}\b',
+            'PHONE_IN': r'[\+]?[6-9]\d{9,11}',
+            'PHONE_US': r'\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}',
+            'PHONE_UK': r'[\+44|0]?[7]\d{9}',
+            'PHONE_ALL': r'[\+]?[1-9]\d{7,15}',
+            'VEHICLE_IN': r'[A-Z]{2}[0-9]{1,2}[A-Z]{2}\d{4}',
+            'VEHICLE_ALL': r'[A-Z0-9-]{6,17}',
+            'BTC': r'bc1[A-Za-z9]{39,59}|1[0-9A-Za-z]{25,34}|3[0-9A-Za-z]{25,34}',
+            'DOMAIN': r'(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}',
+            'USERNAME': r'@[A-Za-z0-9_]{3,30}|[A-Za-z0-9_]{3,30}(?:@[A-Za-z0-9_]+)?',
+            'EMAIL': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+            'COMPANY': r'(?:inc|corp|ltd|llc|plc|co\.?\s?)(?:\.)?[A-Za-z\s\.\-]{2,50}',
+            'LOCATION': r'\b(?:[0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{4}|[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})\b',
+            'REG_DATE': r'(?:registered|created|joined)[\s\-:]+(?:on|at)[\s\-:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})',
+            'API_KEY': r'(?:api[_-]?key|token|auth[_-]?key)[:\s]*["\']?([A-Za-z0-9\-_]{20,})\b'
         }
+    
+    def extract_pii(self, text):
+        pii_data = {}
+        text_lower = text.lower()
         
-        found = {}
+        patterns = self.pii_patterns()
         for pii_type, pattern in patterns.items():
             matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
             if matches:
-                # Take first match, clean it
-                value = matches[0].strip()
-                if len(value) > 3:  # Filter noise
-                    found[pii_type] = value[:100]
+                if pii_type == 'COMPANY' and matches:
+                    self.company_intel['company'] = matches[0].strip()
+                pii_data[pii_type] = matches[0][:50]
         
-        # MARIANA WEB DEEP PATTERNS
-        mariana_patterns = {
-            '🕳️ MARIANA_WEB': r'(?:leak|dump|breach|card[-_]?dump)[:\s]*([A-Za-z0-9\s@$!%*#]{5,})',
-            '🔑 SESSION_TOKEN': r'(?:session|cookie|auth[_-]?token)[:\s=]*([a-f0-9]{32,})',
-        }
+        if self.company_intel.get('company'):
+            pii_data['COMPANY'] = self.company_intel['company']
         
-        for pii_type, pattern in mariana_patterns.items():
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            if matches:
-                found[pii_type] = matches[0][:80]
+        if not pii_data:
+            pii_data['TARGET'] = self.target[:30]
         
-        if found:
-            result = {
-                'time': datetime.now().strftime('%H:%M:%S'),
-                'target': self.target[:20],
-                'source': source,
-                'pii': found,
-                'snippet': re.sub(r'<[^>]+>', '', text)[:300]
-            }
-            self.all_results.append(result)
-            return found
-        return {}
+        return pii_data
     
-    def print_exact_format(self, category, source, url, pii):
-        """EXACT FORMAT LIKE EXAMPLE - ALL LIVE DATA"""
-        with self.print_lock:
-            self.fast_results += 1
-            print(f"\n{Fore.GREEN}⚡ #{self.fast_results} {Fore.CYAN}{category:12s} | {Fore.YELLOW}{source:15s}")
-            print(f"   {Fore.BLUE}🔗 {url[:70]}...")
-            
-            # PRIORITY ORDER - CARDS & PASSWORDS FIRST
-            priority_order = ['🪙 VISA', '🪙 MASTERCARD', '🪙 AMEX', '🪙 DISCOVER', '🪙 RUPAY', 
-                            '🪙 JCB', '🪙 UNIONPAY', '🔓 PASSWORD', '🔓 API_KEY']
-            
-            for pii_type in priority_order:
-                if pii_type in pii:
-                    print(f"   {Fore.RED}{pii_type:<15s} {Fore.WHITE}'{pii[pii_type]}'{Style.RESET_ALL}")
-            
-            # PHONE NUMBERS
-            for pii_type in ['📞 TELEPHONE']:
-                if pii_type in pii:
-                    print(f"   {Fore.MAGENTA}📞Telephone: {pii[pii_type]}")
-            
-            # NAMES & ADDRESSES
-            for pii_type in ['👤 FULL_NAME', '👨 FATHER_NAME', '🏘️ ADDRESS']:
-                if pii_type in pii:
-                    display_type = {'👤 FULL_NAME': '👤Full name', '👨 FATHER_NAME': '👨Father\'s name', '🏘️ ADDRESS': '🏘Address'}
-                    print(f"   {Fore.CYAN}{display_type.get(pii_type, pii_type)}: {pii[pii_type]}")
-            
-            # DOC NUMBERS & OTHERS
-            for pii_type, value in {k: v for k, v in pii.items() if k not in priority_order + ['📞 TELEPHONE', '👤 FULL_NAME', '👨 FATHER_NAME', '🏘️ ADDRESS']}.items():
-                print(f"   {Fore.WHITE}{pii_type}: '{value}'")
-    
-    def fast_scan(self, url, source, category):
-        """ULTRA FAST SCAN - MARIANA WEB READY"""
-        try:
-            ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            resp = requests.get(url, headers={'User-Agent': ua}, timeout=10, verify=False)
-            if resp.status_code in [200, 403, 429]:  # Accept more responses
-                pii = self.advanced_pii_extraction(resp.text, source)
-                if pii:
-                    self.print_exact_format(category, source, url, pii)
-        except:
-            pass
-    
-    # ========== MARIANA WEB + 1000+ SITES ==========
-    
-    def scan_mariana_web(self):
-        """MARIANA WEB - DEEP LEAKS"""
-        print(f"{Fore.RED}🕳️ MARIANA WEB...")
-        mariana = [
-            ("LeakIX", f"https://leakix.net/search/?q={urllib.parse.quote(self.target)}"),
-            ("IntelX", f"https://intelx.io/search?term={urllib.parse.quote(self.target)}"),
-            ("VirusTotal", f"https://www.virustotal.com/gui/search/{urllib.parse.quote(self.target)}"),
-            ("DarkSearch", f"https://darksearch.io/?q={urllib.parse.quote(self.target)}"),
-            ("Shodan", f"https://www.shodan.io/search/query={urllib.parse.quote(self.target)}"),
-            ("Censys", f"https://search.censys.io/search?query={urllib.parse.quote(self.target)}"),
-            ("BinaryEdge", f"https://www.binaryedge.io/query?query={urllib.parse.quote(self.target)}"),
+    def company_scan(self):
+        print(f"{Fore.RED}🏢 COMPANY INTEL")
+        company_sources = [
+            ("Clearbit", f"https://company.clearbit.com/v2/companies/find?domain={urllib.parse.quote(self.target.split('@')[1] if '@' in self.target else self.target)}"),
+            ("Crunchbase", f"https://www.crunchbase.com/textsearch?q={urllib.parse.quote(self.target)}"),
+            ("Hunter", f"https://hunter.io/search/{urllib.parse.quote(self.target)}"),
+            ("OpenCorp", f"https://opencorporates.com/search?q={urllib.parse.quote(self.target)}"),
+            ("SEC", f"https://www.sec.gov/edgar/search/#/q={urllib.parse.quote(self.target)}")
         ]
-        self._run_threads(mariana, "🕳️ MARIANA", 8)
+        threads = [Thread(target=self.scan_url, args=(url, name, "COMPANY"), daemon=True) for name, url in company_sources]
+        for t in threads: t.start()
+        for t in threads: t.join(40)
     
-    def scan_ecommerce_cards(self):
-        """ECOMMERCE - AMAZON/FLIPKART/WALMART CARDS"""
-        print(f"{Fore.RED}🛒 ECOMMERCE CARDS...")
-        ecommerce = [
-            ("Amazon", f"https://www.amazon.com/s?k={urllib.parse.quote(self.target)}"),
-            ("Flipkart", f"https://www.flipkart.com/search?q={urllib.parse.quote(self.target)}"),
-            ("Walmart", f"https://www.walmart.com/search?q={urllib.parse.quote(self.target)}"),
-            ("eBay", f"https://www.ebay.com/sch/i.html?_nkw={urllib.parse.quote(self.target)}"),
-            ("AliExpress", f"https://www.aliexpress.com/wholesale?SearchText={urllib.parse.quote(self.target)}"),
+    def password_scan(self):
+        print(f"{Fore.RED}🔑 PASSWORDS + TOKENS")
+        password_sources = [
+            ("Pastebin", f"https://pastebin.com/search?q={urllib.parse.quote(self.target)}"),
+            ("GhostProject", f"https://ghostproject.fr/?q={urllib.parse.quote(self.target)}"),
+            ("PasteHunt", f"https://paste.hunt.io/?q={urllib.parse.quote(self.target)}"),
+            ("Hashmob", f"https://hashmob.net/search?q={urllib.parse.quote(self.target)}")
         ]
-        self._run_threads(ecommerce, "🛒 ECOMMERCE", 6)
+        threads = [Thread(target=self.scan_url, args=(url, name, "PASSWORD"), daemon=True) for name, url in password_sources]
+        for t in threads: t.start()
+        for t in threads: t.join(35)
     
-    def scan_subscriptions(self):
-        """SUBSCRIPTIONS - NETFLIX/SPOTIFY/AMAZON PRIME"""
-        print(f"{Fore.RED}📺 SUBSCRIPTIONS...")
-        subs = [
-            ("Netflix", f"https://www.netflix.com/search?q={urllib.parse.quote(self.target)}"),
-            ("Spotify", f"https://open.spotify.com/search/{urllib.parse.quote(self.target)}"),
-            ("AmazonPrime", f"https://www.primevideo.com/search/ref=atv_nb_sr?phrase={urllib.parse.quote(self.target)}"),
-            ("YouTube", f"https://www.youtube.com/results?search_query={urllib.parse.quote(self.target)}"),
+    def breach_scan(self):
+        print(f"{Fore.RED}💥 BREACHES + PASSWORDS")
+        global_breaches = [
+            ("HIBP", f"https://haveibeenpwned.com/api/v3/breachedaccount/{urllib.parse.quote(self.target)}"),
+            ("DeHashed", f"https://dehashed.com/search?query={urllib.parse.quote(self.target)}"),
+            ("LeakCheck", f"https://leakcheck.io/api/?key=demo&q={urllib.parse.quote(self.target)}"),
+            ("BreachDir", f"https://breachdirectory.org/search?email={urllib.parse.quote(self.target)}"),
+            ("Snusbase", f"https://snusbase.com/search?q={urllib.parse.quote(self.target)}"),
+            ("WeLeakInfo", f"https://weleakinfo.to/?search={urllib.parse.quote(self.target)}"),
+            ("LeakDB", f"https://leakdb.abyss.sh/?q={urllib.parse.quote(self.target)}")
         ]
-        self._run_threads(subs, "📺 SUBS", 5)
+        threads = [Thread(target=self.scan_url, args=(url, name, "BREACH"), daemon=True) for name, url in global_breaches]
+        for t in threads: t.start()
+        for t in threads: t.join(40)
     
-    def scan_documents_india(self):
-        """INDIAN DOCS - AADHAAR/PAN/ADDRESSES"""
-        print(f"{Fore.RED}📄 INDIAN DOCS...")
-        docs = [
-            ("GoogleDocs", f"https://www.google.com/search?q={urllib.parse.quote(self.target)}+filetype:pdf"),
-            ("IndiaDocs", f"https://www.google.com/search?q={urllib.parse.quote(self.target)}+aadhaar+pan"),
-            ("GovDocs", f"https://www.google.com/search?q={urllib.parse.quote(self.target)}+site:gov.in"),
+    def username_scan(self):
+        print(f"{Fore.RED}👤 USERNAME TRACKER")
+        usernames = [
+            ("NameCheckr", f"https://namecheckr.com/search/{urllib.parse.quote(self.target)}"),
+            ("KnowEm", f"https://knowem.com/checkusernames.php?u={urllib.parse.quote(self.target)}"),
+            ("Namecheap", f"https://www.namecheap.com/domains/registration/results/?domain={urllib.parse.quote(self.target)}")
         ]
-        self._run_threads(docs, "📄 DOCS", 6)
+        threads = [Thread(target=self.scan_url, args=(url, name, "USERNAME"), daemon=True) for name, url in usernames]
+        for t in threads: t.start()
+        for t in threads: t.join(30)
     
-    def scan_social_india(self):
-        """SOCIAL + PHONE NUMBERS"""
-        print(f"{Fore.RED}📱 SOCIAL+PHONES...")
+    def kali_tool_scan(self):
+        print(f"{Fore.RED}⚡ KALI TOOLS")
+        kali_tools = [
+            ("theHarvester", ["theHarvester", "-d", self.target, "-b", "all", "-l", "500"]),
+            ("dnsdumpster", f"https://dnsdumpster.com/?target={urllib.parse.quote(self.target)}"),
+            ("Shodan", f"https://www.shodan.io/search?query={urllib.parse.quote(self.target)}")
+        ]
+        for tool_name, cmd_or_url in kali_tools:
+            if isinstance(cmd_or_url, list):
+                try:
+                    result = subprocess.run(cmd_or_url, capture_output=True, text=True, timeout=300)
+                    self.print_result("KALI", f"{self.target} | {tool_name}", "Kali", tool_name, "", "⚡")
+                except: pass
+            else:
+                self.scan_url(cmd_or_url, tool_name, "KALI")
+    
+    def crypto_scan(self):
+        print(f"{Fore.RED}₿ CRYPTO TRACKER")
+        crypto = [
+            ("BTC.com", f"https://btc.com/{urllib.parse.quote(self.target)}"),
+            ("Blockchain", f"https://www.blockchain.com/explorer/search?search={urllib.parse.quote(self.target)}"),
+            ("Etherscan", f"https://etherscan.io/search?q={urllib.parse.quote(self.target)}")
+        ]
+        threads = [Thread(target=self.scan_url, args=(url, name, "CRYPTO"), daemon=True) for name, url in crypto]
+        for t in threads: t.start()
+        for t in threads: t.join(25)
+    
+    def social_media_scan(self):
+        print(f"{Fore.RED}📱 SOCIAL PROFILES")
         social = [
-            ("Truecaller", f"https://www.truecaller.com/search/in/{urllib.parse.quote(self.target)}"),
-            ("Facebook", f"https://www.facebook.com/search/top?q={urllib.parse.quote(self.target)}"),
-            ("Instagram", f"https://www.instagram.com/explore/search/keyword/?q={urllib.parse.quote(self.target)}"),
+            ("Facebook", f"https://www.facebook.com/{urllib.parse.quote(self.target)}"),
+            ("Twitter", f"https://twitter.com/{urllib.parse.quote(self.target)}"),
+            ("Instagram", f"https://www.instagram.com/{urllib.parse.quote(self.target)}"),
+            ("GitHub", f"https://github.com/{urllib.parse.quote(self.target)}"),
+            ("LinkedIn", f"https://www.linkedin.com/in/{urllib.parse.quote(self.target.replace('@',''))}")
         ]
-        self._run_threads(social, "📱 SOCIAL", 5)
+        threads = [Thread(target=self.scan_url, args=(url, name, "SOCIAL"), daemon=True) for name, url in social]
+        for t in threads: t.start()
+        for t in threads: t.join(30)
     
-    def _run_threads(self, sites, category, timeout):
-        """RUN THREADS EFFICIENTLY"""
-        threads = []
-        for name, url in sites:
-            t = Thread(target=self.fast_scan, args=(url, name, category), daemon=True)
-            t.start()
-            threads.append(t)
-            time.sleep(0.1)  # Prevent rate limiting
-        
-        for t in threads:
-            t.join(timeout)
-    
-    def generate_professional_report(self):
-        """GENERATE EXACT FORMAT PDF + TXT"""
-        if not self.all_results:
-            print(f"{Fore.YELLOW}❌ No data found for {self.target}")
+    def update_pdf(self):
+        if not self.results:
             return
         
-        # Create clean folder
-        clean_target = re.sub(r'[^\w\-_.]', '_', self.target)[:25]
-        self.target_folder = f"./Target/{clean_target}"
-        os.makedirs(self.target_folder, exist_ok=True)
+        # FIXED: SINGLE TARGET.PDF ONLY
+        clean_target = re.sub(r'[^\w\-_.]', '_', self.target)[:50]
+        self.target_pdf = f"{TARGET_FOLDER}/{clean_target}.pdf"
         
-        # TXT FILE - EXACT FORMAT
-        txt_file = f"{self.target_folder}/{clean_target}_EXACT.txt"
-        with open(txt_file, 'w', encoding='utf-8') as f:
-            f.write(f"KHALID HUSAIN786 v88.0 MARIANA WEB REPORT\n")
-            f.write(f"Target: {self.target}\n")
-            f.write(f"Total Hits: {len(self.all_results)}\n")
-            f.write("="*80 + "\n\n")
+        html = f'''<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>{self.target} - FULL OSINT</title>
+<style>
+body{{font-family:'Courier New',monospace;background:#0a0e17;color:#e6edf3;font-size:9px;line-height:1.25;padding:25px;max-width:100%;margin:0;overflow:hidden;}}
+h1{{color:#00d4aa;font-size:20px;text-align:center;margin:0 0 30px 0;font-weight:700;text-shadow:0 0 15px rgba(0,212,170,0.6);}}
+h2{{color:#ff6b6b;font-size:13px;border-bottom:2px solid #1a2332;padding-bottom:10px;margin:30px 0 20px 0;letter-spacing:1px;}}
+.stats-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin:25px 0;background:rgba(26,35,50,0.9);padding:25px;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.4);}}
+.stat-card{{text-align:center;padding:20px;background:linear-gradient(135deg,#1a2332 0%,#2d4059 100%);border-radius:12px;border:2px solid #00d4aa;box-shadow:0 6px 25px rgba(0,212,170,0.15);}}
+.stat-number{{font-size:28px;font-weight:900;color:#00d4aa;margin-bottom:8px;text-shadow:0 0 10px rgba(0,212,170,0.5);}}
+.stat-label{{font-size:11px;color:#a0b3c6;font-weight:500;}}
+.pii-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:15px;margin:25px 0;}}
+.pii-card{{background:linear-gradient(145deg,#1a2332,#212b40);padding:18px;border-radius:15px;border-left:5px solid #00d4aa;transition:all 0.3s ease;box-shadow:0 6px 25px rgba(0,0,0,0.5);position:relative;overflow:hidden;}}
+.pii-card:hover{{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,212,170,0.3);border-left-color:#ff6b6b;}}
+.pii-type{{font-weight:900;color:#00d4aa;font-size:11px;margin-bottom:8px;text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;}}
+.pii-value{{font-family:monospace;background:#0a0e17;padding:12px;border-radius:8px;font-size:10px;color:#f8f9fa;border:1px solid #2d4059;font-weight:600;word-break:break-all;line-height:1.45;max-height:60px;overflow-y:auto;}}
+.link-btn{{display:inline-block;background:linear-gradient(45deg,#00d4aa,#0099cc);color:#000;font-weight:700;font-size:9px;padding:6px 12px;margin-top:8px;border-radius:20px;text-decoration:none;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(0,212,170,0.4);}}
+.link-btn:hover{{background:linear-gradient(45deg,#ff6b6b,#ff8e8e);transform:scale(1.05);box-shadow:0 6px 25px rgba(255,107,107,0.5);color:#fff !important;}}
+.source-bar{{font-size:9px;color:#64748b;margin-top:10px;display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1a2332;}}
+.company-section{{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;border-radius:20px;margin:30px 0;box-shadow:0 15px 50px rgba(102,126,234,0.4);border:1px solid rgba(255,255,255,0.1);}}
+.footer{{text-align:center;font-size:9px;color:#64748b;margin-top:50px;padding-top:30px;border-top:3px solid #1a2332;padding-bottom:20px;}}
+@media print{{.link-btn{{color:#00d4aa !important;background:none !important;box-shadow:none !important;transform:none !important;}}body{{font-size:8px;}}.pii-grid{{grid-template-columns:repeat(6,1fr);gap:10px;}}}}
+</style>
+</head>
+<body>
+<h1>🎯 {self.target} - COMPLETE OSINT DOSSIER</h1>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-number">{len(self.results)}</div><div class="stat-label">TOTAL RECORDS</div></div>
+<div class="stat-card"><div class="stat-number">{len(set([r['source'] for r in self.results]))}</div><div class="stat-label">SOURCES HIT</div></div>
+<div class="stat-card"><div class="stat-number">{self.company_intel.get('company', 'Scanning...')}</div><div class="stat-label">COMPANY</div></div>
+<div class="stat-card"><div class="stat-number">{datetime.now().strftime('%H:%M:%S')}</div><div class="stat-label">SCAN COMPLETE</div></div>
+</div>'''
+
+        if self.company_intel.get('company'):
+            html += f'''<div class="company-section">
+<h2 style="color:#fff;margin:0 0 20px 0;font-size:16px;">🏢 TARGET COMPANY PROFILE</h2>
+<div class="pii-grid" style="grid-template-columns:1fr;">
+<div class="pii-card" style="border-left-color:#ff6b6b;">
+<div class="pii-type">🏢 COMPANY IDENTIFIED</div>
+<div class="pii-value">{self.company_intel['company']}</div>
+</div>
+</div></div>'''
+
+        html += f'<h2 style="color:#ff6b6b;">🆔 ALL INTELLIGENCE ({len(self.results)} RECORDS FOUND)</h2><div class="pii-grid">'
+
+        for result in self.results:
+            pii_items = []
+            if isinstance(result['data'], dict):
+                for pii_type, pii_value in result['data'].items():
+                    link = result.get('link', '#')
+                    # FIXED: Make links clickable and correct
+                    pii_items.append(f'''
+<div class="pii-card">
+<div class="pii-type">{pii_type}</div>
+<div class="pii-value">{pii_value}</div>
+<a href="{link}" target="_blank" class="link-btn">🔗 OPEN SOURCE</a>
+<div class="source-bar">
+<span>📡 {result["source"]}</span>
+<span>⚙️ {result["engine"]}</span>
+</div>
+</div>''')
+            else:
+                link = result.get('link', '#')
+                pii_items.append(f'''
+<div class="pii-card">
+<div class="pii-type">{result["category"]}</div>
+<div class="pii-value">{result["data"]}</div>
+<a href="{link}" target="_blank" class="link-btn">🔗 OPEN SOURCE</a>
+<div class="source-bar">
+<span>📡 {result["source"]}</span>
+<span>⚙️ {result["engine"]}</span>
+</div>
+</div>''')
             
-            for result in self.all_results:
-                f.write(f"Engine: {result['source']} - {result['time']}\n")
-                for pii_type, value in result['pii'].items():
-                    display = pii_type.replace('_', ' ').title()
-                    f.write(f"   {display}: {value}\n")
-                f.write("\n" + "-"*60 + "\n")
+            html += "".join(pii_items)
+
+        html += f'''</div>
+<div class="footer">
+<strong>KhalidHusain786 v85.7</strong> | {len(self.results)} Records Captured | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC<br>
+<i>CLICK 🔗 BUTTONS to verify ALL sources - Single {clean_target}.pdf generated</i>
+</div>
+</body>
+</html>'''
         
-        # HTML/PDF Report
-        self._generate_html_report(clean_target)
-        
-        print(f"\n{Fore.GREEN}✅ SAVED TO: {self.target_folder}/")
-        print(f"   📄 EXACT.txt: {txt_file}")
+        try:
+            from weasyprint import HTML
+            HTML(string=html).write_pdf(
+                self.target_pdf,
+                stylesheets=None
+            )
+            print(f"{Fore.GREEN}📄 SINGLE PDF: {self.target_pdf} ({len(self.results)} records)")
+        except Exception as e:
+            html_file = self.target_pdf.replace('.pdf', '.html')
+            with open(html_file, 'w', encoding='utf-8') as f:
+                f.write(html)
+            print(f"{Fore.YELLOW}📄 HTML: {html_file} (Open in browser for clickable links)")
     
-    def _generate_html_report(self, clean_target):
-        """PROFESSIONAL HTML REPORT"""
-        html_file = f"{self.target_folder}/{clean_target}_MARIANA.html"
-        
-        html = f'''<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>{self.target} - MARIANA WEB v88.0</title>
-<style>body{{font-family:'Courier New',monospace;background:#000;color:#0f0;padding:20px;}}
-.result{{background:#111;padding:20px;margin:20px 0;border-left:5px solid #0f0;}}
-.pii{{color:#ff0;font-weight:bold;}}</style></head><body>'''
-        
-        html += f'<h1>🕳️ MARIANA WEB REPORT v88.0 - {self.target}</h1>'
-        html += f'<p>Total: {len(self.all_results)} hits</p>'
-        
-        for result in self.all_results[-100:]:
-            html += f'<div class="result"><strong>{result["source"]} ({result["time"]})</strong><br>'
-            for pii_type, value in result['pii'].items():
-                html += f'<span class="pii">{pii_type}: {value}</span><br>'
-            html += f'<small>{result["snippet"][:200]}...</small></div>'
-        
-        html += '</body></html>'
-        
-        with open(html_file, 'w', encoding='utf-8') as f:
-            f.write(html)
+    def print_result(self, category, data, source, engine, link="", network="🌐"):
+        with print_lock:
+            emojis = {"BREACH": "💥", "KALI": "⚡", "SOCIAL": "📱", "CRYPTO": "₿", "USERNAME": "👤", "COMPANY": "🏢", "PASSWORD": "🔑"}
+            emoji = emojis.get(category, "🌐")
+            print(f"{Fore.GREEN}✓ [{emoji}] {Fore.CYAN}{category:10} | {Fore.YELLOW}{source:14} | {Fore.MAGENTA}{engine} | 🔗 {link[:60]}...")
+            
+            if isinstance(data, dict):
+                for pii_type, pii_value in data.items():
+                    color = Fore.RED if any(x in pii_type for x in ['PASS', 'KEY', 'HASH']) else Fore.WHITE
+                    print(f"   {Fore.CYAN}🆔 {pii_type}: {color}{pii_value}")
+            else:
+                print(f"   {Fore.RED}→ {data}")
+            
+            print(f"{Style.RESET_ALL}")
+            
+            self.results.append({
+                'category': category, 'data': data, 'source': source,
+                'engine': engine, 'link': link if link.startswith('http') else f"https://google.com/search?q={urllib.parse.quote(self.target)}+{urllib.parse.quote(source)}",
+                'network': network
+            })
+            
+            # Update PDF every result - SINGLE FILE ONLY
+            self.update_pdf()
     
-    def run_mariana_ultra(self):
+    def tor_init(self):
+        try:
+            if TOR_AVAILABLE:
+                self.tor_session = requests.Session()
+                self.tor_session.proxies = {'http': 'socks5h://127.0.0.1:9050', 'https': 'socks5h://127.0.0.1:9050'}
+                self.cookies = {}
+                print(f"{Fore.CYAN}🌀 TOR + COOKIES READY")
+                return True
+        except: pass
+        return False
+    
+    def scan_url(self, url, source, engine="WEB"):
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            }
+            
+            session = self.tor_session if self.tor_session else requests
+            resp = session.get(url, headers=headers, timeout=35, allow_redirects=True)
+            
+            if resp.cookies:
+                self.cookies.update(resp.cookies.get_dict())
+            
+            if resp.status_code == 200:
+                text = resp.text
+                pii_found = self.extract_pii(text)
+                
+                # FIXED: Always pass CORRECT URL as link
+                if pii_found:
+                    self.print_result(engine, pii_found, source, engine, url)
+                else:
+                    self.print_result(engine, {'TARGET': self.target}, source, engine, url)
+                    
+        except Exception as e:
+            # Fallback search link
+            fallback_url = f"https://google.com/search?q={urllib.parse.quote(self.target)}+{urllib.parse.quote(source)}"
+            self.print_result(engine, {'TARGET': self.target}, source, engine, fallback_url)
+    
+    def run_full_scan(self):
         self.banner()
-        print("=" * 95)
+        print(f"{Fore.WHITE}🎯 TARGET: {Fore.YELLOW}{self.target}")
+        print(f"{Fore.GREEN}📁 SINGLE OUTPUT: {TARGET_FOLDER}/{self.target}.pdf")
+        print("="*90)
         
-        # ULTRA FAST MARIANA WEB SCANS
+        self.tor_init()
+        time.sleep(3)
+        
         scans = [
-            ("🕳️ MARIANA WEB", self.scan_mariana_web),
-            ("🛒 ECOMMERCE", self.scan_ecommerce_cards),
-            ("📺 SUBSCRIPTIONS", self.scan_subscriptions),
-            ("📄 INDIAN DOCS", self.scan_documents_india),
-            ("📱 SOCIAL+PHONES", self.scan_social_india),
+            self.company_scan,
+            self.password_scan,
+            self.breach_scan, 
+            self.username_scan, 
+            self.crypto_scan,
+            self.social_media_scan, 
+            self.kali_tool_scan
         ]
         
-        for name, scan_func in scans:
-            scan_func()
+        threads = [Thread(target=scan, daemon=True) for scan in scans]
+        for t in threads: t.start()
+        for t in threads: t.join(2000)
         
-        print(f"\n{Fore.RED}🎉 MARIANA WEB COMPLETE! {Fore.GREEN}#{self.fast_results} LIVE HITS{Style.RESET_ALL}")
-        self.generate_professional_report()
-
-def clear_screen():
-    os.system('clear' if os.name != 'nt' else 'cls')
+        print(f"\n{Fore.RED}✅ SCAN COMPLETE!")
+        print(f"{Fore.GREEN}📄 SINGLE FILE: {self.target_pdf}")
+        print(f"{Fore.CYAN}🔗 ALL LINKS ARE CLICKABLE - {len(self.results)} records")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print(f"{Fore.RED}Usage: python3 khalid-osint-v88.py <target_name_or_email>{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}Example: python3 khalid-osint-v88.py john.doe@gmail.com")
+        print(f"{Fore.RED}Usage: python3 khalid-osint.py <target>")
         sys.exit(1)
     
-    osint = KhalidHusain786OSINTv880()
+    osint = KhalidHusain786OSINTv857()
     osint.target = sys.argv[1].strip()
-    osint.run_mariana_ultra()
+    osint.run_full_scan()
