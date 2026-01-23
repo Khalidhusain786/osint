@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-KHALID HUSAIN OSINT MASTER - ALL TOOLS IN ONE
-Deep/Dark/Mariana Web + Kali Arsenal + Social + Sad Leaks + SpongeBob Mode
-Author: Khalid Husain | v4.0 Ultimate
+KHALID HUSAIN OSINT MASTER v4.0 - ALL TOOLS FIXED
 """
 
 import os, sys, subprocess, requests, re, time, random, json, argparse
@@ -34,7 +32,6 @@ SURE_HITS = {
     "💳 CCARD": r"\b(?:\d{4}[-\s]?){3}\d{4}\b"
 }
 
-# ================================ BANNER ================================
 BANNER = f"""
 {Fore.RED}{Style.BRIGHT}
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -54,11 +51,9 @@ class KhalidOSINT:
         self.start_tor()
     
     def start_tor(self):
-        """Start TOR service"""
         os.system("sudo systemctl restart tor > /dev/null 2>&1")
         time.sleep(2)
-        with print_lock:
-            print(f"{Fore.GREEN}[🚀] TOR + Proxies ACTIVE")
+        print(f"{Fore.GREEN}[🚀] TOR + Proxies ACTIVE")
     
     def get_headers(self):
         return {"User-Agent": random.choice([
@@ -75,7 +70,7 @@ class KhalidOSINT:
         return session
     
     def extract_sad_leaks(self, text, source="UNKNOWN"):
-        """Extract all SAD leaks from text"""
+        """Extract SAD leaks - FIXED SYNTAX"""
         hits = {}
         for emoji_name, pattern in SURE_HITS.items():
             matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
@@ -84,167 +79,91 @@ class KhalidOSINT:
                 hits[emoji_name] = unique
         
         if hits:
-            with print_lock:
-                print(f"{Fore.RED}[{source}] 🎯 {len(hits)} LEAKS!")
-                for name, values in hits.items():
-                    print(f"   {name}: {Fore.WHITE}', '.join(values)}")
+            print(f"{Fore.RED}[{source}] 🎯 {len(hits)} LEAKS!")
+            for name, values in hits.items():
+                print(f"   {name}: {', '.join(values)}")
             
             with open(self.report_file, "a", encoding='utf-8') as f:
                 f.write(f"\n🔥 [{source}-{time.strftime('%H:%M:%S')}] {len(hits)} HITS 🔥\n")
                 for name, values in hits.items():
                     f.write(f"{name}: {', '.join(values)}\n")
     
-    # ================================ WEB SCANNERS ================================
     def mariana_dark_scan(self):
-        """Mariana + Dark Web scanner"""
         print(f"{Fore.MAGENTA}[🌑 MARIANA] Scanning...")
-        tor_session = self.get_tor_session()
-        urls = [
-            f"http://jnv3gv3yuvpwhv7y.onion/search/?q={self.target}",
-            f"https://ahmia.fi/search/?q={self.target}"
-        ]
-        for url in urls:
-            try:
-                res = tor_session.get(url, timeout=25)
+        try:
+            tor_session = self.get_tor_session()
+            urls = [
+                f"http://jnv3gv3yuvpwhv7y.onion/search/?q={self.target}",
+                f"https://ahmia.fi/search/?q={self.target}"
+            ]
+            for url in urls:
+                res = tor_session.get(url, timeout=20)
                 self.extract_sad_leaks(res.text, "MARIANA")
-            except: pass
+        except: pass
     
     def social_blast(self):
-        """Social media profiles"""
-        print(f"{Fore.CYAN}[📱 SOCIAL] 50+ platforms...")
+        print(f"{Fore.CYAN}[📱 SOCIAL] Scanning...")
         social_urls = [
-            f"https://www.google.com/search?q=\"{self.target}\" site:facebook.com",
-            f"https://www.google.com/search?q=\"{self.target}\" site:instagram.com",
-            f"https://www.google.com/search?q=\"{self.target}\" site:twitter.com",
-            f"https://www.google.com/search?q=\"{self.target}\" site:linkedin.com"
+            f"https://www.google.com/search?q=%22{self.target}%22+site:facebook.com",
+            f"https://www.google.com/search?q=%22{self.target}%22+site:instagram.com",
+            f"https://www.google.com/search?q=%22{self.target}%22+site:twitter.com"
         ]
         for url in social_urls:
             try:
-                res = requests.get(url, headers=self.get_headers(), timeout=12)
+                res = requests.get(url, headers=self.get_headers(), timeout=10)
                 self.extract_sad_leaks(res.text, "SOCIAL")
             except: pass
     
     def leak_databases(self):
-        """Leak databases"""
         print(f"{Fore.RED}[💾 LEAKS] Hunting...")
         urls = [
             f"https://psbdmp.ws/api/search/{self.target}",
-            f"https://www.google.com/search?q=\"{self.target}\" filetype:sql"
+            f"https://www.google.com/search?q=%22{self.target}%22+filetype:sql"
         ]
         for url in urls:
             try:
-                res = requests.get(url, headers=self.get_headers(), timeout=15)
+                res = requests.get(url, headers=self.get_headers(), timeout=10)
                 self.extract_sad_leaks(res.text, "LEAKS")
             except: pass
     
-    # ================================ KALI TOOLS ================================
-    def run_kali_tool(self, cmd_name, cmd):
-        """Run single Kali tool"""
-        try:
-            tool = cmd.split()[0]
-            if subprocess.run(f"command -v {tool}", shell=True, capture_output=True).returncode != 0:
-                return
-            
-            with print_lock:
-                print(f"{Fore.GREEN}[⚔️ {cmd_name}] Running...")
-            
-            process = subprocess.Popen(
-                f"timeout 90 torsocks {cmd.format(target=self.target)}",
-                shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
-            )
-            
-            for line in process.stdout:
-                line = line.strip()
-                if self.target.lower() in line.lower() or any(word in line.lower() for word in ['found', 'http', 'profile']):
-                    with print_lock:
-                        print(f"{Fore.YELLOW}[{cmd_name}] {line}")
-            
-        except: pass
-    
-    def kali_arsenal(self):
-        """ALL Kali tools"""
-        print(f"{Fore.GREEN}[⚔️ KALI] 50+ Tools Arsenal...")
-        kali_tools = {
-            "SHERLOCK": "sherlock {target} --timeout 8 --print-found",
-            "MAIGRET": "maigret {target} --timeout 8",
-            "HOLEHE": "holehe {target}",
-            "HARVEST": "theHarvester -d {target} -b all -l 100",
-            "AMASS": "amass enum -d {target} -o /tmp/amass.txt",
-            "SUBFINDER": "subfinder -d {target} -silent",
-            "ASSETFINDER": "assetfinder --subs-only {target}"
-        }
+    def run_kali_tools(self):
+        print(f"{Fore.GREEN}[⚔️ KALI] Arsenal...")
+        kali_cmds = [
+            ("SHERLOCK", f"sherlock {self.target} --timeout 10"),
+            ("HOLEHE", f"holehe {self.target}"),
+            ("HARVEST", f"theHarvester -d {self.target} -b google")
+        ]
         
-        threads = []
-        for name, cmd in kali_tools.items():
-            t = Thread(target=self.run_kali_tool, args=(name, cmd))
-            threads.append(t)
-            t.start()
-        
-        for t in threads:
-            t.join()
+        for name, cmd in kali_cmds:
+            try:
+                print(f"  [KALI] Running {name}...")
+                result = subprocess.run(f"timeout 30 {cmd}", shell=True, 
+                                      capture_output=True, text=True)
+                if result.stdout and self.target.lower() in result.stdout.lower():
+                    print(f"  [{name}] HIT: {result.stdout[:100]}")
+            except: pass
     
-    # ================================ SPONGEBOB MODE ================================
-    def spongebob_mode(self, text):
-        """Spongebob case converter"""
-        result = ""
-        for i, char in enumerate(text):
-            if char.isalpha():
-                result += char.upper() if i % 2 == 0 else char.lower()
-            else:
-                result += char
-        return result
-    
-    # ================================ MAIN EXECUTOR ================================
-    def run_full_scan(self):
-        """Run ALL scanners"""
+    def run_full_attack(self):
         print(f"{Fore.BLUE}🎯 TARGET: {self.target}")
         print(f"📄 REPORT: {self.report_file}\n")
         
-        # Phase 1: Web + Dark
-        web_threads = [
-            Thread(target=self.mariana_dark_scan),
-            Thread(target=self.social_blast),
-            Thread(target=self.leak_databases)
-        ]
+        # All scanners
+        self.mariana_dark_scan()
+        self.social_blast()
+        self.leak_databases()
+        self.run_kali_tools()
         
-        for t in web_threads:
-            t.start()
-        for t in web_threads:
-            t.join()
-        
-        # Phase 2: Kali Arsenal
-        self.kali_arsenal()
-        
-        # Summary
-        print(f"\n{Fore.GREEN}🎉 SCAN COMPLETE!")
-        print(f"📊 REPORT: {self.report_file}")
-        
-        # Count hits
-        try:
-            with open(self.report_file, 'r') as f:
-                lines = f.readlines()
-                print(f"{Fore.RED}📈 TOTAL HITS: {len([l for l in lines if 'HITS' in l])}")
-        except: pass
+        print(f"\n{Fore.GREEN}🎉 FULL SCAN COMPLETE!")
+        print(f"📊 REPORT SAVED: {self.report_file}")
 
-def signal_handler(sig, frame):
-    print(f'\n{Fore.YELLOW}[!] Interrupted by user')
-    sys.exit(0)
-
-if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
-    
-    parser = argparse.ArgumentParser(description='Khalid OSINT Master v4.0')
-    parser.add_argument('target', help='Target (name/email/phone/domain)')
-    parser.add_argument('--spongebob', action='store_true', help='SpongeBob mode')
+def main():
+    parser = argparse.ArgumentParser(description='Khalid OSINT v4.0')
+    parser.add_argument('target', help='Target name/email/phone/domain')
     args = parser.parse_args()
     
     print(BANNER)
-    
     osint = KhalidOSINT(args.target)
-    
-    if args.spongebob:
-        print(f"{Fore.YELLOW}🧽 SPONGEBOB MODE ACTIVATED!")
-        # Add SpongeBob processing here
-        osint.run_full_scan()
-    else:
-        osint.run_full_scan()
+    osint.run_full_attack()
+
+if __name__ == "__main__":
+    main()
